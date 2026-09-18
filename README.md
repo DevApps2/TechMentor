@@ -1,714 +1,605 @@
-Projeto Kotlin — Guia de Trabalho com Git e GitHub
+# 📱 Projeto Etec leste
 
-Este documento explica como o grupo deve trabalhar em conjunto no projeto Kotlin usando Git e GitHub.
+Projeto desenvolvido em **Kotlin** com o objetivo de criar um sistema acadêmico para cadastro e gerenciamento de alunos.
 
-1. Tecnologias
+---
 
-Kotlin
+# 📋 Regras do Projeto
 
-Git
+## 🌳 1. Branches
 
-GitHub
+A `main` representa a **versão estável** do projeto.
 
-IntelliJ IDEA / Android Studio, conforme o projeto
+Cada integrante deve trabalhar em uma branch própria.
 
-2. Estrutura do projeto
+### 📌 Padrão
 
-A branch principal do projeto será:
+| Tipo | Padrão |
+|---|---|
+| 🆕 Funcionalidade | `feature/nome-da-tarefa` |
+| 🐛 Correção | `fix/nome-da-correcao` |
+| 🎨 Visual | `style/nome-da-alteracao` |
 
-main
+### Exemplos
 
-
-A main deve conter apenas versões estáveis do projeto.
-
-Cada integrante deve desenvolver suas tarefas em uma branch própria.
-
-Exemplo:
-
-main
-│
-├── feature/login
-├── feature/cadastro
-├── feature/tela-home
-└── fix/erro-login
-
-3. Antes de começar
-
-Cada integrante precisa instalar o Git e configurar seu nome e e-mail:
-
-git config --global user.name "Seu Nome"
-git config --global user.email "seu@email.com"
-
-
-Verifique:
-
-git config --global --list
-
-
-Depois, clone o projeto:
-
-git clone URL_DO_REPOSITORIO
-
-
-Entre na pasta:
-
-cd nome-do-projeto
-
-4. Entendendo o Git
-
-Os principais estados são:
-
-Arquivos
-   ↓
-git add
-   ↓
-Staging Area
-   ↓
-git commit
-   ↓
-Repositório local
-   ↓
-git push
-   ↓
-GitHub
-
-git status
-
-Mostra o estado atual do projeto:
-
-git status
-
-
-Use esse comando frequentemente.
-
-5. Branches
-
-Uma branch é uma linha de desenvolvimento independente.
-
-Não é recomendado desenvolver diretamente na main.
-
-Criar uma branch
-git switch -c feature/nome-da-feature
-
-
-Exemplo:
-
-git switch -c feature/login
-
-
-Podemos usar alguns padrões:
-
-feature/     → nova funcionalidade
-fix/         → correção de bug
-refactor/    → reorganização do código
-docs/        → documentação
-test/        → testes
-
-
-Exemplos:
-
-feature/cadastro-usuario
+```text
+feature/cadastro-aluno
 feature/tela-login
-fix/validacao-email
-refactor/repository
-test/login
-docs/readme
+feature/validacao-email
+fix/erro-cadastro
+style/ajuste-layout
+```
 
-6. Ver as branches
+> 🚫 **Não fazer alterações diretamente na `main`.**
 
-Para ver as branches locais:
+---
 
-git branch
+## 🔄 2. Antes de começar uma tarefa
 
+Sempre atualize a `main`:
 
-Para ver também as branches remotas:
-
-git branch -a
-
-7. Trocar de branch
-git switch nome-da-branch
-
-
-Exemplo:
-
-git switch main
-
-
-Ou:
-
-git switch feature/login
-
-8. Criando uma nova feature
-
-Suponha que alguém recebeu a tarefa:
-
-Criar tela de login.
-
-Primeiro, atualize a main:
-
-git switch main
+```bash
+git checkout main
 git pull origin main
+```
 
+Depois crie sua branch:
 
-Depois crie a branch:
+```bash
+git checkout -b feature/nome-da-tarefa
+```
 
-git switch -c feature/login
+---
 
+## 💻 3. Desenvolvimento
 
-Agora você pode trabalhar no código Kotlin.
+Cada integrante deve trabalhar na **tarefa atribuída**.
 
-Exemplo:
+### Regras
 
-class LoginService {
+- Evitar alterar arquivos desnecessários;
+- Não modificar partes do projeto sem necessidade;
+- Comunicar alterações que possam afetar outro integrante;
+- Manter o código organizado.
 
-    fun login(email: String, password: String): Boolean {
-        return email.isNotBlank() && password.isNotBlank()
-    }
-}
+> 🎯 **Quanto menor e mais específica a alteração, mais fácil será revisar.**
 
-9. Commit
+---
 
-Depois de realizar uma parte do trabalho:
+## 💾 4. Commits
 
-git status
+Os commits devem explicar claramente o que foi alterado.
 
+### Padrão
 
-Adicione os arquivos:
+```text
+tipo: descrição
+```
 
-git add .
+### Tipos
 
+| Tipo | Utilização |
+|---|---|
+| `feat` | Nova funcionalidade |
+| `fix` | Correção de erro |
+| `style` | Alteração visual/formatação |
+| `refactor` | Alteração na estrutura do código |
+| `docs` | Documentação |
+| `test` | Testes |
+| `chore` | Configurações/manutenção |
 
-Faça o commit:
+### ✅ Bons exemplos
 
-git commit -m "feat: implementa login"
+```bash
+git commit -m "feat: adiciona cadastro de aluno"
+```
 
+```bash
+git commit -m "fix: corrige validação de idade"
+```
 
-O commit deve explicar o que foi feito.
+```bash
+git commit -m "style: ajusta layout da tela inicial"
+```
 
-Exemplos:
+### ❌ Evitar
 
-git commit -m "feat: adiciona cadastro de usuario"
-git commit -m "feat: cria tela inicial"
-git commit -m "fix: corrige validacao de email"
-git commit -m "test: adiciona testes do login"
-git commit -m "refactor: reorganiza camada repository"
-
-
-Evite commits como:
-
+```text
 coisas
-mudancas
 teste
+mudanças
 aaaa
+funcionou
 final
-agora vai
+final2
+```
 
-10. Enviar a branch para o GitHub
+---
 
-Depois do commit:
+## 📦 5. Enviando alterações
 
-git push origin feature/login
+Depois de terminar uma alteração:
 
-
-Na primeira vez, também pode ser utilizado:
-
-git push -u origin feature/login
-
-
-Depois disso, normalmente basta:
-
-git push
-
-11. Pull Request (PR)
-
-Depois que a feature estiver pronta, abra um Pull Request no GitHub.
-
-O fluxo será:
-
-feature/login
-      ↓
-     push
-      ↓
-   GitHub
-      ↓
-Pull Request
-      ↓
-Revisão
-      ↓
-Merge
-      ↓
-main
-
-
-O Pull Request permite que outros integrantes revisem o código antes de ele entrar na main.
-
-12. Revisão de código
-
-Antes do merge, outro integrante deve verificar o código.
-
-Algumas coisas para conferir:
-
-O código funciona?
-
-A feature realmente resolve a tarefa?
-
-Existem erros óbvios?
-
-Os nomes de classes e funções estão claros?
-
-Existem testes quando necessários?
-
-O código segue o padrão do projeto?
-
-A alteração quebrou alguma funcionalidade existente?
-
-Comentários devem ser feitos no Pull Request.
-
-13. Atualizando sua branch
-
-Enquanto você trabalha, outras pessoas podem alterar a main.
-
-Por isso, antes de finalizar sua feature, atualize sua branch.
-
-Uma forma simples:
-
-git switch main
-git pull origin main
-git switch feature/login
-git merge main
-
-
-Se houver alterações, o Git tentará juntá-las à sua branch.
-
-Outra possibilidade é utilizar rebase, mas para grupos iniciantes é recomendável primeiro dominar o fluxo com merge.
-
-14. Merge
-
-Quando o Pull Request for aprovado, a feature pode ser incorporada à main.
-
-Exemplo:
-
-main
-  │
-  ├───────────────┐
-  │               │
-  │         feature/login
-  │               │
-  │          desenvolvimento
-  │               │
-  └───────────────┘
-          merge
-
-
-Depois do merge:
-
-git switch main
-git pull origin main
-
-
-A main estará atualizada.
-
-15. Conflitos
-
-Um conflito acontece quando duas pessoas modificam a mesma parte do código de maneiras incompatíveis.
-
-Por exemplo:
-
-Pessoa A:
-
-val nome = "João"
-
-
-Pessoa B:
-
-val nome = "Maria"
-
-
-Quando o Git não consegue decidir qual alteração deve permanecer, ele marca um conflito.
-
-O arquivo pode ficar parecido com:
-
-<<<<<<< HEAD
-val nome = "João"
-=======
-val nome = "Maria"
->>>>>>> feature/outra-branch
-
-
-O integrante precisa decidir qual código deve permanecer.
-
-Depois de resolver:
-
-git add .
-git commit -m "fix: resolve conflito de merge"
-
-16. Regra importante sobre conflitos
-
-Não resolva conflitos simplesmente escolhendo "o meu código".
-
-Converse com a pessoa que fez a outra alteração e entendam o que cada mudança fazia.
-
-Principalmente em arquivos importantes como:
-
-build.gradle.kts
-settings.gradle.kts
-AndroidManifest.xml
-arquivos de configuração
-classes utilizadas por várias features
-
-17. Não trabalhar diretamente na main
-
-Evitem fazer:
-
-git switch main
-# alterar código
-git add .
-git commit
-git push
-
-
-O fluxo recomendado é:
-
-main
- ↓
-criar branch
- ↓
-desenvolver
- ↓
-commit
- ↓
-push
- ↓
-Pull Request
- ↓
-review
- ↓
-merge
- ↓
-main
-
-18. Divisão das tarefas
-
-O grupo deve dividir o projeto em tarefas.
-
-Exemplo:
-
-#1 Criar sistema de login
-#2 Criar cadastro
-#3 Criar tela inicial
-#4 Criar banco de dados
-#5 Criar testes
-#6 Criar documentação
-
-
-Cada tarefa pode gerar uma branch:
-
-feature/login
-feature/cadastro
-feature/home
-feature/database
-test/login
-docs/readme
-
-19. Uma pessoa por branch
-
-Como regra geral:
-
-Pessoa A → feature/login
-Pessoa B → feature/cadastro
-Pessoa C → feature/home
-Pessoa D → feature/database
-
-
-Isso diminui bastante a chance de conflitos.
-
-Se duas pessoas precisarem trabalhar na mesma feature, combinem antes como dividir o trabalho.
-
-20. Commits pequenos
-
-Prefira:
-
-commit 1 → cria modelo User
-commit 2 → cria UserRepository
-commit 3 → adiciona validação
-commit 4 → adiciona testes
-
-
-Em vez de:
-
-commit → fiz o sistema inteiro
-
-
-Commits pequenos facilitam a revisão e a identificação de problemas.
-
-21. Antes de abrir um Pull Request
-
-Faça:
-
+```bash
 git status
+```
 
+```bash
+git add .
+```
 
-Verifique se não existem alterações esquecidas.
+```bash
+git commit -m "feat: descrição"
+```
+
+```bash
+git push origin nome-da-branch
+```
+
+---
+
+## 🔀 6. Pull Request
+
+Nenhuma alteração deve entrar na `main` sem passar por um **Pull Request (PR)**.
+
+### Fluxo
+
+```text
+🌱 Branch
+   ↓
+💻 Desenvolvimento
+   ↓
+🧪 Testes
+   ↓
+💾 Commit
+   ↓
+☁️ Push
+   ↓
+🔀 Pull Request
+   ↓
+👀 Revisão
+   ↓
+✅ Aprovação
+   ↓
+🔗 Merge
+   ↓
+🌳 main
+```
+
+### O Pull Request deve informar:
+
+- O que foi desenvolvido;
+- Quais arquivos foram alterados;
+- Alterações importantes;
+- Se a funcionalidade foi testada.
+
+---
+
+## 👀 7. Revisão de código
+
+Antes do merge, outro integrante deve revisar o código.
+
+### Verificar:
+
+- [ ] O código funciona;
+- [ ] A tarefa foi concluída;
+- [ ] Não existem erros evidentes;
+- [ ] O código está organizado;
+- [ ] Não existem alterações desnecessárias;
+- [ ] Outras funcionalidades continuam funcionando.
+
+---
+
+## 🧪 8. Testes
+
+Antes de abrir um Pull Request:
+
+- [ ] O aplicativo inicia normalmente;
+- [ ] A funcionalidade funciona;
+- [ ] Os campos funcionam corretamente;
+- [ ] As validações funcionam;
+- [ ] Não existem erros no Logcat;
+- [ ] Outras funcionalidades continuam funcionando.
+
+---
+
+## ⚠️ 9. Conflitos
+
+Conflitos acontecem quando duas pessoas alteram a mesma parte de um arquivo.
+
+```text
+⚠️ CONFLICT
+```
+
+### Ao encontrar um conflito:
+
+1. Identificar o conflito;
+2. Analisar os dois códigos;
+3. Combinar as alterações corretas;
+4. Testar o projeto;
+5. Fazer um novo commit.
 
 Depois:
 
-git switch main
-git pull origin main
-
-
-Volte para sua branch:
-
-git switch feature/login
-
-
-Atualize sua branch:
-
-git merge main
-
-
-Execute os testes do projeto.
-
-Se tudo estiver funcionando:
-
-git push
-
-
-Depois abra o Pull Request.
-
-22. Depois que o Pull Request for aprovado
-
-Após o merge:
-
-git switch main
-git pull origin main
-
-
-Agora sua main local está atualizada.
-
-Para começar outra tarefa:
-
-git switch -c feature/nova-feature
-
-23. Comandos principais
-Configuração
-git config --global user.name "Seu Nome"
-git config --global user.email "seu@email.com"
-
-Clonar
-git clone URL_DO_REPOSITORIO
-
-Status
-git status
-
-Atualizar
-git pull
-
-Criar branch
-git switch -c feature/minha-feature
-
-Trocar branch
-git switch nome-da-branch
-
-Ver branches
-git branch
-
-Adicionar arquivos
+```bash
 git add .
+```
 
-Criar commit
-git commit -m "feat: minha alteração"
+```bash
+git commit -m "fix: resolve conflito"
+```
 
-Enviar para o GitHub
-git push
+> 🚫 Nunca apagar alterações de outro integrante sem verificar primeiro.
 
-Ver histórico
-git log --oneline
+---
 
-Mesclar uma branch
-git merge nome-da-branch
+## 🔄 10. Atualização da branch
 
-24. Convenção de commits
+Se a `main` recebeu novas alterações enquanto você trabalha:
 
-Podemos utilizar uma convenção simples:
+```bash
+git checkout main
+git pull origin main
+```
 
-feat: nova funcionalidade
+Depois volte para sua branch:
 
-fix: correção de bug
+```bash
+git checkout nome-da-sua-branch
+```
 
-refactor: alteração estrutural sem mudar comportamento
+Mantenha sua branch atualizada para reduzir conflitos.
 
-test: criação ou alteração de testes
+---
 
-docs: documentação
+## 🗂️ 11. Organização dos arquivos
 
-chore: tarefas de manutenção/configuração
+### Regras
 
+- Manter a estrutura do projeto;
+- Não criar arquivos desnecessários;
+- Não duplicar arquivos sem necessidade;
+- Remover arquivos de teste que não serão utilizados;
+- Manter imagens e recursos organizados.
 
-Exemplos:
+---
 
-git commit -m "feat: adiciona cadastro de usuario"
-git commit -m "fix: corrige login invalido"
-git commit -m "refactor: separa camada de servico"
-git commit -m "test: adiciona testes do cadastro"
-git commit -m "docs: atualiza README"
-git commit -m "chore: atualiza dependencias"
+## 📝 12. Nomes de arquivos
 
-25. Organização recomendada do GitHub
+Os nomes devem ser claros e seguir um padrão.
 
-O repositório pode ser organizado com:
+### ✅ Exemplos
 
-Issues
-   ↓
-Tarefas
+```text
+MainActivity.kt
+Aluno.kt
+AlunoRepository.kt
+CadastroActivity.kt
+```
 
-Branches
-   ↓
-Desenvolvimento
+### ❌ Evitar
 
-Pull Requests
-   ↓
-Revisão
+```text
+teste.kt
+teste2.kt
+coisa.kt
+arquivoNovo.kt
+final2.kt
+```
 
-main
-   ↓
-Código integrado
+---
 
+## 🧹 13. Código
 
-O grupo pode utilizar Issues para registrar o que precisa ser feito.
+O código deve ser:
+
+- ✅ Organizado;
+- ✅ Legível;
+- ✅ Simples;
+- ✅ Fácil de entender;
+- ✅ Comentado quando necessário.
+
+### Evitar:
+
+- Código morto;
+- Variáveis desnecessárias;
+- Código duplicado;
+- Trechos antigos comentados.
+
+### ❌ Exemplo
+
+```kotlin
+// código antigo
+// val aluno = ...
+// teste
+```
+
+### ✅ Preferir
+
+Código limpo e funcional.
+
+---
+
+## 🔐 14. Informações sensíveis
+
+Nunca enviar para o GitHub:
+
+- 🔑 Senhas;
+- 🎫 Tokens;
+- 🔐 Chaves de API;
+- 👤 Dados pessoais;
+- 🔒 Credenciais.
+
+Utilizar `.gitignore` quando necessário.
+
+---
+
+## ⚙️ 15. Configurações do projeto
+
+Não alterar configurações importantes sem comunicar a equipe.
+
+Isso inclui:
+
+- Gradle;
+- SDK;
+- Dependências;
+- Plugins;
+- Configurações do projeto.
+
+### Para adicionar uma biblioteca:
+
+1. Informar a equipe;
+2. Explicar a necessidade;
+3. Verificar se já existe uma solução no projeto;
+4. Testar o projeto após a alteração.
+
+---
+
+## 📱 16. Testar antes do Merge
+
+Antes de solicitar o merge:
+
+```text
+✅ Projeto compila
+✅ Aplicativo inicia
+✅ Funcionalidade funciona
+✅ Não apresenta erros
+✅ Outras funcionalidades continuam funcionando
+```
+
+---
+
+## 🚨 17. Force Push
+
+Evitar:
+
+```bash
+git push --force
+```
+
+> ⚠️ O `force push` pode sobrescrever o histórico da branch e causar perda de alterações.
+
+---
+
+Adiciona esta seção depois de Pull Request:
+
+---
+
+## 📝 18. Issues
+
+As **Issues** do GitHub serão utilizadas para organizar e acompanhar as tarefas e problemas do projeto.
+
+### 🎯 Para que usar
+
+- 🆕 Criar tarefas;
+- 🐛 Registrar problemas e bugs;
+- 💡 Registrar melhorias ou ideias;
+- 📌 Acompanhar o andamento das atividades.
+
+### 📋 Padrão da Issue
+
+Cada Issue deve conter:
+
+- **Título:** descrição curta e objetiva;
+- **Descrição:** explicar o que precisa ser feito;
+- **Responsável:** integrante responsável pela tarefa;
+- **Labels:** categoria da tarefa;
+- **Status:** acompanhar o andamento.
+
+### 🏷️ Labels
+
+| Label | Utilização |
+|---|---|
+| `feature` | Nova funcionalidade |
+| `bug` | Correção de erro |
+| `style` | Alteração visual |
+| `documentation` | Documentação |
+| `enhancement` | Melhoria |
+| `task` | Tarefa geral |
+
+### 🔄 Fluxo
+
+```text
+📝 Issue criada
+      ↓
+👤 Responsável definido
+      ↓
+🌱 Branch criada
+      ↓
+💻 Desenvolvimento
+      ↓
+🧪 Testes
+      ↓
+🔀 Pull Request
+      ↓
+✅ Merge
+      ↓
+✔️ Issue fechada
+```
+
+### 🔗 Issue + Branch + Pull Request
+
+Sempre que possível, relacionar a branch e o Pull Request à Issue correspondente.
 
 Exemplo:
 
+```text
 Issue #12
-Título: Criar tela de login
+"Implementar cadastro de aluno"
 
-Descrição:
-- Criar campos de e-mail e senha
-- Adicionar botão de login
-- Validar campos
-- Criar testes
+        ↓
 
+feature/cadastro-aluno
 
-A pessoa responsável cria:
+        ↓
 
-feature/login
+Pull Request #18
 
+        ↓
 
-e desenvolve a tarefa.
+Merge na main
 
-26. Regra de ouro do grupo
+        ↓
 
-Antes de começar a trabalhar:
+Issue #12 fechada
+```
 
-git switch main
-git pull origin main
-git switch -c feature/minha-feature
+> 📌 **Toda tarefa relevante deve possuir uma Issue antes de começar o desenvolvimento.**
 
+## 🧑‍💻 19. Responsabilidade de cada integrante
 
-Durante o desenvolvimento:
+Cada integrante é responsável por:
 
+- Desenvolver sua tarefa;
+- Manter sua branch atualizada;
+- Fazer commits organizados;
+- Testar suas alterações;
+- Criar o Pull Request;
+- Corrigir problemas encontrados na revisão;
+- Comunicar conflitos e problemas à equipe.
+
+---
+
+## 🤝 10. Comunicação
+
+Antes de alterar algo que possa afetar o trabalho de outro integrante, comunicar a equipe.
+
+Principalmente:
+
+```text
+MainActivity
+Banco de dados
+Dependências
+Configurações
+Classes compartilhadas
+Estrutura de pastas
+```
+
+---
+
+## 🏁 21. Finalização de uma tarefa
+
+Uma tarefa é considerada concluída quando:
+
+```text
+☑ Desenvolvimento concluído
+☑ Código testado
+☑ Commit realizado
+☑ Branch enviada
+☑ Pull Request criado
+☑ Código revisado
+☑ Correções realizadas
+☑ Pull Request aprovado
+☑ Merge realizado
+```
+
+---
+
+# 🔥 Fluxo Oficial
+
+```text
+🌳 Atualizar main
+       ↓
+🌱 Criar branch
+       ↓
+💻 Desenvolver
+       ↓
+🧪 Testar
+       ↓
+💾 Commit
+       ↓
+☁️ Push
+       ↓
+🔀 Pull Request
+       ↓
+👀 Revisão
+       ↓
+🔧 Correções
+       ↓
+✅ Aprovação
+       ↓
+🔗 Merge
+       ↓
+🌳 Atualizar main
+```
+
+---
+
+# 📌 Comandos principais
+
+### 🔍 Ver alterações
+
+```bash
 git status
-git add .
-git commit -m "feat: descrição da alteração"
-git push
+```
 
+### 🌳 Ver branches
 
-Quando terminar:
+```bash
+git branch
+```
 
-Pull Request
-    ↓
-Code Review
-    ↓
-Aprovado
-    ↓
-Merge
-    ↓
-main
+### 🔄 Atualizar a main
 
-27. Fluxo completo
-
-O fluxo que todos devem seguir é:
-
-1. Pegar uma Issue
-        ↓
-2. Atualizar a main
-        ↓
-3. Criar uma branch
-        ↓
-4. Desenvolver a feature
-        ↓
-5. Fazer commits
-        ↓
-6. Fazer push
-        ↓
-7. Abrir Pull Request
-        ↓
-8. Outro integrante revisar
-        ↓
-9. Corrigir o que for necessário
-        ↓
-10. Aprovar PR
-        ↓
-11. Fazer merge
-        ↓
-12. Atualizar a main
-        ↓
-13. Começar a próxima tarefa
-
-Exemplo prático
-
-João recebeu a tarefa de criar o login.
-
-git switch main
+```bash
+git checkout main
 git pull origin main
+```
 
-git switch -c feature/login
+### 🌱 Criar branch
 
+```bash
+git checkout -b feature/nome-da-tarefa
+```
 
-João desenvolve a funcionalidade.
+### ➕ Adicionar alterações
 
-Depois:
-
-git status
+```bash
 git add .
-git commit -m "feat: implementa login"
-git push -u origin feature/login
+```
 
+### 💾 Criar commit
 
-João abre um Pull Request no GitHub.
+```bash
+git commit -m "feat: descrição"
+```
 
-Maria revisa o código.
+### ☁️ Enviar branch
 
-Se estiver tudo certo, o PR é aprovado e entra na main.
+```bash
+git push origin feature/nome-da-tarefa
+```
 
-João então atualiza seu repositório:
+---
 
-git switch main
-git pull origin main
+# 🧠 Regra de Ouro
 
-
-E está pronto para pegar outra tarefa.
-
-28. Regra principal
-
-Nunca façam push diretamente na main sem que essa seja a política combinada pelo grupo.
-
-O padrão recomendado para o projeto é:
-
-Issue
- ↓
-Feature Branch
- ↓
-Commit
- ↓
-Push
- ↓
-Pull Request
- ↓
-Code Review
- ↓
-Merge
- ↓
-Main
-
-
-Esse fluxo mantém o projeto organizado e permite que várias pessoas trabalhem simultaneamente sem precisar ficar enviando arquivos umas para as outras.
+> 🌳 **`main` = versão estável**
+>
+> 🌱 **`feature/...` = desenvolvimento**
+>
+> 🔀 **Pull Request = revisão**
+>
+> 🔗 **Merge = entrada na `main`**
+>
+> 🧪 **Testar antes de fazer o merge**
