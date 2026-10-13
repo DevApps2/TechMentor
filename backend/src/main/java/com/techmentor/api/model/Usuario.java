@@ -3,6 +3,7 @@ package com.techmentor.api.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 import java.time.*;
 import java.util.*;
