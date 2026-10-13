@@ -1,11 +1,11 @@
-package com.techmentor.api.execptions;
+package com.techmentor.api.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.CONFLICT)
-public class ConflictExecption extends RuntimeException {
-    public ConflictExecption(String message) {
+public class ConflictException extends RuntimeException {
+    public ConflictException(String message) {
         super(message);
     }
 }

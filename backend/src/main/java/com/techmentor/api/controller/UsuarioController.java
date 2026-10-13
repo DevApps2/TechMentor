@@ -1,4 +1,5 @@
 package com.techmentor.api.controller;
+import com.techmentor.api.dto.UsuarioResponseDTO;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.service.UsuarioService;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,8 @@ public class UsuarioController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Usuario>> listarUsuarios(){
-        List<Usuario> usuarios = service.listarUsuarios();
-        return ResponseEntity.ok(usuarios);
+    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios(){
+        return ResponseEntity.ok(service.listarUsuarios());
     }
 
     @PostMapping()
@@ -29,5 +29,15 @@ public class UsuarioController {
         return ResponseEntity.status(201).build();
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id){
+        this.service.deletarUsuario(id);
+        return ResponseEntity.noContent().build();
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> atualizar(@PathVariable Long id, @RequestBody Usuario usuario){
+        this.service.atualizarUsuario(id, usuario);
+        return ResponseEntity.ok().build();
+    }
 }

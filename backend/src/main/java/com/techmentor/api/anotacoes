@@ -1,0 +1,19 @@
+Criar UsuarioCreateDTO e UsuarioUpdateDTO e trocar criarUsuario e atualizarUsuario para recebê-los. Hoje o cliente consegue mandar tipo: ADMIN, XP e nível, e a senha vem no campo senhaHash.
+
+criarUsuario deve devolver UsuarioResponseDTO, sem Optional.
+
+atualizarUsuario deve devolver o DTO atualizado (200).
+
+loginUsuario deve devolver algo que o front use (token ou DTO). Falta combinar o mecanismo de autenticação com o colega.
+
+Adicionar spring-boot-starter-validation se for usar @Valid nos DTOs.
+
+Decidir se DELETE de usuário vira desativação (soft delete), já que ele tem muitas dependências.
+
+Conferir os status do controller: POST 201, GET 200, PUT 200, DELETE 204.
+
+Alinhar com o Matheus o pacote exceptions e um handler global de erros.
+
+O e-mail no DTO de resposta é privado: criar um DTO público sem e-mail para quando outras pessoas virem o perfil.
+
+Testar tudo no Postman (criar, logar, listar, atualizar, deletar).
