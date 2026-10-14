@@ -1,19 +1,29 @@
-Criar UsuarioCreateDTO e UsuarioUpdateDTO e trocar criarUsuario e atualizarUsuario para recebê-los. Hoje o cliente consegue mandar tipo: ADMIN, XP e nível, e a senha vem no campo senhaHash.
+PENDÊNCIAS TECHMENTOR
 
-criarUsuario deve devolver UsuarioResponseDTO, sem Optional.
+USUÁRIO
+[ ] Criar UsuarioCreateDTO (nome, email, senha) para o cadastro.
+    Hoje a senha chega no campo "senhaHash" (provisório).
+    O cliente também consegue mandar tipo ADMIN e xpTotal no cadastro.
+[ ] criarUsuario devolve Optional sem necessidade: devolver UsuarioResponseDTO.
+[ ] Criar DTO de atualização (só nome, email, fotoUrl).
+[ ] Usar UsuarioResponseDTO em todas as respostas (nunca devolver senhaHash).
+[ ] Login: devolver DTO em vez da entidade Usuario.
 
-atualizarUsuario deve devolver o DTO atualizado (200).
+CURSO
+[ ] Criar CursoRequestDTO (entrada) e CursoResponseDTO (saída, sem id).
+[ ] @JsonPropertyOrder nos DTOs para ordenar os campos do JSON.
+[ ] Títulos com "/" quebram a rota /cursos/{titulo}: avaliar slug.
+[ ] GET /cursos/{titulo} também acha curso desativado: decidir se deve esconder.
 
-loginUsuario deve devolver algo que o front use (token ou DTO). Falta combinar o mecanismo de autenticação com o colega.
+VALIDAÇÃO
+[ ] Adicionar spring-boot-starter-validation no pom.xml (avisar o Matheus).
+[ ] @NotBlank, @Email, @Size nos DTOs e @Valid nos controllers.
 
-Adicionar spring-boot-starter-validation se for usar @Valid nos DTOs.
+COMBINAR COM O MATHEUS
+[ ] ddl-auto=create-drop apaga o banco a cada reinício: trocar para update.
+[ ] Handler global de exceções (@RestControllerAdvice), para as mensagens
+    saírem com o status certo (404, 409, 403) em vez de 500.
+[ ] Avisar sobre a dependência spring-security-crypto e o PasswordConfig.
 
-Decidir se DELETE de usuário vira desativação (soft delete), já que ele tem muitas dependências.
-
-Conferir os status do controller: POST 201, GET 200, PUT 200, DELETE 204.
-
-Alinhar com o Matheus o pacote exceptions e um handler global de erros.
-
-O e-mail no DTO de resposta é privado: criar um DTO público sem e-mail para quando outras pessoas virem o perfil.
-
-Testar tudo no Postman (criar, logar, listar, atualizar, deletar).
+GIT
+[ ] Não subir application.properties com senha do banco.

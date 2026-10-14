@@ -18,10 +18,13 @@ public class CursoService {
         this.cursoRepository = cursoRepository;
     }
 
-    public List<Curso> listarCursos() {
+    public List<Curso> listarCursosAtivos() {
         return cursoRepository.findAllByAtivoTrue();
     }
 
+    public List<Curso> listarCursosDesativados(){
+        return cursoRepository.findAllByAtivoFalse();
+    }
     public Curso buscarPorTitulo(String titulo) {
         return cursoRepository.findByTituloIgnoreCase(titulo)
                 .orElseThrow(() -> new NotFoundException("Curso não encontrado!"));
