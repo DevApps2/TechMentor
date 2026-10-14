@@ -33,7 +33,7 @@ public class UsuarioService {
         if (repository.existsByEmail(usuario.getEmail())) {
             throw new ConflictException("Usuário já cadastrado!");
         }
-        // PROVISÓRIO: por enquanto a senha chega no campo senhaHash (ver pendências)
+        // PROVISÓRIO: por enquanto a senha chega no campo senhaHash
         usuario.setSenhaHash(passwordEncoder.encode(usuario.getSenhaHash()));
         return Optional.of(repository.save(usuario));
     }
