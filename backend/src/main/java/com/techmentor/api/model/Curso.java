@@ -1,25 +1,31 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.*;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity @Table(name = "cursos")
 @Getter @Setter @NoArgsConstructor
+
+@JsonPropertyOrder({"id", "titulo", "descricao", "categoria", "iconeUrl", "ativo", "modulos"})
+
 public class Curso {
     public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS }
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @Column(nullable = false) private String titulo;
-    @Column(length = 1000) private String descricao;
-    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Categoria categoria;
-    private String iconeUrl;
-    private boolean ativo = true;
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
     private List<Modulo> modulos = new ArrayList<>();
+
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false, length = 150) private String titulo;
+    @Column(length = 1000) private String descricao;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Categoria categoria;
+    @Column(length = 255) private String iconeUrl;
+    @Column(nullable = false) private boolean ativo = true;
 }
