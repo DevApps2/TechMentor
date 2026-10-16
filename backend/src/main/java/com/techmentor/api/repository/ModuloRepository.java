@@ -11,4 +11,9 @@ public interface ModuloRepository extends JpaRepository<Modulo, Long> {
     Optional<Modulo> findByCursoTituloIgnoreCaseAndOrdem(String tituloCurso, int ordem);
     Optional<Modulo> findByCursoAndOrdem(Curso curso, int ordem);
 
+    public interface moduloRepository extends JpaRepository<Modulo, Long> {
+        boolean existsByCursoAndOrdem(Curso curso, int ordem);
+        Optional<Modulo> findByCursoAndOrdem(Curso curso, int ordem);
+    }
+
 }

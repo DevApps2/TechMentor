@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,13 +11,19 @@ import java.util.*;
 
 @Entity @Table(name = "usuarios")
 @Getter @Setter @NoArgsConstructor
+@JsonPropertyOrder({"id", "nome", "email", "fotoUrl", "tipo", "xp"})
+
 public class Usuario {
     public enum Tipo { ALUNA, MENTORA, ADMIN }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+
     @Column(nullable = false, length = 120) private String nome;
+
     @Column(nullable = false, unique = true, length = 160) private String email;
+
     @Column(nullable = false) private String senhaHash; // guardar com BCrypt, nunca a senha pura
+
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Tipo tipo = Tipo.ALUNA;
     private String fotoUrl;
 

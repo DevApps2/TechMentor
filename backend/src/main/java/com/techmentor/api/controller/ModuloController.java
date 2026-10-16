@@ -2,25 +2,33 @@ package com.techmentor.api.controller;
 
 import com.techmentor.api.model.Modulo;
 import com.techmentor.api.service.ModuloService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/cursos/{titulo}/modulos")
+@RequiredArgsConstructor
+@RequestMapping("/modulos")
 public class ModuloController {
 
     private final ModuloService moduloService;
 
-    public ModuloController(ModuloService moduloService) {
-        this.moduloService = moduloService;
+    @PostMapping("/{titulo}")
+    public ResponseEntity<Modulo> criarModulo(@PathVariable String titulo, @RequestBody Modulo mudolo){
+        this.moduloService.criarModulo(titulo,mudolo);
+        return  ResponseEntity.status(201).build();
     }
 
-    @GetMapping("/{ordem}")
-    public ResponseEntity<Modulo> buscarModulo(@PathVariable String titulo, @PathVariable int ordem) {
-        return ResponseEntity.ok(moduloService.buscarModulo(titulo, ordem));
+    @DeleteMapping("/{titulo}")
+    public ResponseEntity<Void> deletarModulo(@PathVariable String titulo, @RequestBody Modulo modulo) {
+        moduloService.deletarModulo(titulo, modulo.getOrdem());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{titulo}/{ordem}")
+    public ResponseEntity<Modulo> atualizarModulo(@PathVariable String titulo, @PathVariable int ordem, @RequestBody Modulo modulo) {
+        this.moduloService.atualizarModulo(titulo, ordem, modulo) ;
+        return ResponseEntity.status(200).build();
     }
 }
