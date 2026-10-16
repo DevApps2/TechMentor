@@ -18,15 +18,10 @@ public class ModuloService {
     private final ModuloRepository moduloRepository;
     private final CursoService cursoService;
 
-    private Curso buscarCursoAtivo(String tituloCurso) {
-        return cursoService.listarCursosAtivos().stream()
-                .filter(c -> c.getTitulo().equalsIgnoreCase(tituloCurso))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("Curso não encontrado!"));
-    }
+
 
     public Modulo criarModulo(String tituloCurso, Modulo modulo) {
-        Curso curso = buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
 
         if (moduloRepository.existsByCursoAndOrdem(curso, modulo.getOrdem())) {
             throw new ConflictException("Já existe um módulo com essa ordem no curso!");
@@ -38,7 +33,7 @@ public class ModuloService {
     }
 
     public void deletarModulo(String tituloCurso, int ordem) {
-        Curso curso = buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
 
         Modulo modulo = moduloRepository.findByCursoAndOrdem(curso, ordem)
                 .orElseThrow(() -> new NotFoundException("Módulo não encontrado!"));
@@ -47,7 +42,7 @@ public class ModuloService {
     }
 
     public Modulo atualizarModulo(String tituloCurso, int ordem, Modulo alterar) {
-        Curso curso = buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
 
         Modulo modulo = moduloRepository.findByCursoAndOrdem(curso, ordem)
                 .orElseThrow(() -> new NotFoundException("Módulo não encontrado!"));

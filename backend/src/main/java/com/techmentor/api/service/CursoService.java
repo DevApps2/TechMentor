@@ -4,24 +4,26 @@ import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Curso;
 import com.techmentor.api.repository.CursoRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CursoService {
 
     private final CursoRepository cursoRepository;
-
-    public CursoService(CursoRepository cursoRepository) {
-        this.cursoRepository = cursoRepository;
-    }
-
     public List<Curso> listarCursosAtivos() {
         return cursoRepository.findAllByAtivoTrue();
     }
 
+    public Curso buscarCursoAtivo(String titulo) {
+        return cursoRepository.findByTituloIgnoreCase(titulo)
+                .filter(Curso::isAtivo)
+                .orElseThrow(() -> new NotFoundException("Curso não encontrado!"));
+    }
     public List<Curso> listarCursosDesativados(){
         return cursoRepository.findAllByAtivoFalse();
     }
