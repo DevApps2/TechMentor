@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,10 @@ import java.util.*;
 public class ProgressoAula {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false) private Usuario usuario;
+
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false) private Aula aula;
 
     private LocalDateTime concluidaEm = LocalDateTime.now();

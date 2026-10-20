@@ -1,0 +1,29 @@
+PENDÊNCIAS TECHMENTOR
+
+USUÁRIO
+[ ] Criar UsuarioCreateDTO (nome, email, senha) para o cadastro.
+    Hoje a senha chega no campo "senhaHash" (provisório).
+    O cliente também consegue mandar tipo ADMIN e xpTotal no cadastro.
+[ ] criarUsuario devolve Optional sem necessidade: devolver UsuarioResponseDTO.
+[ ] Criar DTO de atualização (só nome, email, fotoUrl).
+[ ] Usar UsuarioResponseDTO em todas as respostas (nunca devolver senhaHash).
+[ ] Login: devolver DTO em vez da entidade Usuario.
+
+CURSO
+[ ] Criar CursoRequestDTO (entrada) e CursoResponseDTO (saída, sem id).
+[ ] @JsonPropertyOrder nos DTOs para ordenar os campos do JSON.
+[ ] Títulos com "/" quebram a rota /cursos/{titulo}: avaliar slug.
+[ ] GET /cursos/{titulo} também acha curso desativado: decidir se deve esconder.
+
+VALIDAÇÃO
+[ ] Adicionar spring-boot-starter-validation no pom.xml (avisar o Matheus).
+[ ] @NotBlank, @Email, @Size nos DTOs e @Valid nos controllers.
+
+COMBINAR COM O MATHEUS
+[ ] ddl-auto=create-drop apaga o banco a cada reinício: trocar para update.
+[ ] Handler global de exceções (@RestControllerAdvice), para as mensagens
+    saírem com o status certo (404, 409, 403) em vez de 500.
+[ ] Avisar sobre a dependência spring-security-crypto e o PasswordConfig.
+
+GIT
+[ ] Não subir application.properties com senha do banco.
