@@ -8,7 +8,7 @@ import com.techmentor.api.model.HorarioDisponivel;
 import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.BloqueioUsuarioRepository;
-import com.techmentor.api.ApiException;
+import com.techmentor.api.exceptions.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;

@@ -18,8 +18,8 @@ public class CursoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Curso>> listarCursosAtivos() {
-        return ResponseEntity.ok(cursoService.listarCursosAtivos());
+    public ResponseEntity<List<Curso>> listarCursos(@RequestParam(required = false) Curso.Categoria categoria) {
+        return ResponseEntity.ok(cursoService.listarCursosAtivos(categoria));
     }
 
     @GetMapping("/desativados")
@@ -29,7 +29,7 @@ public class CursoController {
 
     @GetMapping("/buscar")
     public ResponseEntity<Curso> buscarPorTitulo(@RequestParam String titulo) {
-        return ResponseEntity.ok(cursoService.buscarPorTitulo(titulo));
+        return ResponseEntity.ok(cursoService.detalharCurso(titulo));
     }
 
     @PostMapping

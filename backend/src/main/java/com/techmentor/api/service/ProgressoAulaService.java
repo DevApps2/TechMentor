@@ -17,10 +17,17 @@ public class ProgressoAulaService {
 
     private final ProgressoAulaRepository progressoAulaRepository;
     private final MatriculaRepository matriculaRepository;
+    private final NotificacaoService notificacaoService;
     private final UsuarioRepository usuarioRepository;
+    private final ConquistaService conquistaService;
     private final ModuloRepository moduloRepository;
+    private final DesafioService desafioService;
     private final AulaRepository aulaRepository;
     private final CursoService cursoService;
+    private final XpService xpService;
+
+
+
 
     @Transactional
     public ProgressoAula concluirAula(String tituloCurso, int ordemModulo, int ordemAula, Long usuarioId) {
@@ -47,15 +54,18 @@ public class ProgressoAulaService {
         progresso.setAula(aula);
         ProgressoAula salvo = progressoAulaRepository.save(progresso);
 
-        usuario.setXpTotal(usuario.getXpTotal() + aula.getXpRecompensa());
-        usuarioRepository.save(usuario);
+        xpService.registrar(usuario, aula.getXpRecompensa(), "Aula: " + aula.getTitulo());
 
         long total = aulaRepository.countByModulo_Curso(curso);
         long concluidas = progressoAulaRepository.countByUsuarioAndAula_Modulo_Curso(usuario, curso);
         if (concluidas == total) {
             matricula.setConcluidoEm(LocalDateTime.now());
             matriculaRepository.save(matricula);
+            notificacaoService.notificar(usuario, "Curso concluído!", curso.getTitulo());
         }
+
+        conquistaService.desbloquear(usuario, "Primeiros Passos");
+        desafioService.verificarDesafios(usuario);
 
         return salvo;
     }

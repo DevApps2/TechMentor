@@ -1,21 +1,30 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.Transient;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity @Table(name = "cursos")
 @Getter @Setter @NoArgsConstructor
 
-@JsonPropertyOrder({"id", "titulo", "descricao", "categoria", "iconeUrl", "ativo", "modulos"})
-
 public class Curso {
+
+    @JsonPropertyOrder({"id", "titulo", "descricao", "categoria", "iconeUrl", "ativo", "modulos"})
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+
+    @Transient
+    private Long totalAulas;
     public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS }
+
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")

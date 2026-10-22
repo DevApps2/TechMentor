@@ -1,4 +1,4 @@
-package com.techmentor.api;
+package com.techmentor.api.exceptions;
 
 import org.springframework.http.HttpStatus;
 

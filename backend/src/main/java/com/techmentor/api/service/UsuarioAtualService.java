@@ -1,6 +1,6 @@
 package com.techmentor.api.service;
 
-import com.techmentor.api.ApiException;
+import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;

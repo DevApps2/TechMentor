@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     List<Curso> findAllByAtivoTrue();
+
+    List<Curso> findByAtivoTrueAndCategoria(Curso.Categoria categoria);
     List<Curso> findAllByAtivoFalse();
     boolean existsByTituloIgnoreCase(String titulo);
     Optional<Curso> findByTituloIgnoreCase(String titulo);

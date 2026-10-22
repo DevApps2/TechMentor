@@ -1,7 +1,7 @@
 package com.techmentor.api.service;
 
 import com.techmentor.api.model.Usuario;
-import com.techmentor.api.ApiException;
+import com.techmentor.api.exceptions.ApiException;
 
 public final class RegraAcesso {
     private RegraAcesso() { }
