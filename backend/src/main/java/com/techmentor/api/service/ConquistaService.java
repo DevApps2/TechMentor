@@ -1,5 +1,8 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.dto.GamificacaoDtos.ConquistaRequest;
+import com.techmentor.api.dto.GamificacaoDtos.ConquistaResponse;
+import com.techmentor.api.dto.GamificacaoDtos.UsuarioConquistaResponse;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Conquista;
@@ -8,9 +11,9 @@ import com.techmentor.api.model.UsuarioConquista;
 import com.techmentor.api.repository.ConquistaRepository;
 import com.techmentor.api.repository.UsuarioConquistaRepository;
 import com.techmentor.api.repository.UsuarioRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,14 +35,29 @@ public class ConquistaService {
         return conquistaRepository.save(conquista);
     }
 
+    @Transactional
+    public ConquistaResponse criarConquista(ConquistaRequest request) {
+        return ConquistaResponse.from(criarConquista(request.toEntity()));
+    }
+
     public List<Conquista> listarConquistas() {
         return conquistaRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConquistaResponse> listarConquistasDTO() {
+        return listarConquistas().stream().map(ConquistaResponse::from).toList();
     }
 
     public List<UsuarioConquista> listarConquistasDaUsuaria(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
         return usuarioConquistaRepository.findByUsuario(usuario);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioConquistaResponse> listarConquistasDaUsuariaDTO(Long usuarioId) {
+        return listarConquistasDaUsuaria(usuarioId).stream().map(UsuarioConquistaResponse::from).toList();
     }
 
     public Conquista atualizarConquista(String nome, Conquista dados) {
@@ -56,6 +74,11 @@ public class ConquistaService {
         conquista.setIconeUrl(dados.getIconeUrl());
         conquista.setXpBonus(dados.getXpBonus());
         return conquistaRepository.save(conquista);
+    }
+
+    @Transactional
+    public ConquistaResponse atualizarConquista(String nome, ConquistaRequest request) {
+        return ConquistaResponse.from(atualizarConquista(nome, request.toEntity()));
     }
 
     @Transactional

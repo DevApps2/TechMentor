@@ -1,6 +1,8 @@
 package com.techmentor.api.controller;
 
-import com.techmentor.api.model.Aula;
+import com.techmentor.api.dto.CursoDtos.AulaRequest;
+import com.techmentor.api.dto.CursoDtos.AulaResponse;
+import jakarta.validation.Valid;
 import com.techmentor.api.service.AulaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class AulaController {
     private final AulaService aulaService;
 
-    @PostMapping("/{titulo}/{ordemMudolo}")
-    public ResponseEntity<Aula> criarAula(@PathVariable String titulo, @RequestBody Aula aula, @PathVariable int ordemMudolo) {
-        this.aulaService.CriarAula(titulo, ordemMudolo, aula);
-        return ResponseEntity.status(201).build();
+    @PostMapping("/{titulo}/{ordemModulo}")
+    public ResponseEntity<AulaResponse> criarAula(@PathVariable String titulo,
+                                                  @PathVariable int ordemModulo,
+                                                  @Valid @RequestBody AulaRequest request) {
+        return ResponseEntity.status(201).body(aulaService.criarAula(titulo, ordemModulo, request));
     }
 
     @DeleteMapping("/{titulo}/{ordemModulo}/{ordemAula}")
@@ -25,8 +28,9 @@ public class AulaController {
     }
 
     @PutMapping("/{titulo}/{ordemModulo}/{ordemAula}")
-    public ResponseEntity<Aula> atualizarAula(@PathVariable String titulo, @PathVariable int ordemModulo,
-                                              @PathVariable int ordemAula, @RequestBody Aula aula) {
-        return ResponseEntity.ok(aulaService.atualizarAula(titulo, ordemModulo, ordemAula, aula));
+    public ResponseEntity<AulaResponse> atualizarAula(@PathVariable String titulo, @PathVariable int ordemModulo,
+                                                      @PathVariable int ordemAula,
+                                                      @Valid @RequestBody AulaRequest request) {
+        return ResponseEntity.ok(aulaService.atualizarAula(titulo, ordemModulo, ordemAula, request));
     }
 }

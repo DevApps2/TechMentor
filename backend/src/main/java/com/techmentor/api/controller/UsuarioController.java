@@ -1,43 +1,52 @@
 package com.techmentor.api.controller;
-import com.techmentor.api.dto.UsuarioResponseDTO;
-import com.techmentor.api.model.Usuario;
+
+import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
+import com.techmentor.api.dto.UsuarioDtos.Response;
+import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
 import com.techmentor.api.service.UsuarioService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/usuarios")
 public class UsuarioController {
 
     private final UsuarioService service;
 
-    public UsuarioController(UsuarioService service) {
-        this.service = service;
-    }
-
-    @GetMapping()
-    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios(){
+    @GetMapping
+    public ResponseEntity<List<Response>> listarUsuarios() {
         return ResponseEntity.ok(service.listarUsuarios());
     }
 
-    @PostMapping()
-    public ResponseEntity<String> cadastrar(@RequestBody @Validated Usuario usuario){
-        this.service.criarUsuario(usuario);
-        return ResponseEntity.status(201).build();
-    }
+    @PostMapping
+    public ResponseEntity<Response> cadastrar(
+            @Valid @RequestBody CreateRequest dto) {
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id){
-        this.service.deletarUsuario(id);
-        return ResponseEntity.noContent().build();
+        Response resposta = service.criarUsuario(dto);
+
+        return ResponseEntity.status(201).body(resposta);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> atualizar(@PathVariable Long id, @RequestBody Usuario usuario){
-        this.service.atualizarUsuario(id, usuario);
+    public ResponseEntity<Void> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateRequest dto) {
+
+        service.atualizarUsuario(id, dto);
+
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+
+        service.deletarUsuario(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

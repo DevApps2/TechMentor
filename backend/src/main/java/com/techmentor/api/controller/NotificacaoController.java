@@ -1,6 +1,6 @@
 package com.techmentor.api.controller;
 
-import com.techmentor.api.model.Notificacao;
+import com.techmentor.api.dto.GamificacaoDtos.NotificacaoResponse;
 import com.techmentor.api.service.NotificacaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +16,9 @@ public class NotificacaoController {
     private final NotificacaoService notificacaoService;
 
     @GetMapping("/usuarios/{usuarioId}")
-    public ResponseEntity<List<Notificacao>> listar(@PathVariable Long usuarioId,
-                                                    @RequestParam(required = false) Boolean lida) {
-        return ResponseEntity.ok(notificacaoService.listar(usuarioId, lida));
+    public ResponseEntity<List<NotificacaoResponse>> listar(@PathVariable Long usuarioId,
+                                                            @RequestParam(required = false) Boolean lida) {
+        return ResponseEntity.ok(notificacaoService.listarDTO(usuarioId, lida));
     }
 
     @PatchMapping("/leitura/usuarios/{usuarioId}")

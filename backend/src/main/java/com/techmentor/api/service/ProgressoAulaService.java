@@ -1,5 +1,7 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.dto.GamificacaoDtos.ProgressoAulaResponse;
+import com.techmentor.api.dto.GamificacaoDtos.ProgressoCursoResponse;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.*;
@@ -70,6 +72,12 @@ public class ProgressoAulaService {
         return salvo;
     }
 
+    @Transactional
+    public ProgressoAulaResponse concluirAulaDTO(String tituloCurso, int ordemModulo,
+                                                int ordemAula, Long usuarioId) {
+        return ProgressoAulaResponse.from(concluirAula(tituloCurso, ordemModulo, ordemAula, usuarioId));
+    }
+
     public Map<String, Long> progressoDoCurso(String tituloCurso, Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
@@ -84,6 +92,12 @@ public class ProgressoAulaService {
         Long concluidas = progressoAulaRepository.countByUsuarioAndAula_Modulo_Curso(usuario, curso);
 
         return Map.of("aulasConcluidas", concluidas, "totalAulas", total);
+    }
+
+    @Transactional
+    public ProgressoCursoResponse progressoDoCursoDTO(String tituloCurso, Long usuarioId) {
+        Map<String, Long> progresso = progressoDoCurso(tituloCurso, usuarioId);
+        return new ProgressoCursoResponse(progresso.get("aulasConcluidas"), progresso.get("totalAulas"));
     }
 
 }

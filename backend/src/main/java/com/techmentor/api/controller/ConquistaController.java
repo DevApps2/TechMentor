@@ -1,8 +1,10 @@
 package com.techmentor.api.controller;
 
-import com.techmentor.api.model.Conquista;
-import com.techmentor.api.model.UsuarioConquista;
+import com.techmentor.api.dto.GamificacaoDtos.ConquistaRequest;
+import com.techmentor.api.dto.GamificacaoDtos.ConquistaResponse;
+import com.techmentor.api.dto.GamificacaoDtos.UsuarioConquistaResponse;
 import com.techmentor.api.service.ConquistaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,23 +19,24 @@ public class ConquistaController {
     private final ConquistaService conquistaService;
 
     @PostMapping
-    public ResponseEntity<Conquista> criarConquista(@RequestBody Conquista conquista) {
-        return ResponseEntity.status(201).body(conquistaService.criarConquista(conquista));
+    public ResponseEntity<ConquistaResponse> criarConquista(@Valid @RequestBody ConquistaRequest request) {
+        return ResponseEntity.status(201).body(conquistaService.criarConquista(request));
     }
 
     @GetMapping
-    public ResponseEntity<List<Conquista>> listarConquistas() {
-        return ResponseEntity.ok(conquistaService.listarConquistas());
+    public ResponseEntity<List<ConquistaResponse>> listarConquistas() {
+        return ResponseEntity.ok(conquistaService.listarConquistasDTO());
     }
 
     @GetMapping("/usuarios/{usuarioId}")
-    public ResponseEntity<List<UsuarioConquista>> listarConquistasDaUsuaria(@PathVariable Long usuarioId) {
-        return ResponseEntity.ok(conquistaService.listarConquistasDaUsuaria(usuarioId));
+    public ResponseEntity<List<UsuarioConquistaResponse>> listarConquistasDaUsuaria(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(conquistaService.listarConquistasDaUsuariaDTO(usuarioId));
     }
 
     @PutMapping("/{nome}")
-    public ResponseEntity<Conquista> atualizarConquista(@PathVariable String nome, @RequestBody Conquista dados) {
-        return ResponseEntity.ok(conquistaService.atualizarConquista(nome, dados));
+    public ResponseEntity<ConquistaResponse> atualizarConquista(@PathVariable String nome,
+                                                                @Valid @RequestBody ConquistaRequest request) {
+        return ResponseEntity.ok(conquistaService.atualizarConquista(nome, request));
     }
 
     @DeleteMapping("/{nome}")

@@ -1,6 +1,7 @@
 package com.techmentor.api.controller;
 
 import com.techmentor.api.dto.MentoriaDtos.*;
+import jakarta.validation.Valid;
 import com.techmentor.api.service.AgendamentoService;
 import com.techmentor.api.service.MentoraService;
 import com.techmentor.api.service.UsuarioAtualService;
@@ -26,7 +27,8 @@ public class MentoriaController {
 
     @PostMapping("/areas-atuacao")
     @ResponseStatus(HttpStatus.CREATED)
-    public AreaResponse criarArea(@RequestHeader("X-Usuario-Id") Long actorId, @RequestBody AreaRequest request) {
+    public AreaResponse criarArea(@RequestHeader("X-Usuario-Id") Long actorId,
+                                  @Valid @RequestBody AreaRequest request) {
         return mentoras.criarArea(usuarios.buscar(actorId), request == null ? null : request.nome());
     }
 
@@ -39,14 +41,14 @@ public class MentoriaController {
     @PostMapping("/mentoras")
     @ResponseStatus(HttpStatus.CREATED)
     public MentoraResponse criarMentora(@RequestHeader("X-Usuario-Id") Long actorId,
-                                        @RequestBody MentoraRequest request) {
+                                        @Valid @RequestBody MentoraRequest request) {
         return mentoras.criarMentora(usuarios.buscar(actorId), request);
     }
 
     @PutMapping("/mentoras/{id}")
     public MentoraResponse atualizarMentora(@RequestHeader("X-Usuario-Id") Long actorId,
                                             @PathVariable Long id,
-                                            @RequestBody MentoraRequest request) {
+                                            @Valid @RequestBody MentoraRequest request) {
         return mentoras.atualizarMentora(usuarios.buscar(actorId), id, request);
     }
 
@@ -62,7 +64,7 @@ public class MentoriaController {
     @PostMapping("/mentoras/{id}/disponibilidades")
     @ResponseStatus(HttpStatus.CREATED)
     public HorarioResponse criarHorario(@RequestHeader("X-Usuario-Id") Long actorId, @PathVariable Long id,
-                                        @RequestBody HorarioRequest request) {
+                                        @Valid @RequestBody HorarioRequest request) {
         return mentoras.criarHorario(usuarios.buscar(actorId), id, request);
     }
 
@@ -86,7 +88,7 @@ public class MentoriaController {
     @PostMapping("/agendamentos")
     @ResponseStatus(HttpStatus.CREATED)
     public AgendamentoResponse criarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                               @RequestBody AgendamentoRequest request) {
+                                               @Valid @RequestBody AgendamentoRequest request) {
         return agendamentos.criar(usuarios.buscar(actorId), request);
     }
 

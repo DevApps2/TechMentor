@@ -1,7 +1,10 @@
 package com.techmentor.api.controller;
 
+import com.techmentor.api.dto.CursoDtos.CursoRequest;
+import com.techmentor.api.dto.CursoDtos.CursoResponse;
 import com.techmentor.api.model.Curso;
 import com.techmentor.api.service.CursoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,29 +21,29 @@ public class CursoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Curso>> listarCursos(@RequestParam(required = false) Curso.Categoria categoria) {
-        return ResponseEntity.ok(cursoService.listarCursosAtivos(categoria));
+    public ResponseEntity<List<CursoResponse>> listarCursos(@RequestParam(required = false) Curso.Categoria categoria) {
+        return ResponseEntity.ok(cursoService.listarCursosDTO(categoria));
     }
 
     @GetMapping("/desativados")
-    public ResponseEntity<List<Curso>> listarCursosDesativados() {
-        return ResponseEntity.ok(cursoService.listarCursosDesativados());
+    public ResponseEntity<List<CursoResponse>> listarCursosDesativados() {
+        return ResponseEntity.ok(cursoService.listarCursosDesativadosDTO());
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<Curso> buscarPorTitulo(@RequestParam String titulo) {
-        return ResponseEntity.ok(cursoService.detalharCurso(titulo));
+    public ResponseEntity<CursoResponse> buscarPorTitulo(@RequestParam String titulo) {
+        return ResponseEntity.ok(cursoService.detalharCursoDTO(titulo));
     }
 
     @PostMapping
-    public ResponseEntity<Curso> cadastrarCurso(@RequestBody Curso curso) {
-        return ResponseEntity.status(201).body(cursoService.criarCurso(curso));
+    public ResponseEntity<CursoResponse> cadastrarCurso(@Valid @RequestBody CursoRequest request) {
+        return ResponseEntity.status(201).body(cursoService.criarCurso(request));
     }
 
     @PutMapping("/{titulo}")
-    public ResponseEntity<Void> atualizarCurso(@PathVariable String titulo, @RequestBody Curso curso) {
-        cursoService.atualizarCurso(titulo, curso);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<CursoResponse> atualizarCurso(@PathVariable String titulo,
+                                                        @Valid @RequestBody CursoRequest request) {
+        return ResponseEntity.ok(cursoService.atualizarCurso(titulo, request));
     }
 
     @DeleteMapping("/{titulo}")

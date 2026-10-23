@@ -1,6 +1,7 @@
 package com.techmentor.api.controller;
 
 import com.techmentor.api.dto.SegurancaDtos.*;
+import jakarta.validation.Valid;
 import com.techmentor.api.service.BloqueioService;
 import com.techmentor.api.service.DenunciaService;
 import com.techmentor.api.service.UsuarioAtualService;
@@ -24,7 +25,7 @@ public class SegurancaController {
     @PostMapping("/denuncias")
     @ResponseStatus(HttpStatus.CREATED)
     public DenunciaResponse denunciar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                      @RequestBody DenunciaRequest request) {
+                                      @Valid @RequestBody DenunciaRequest request) {
         return denuncias.criar(usuarios.buscar(actorId), request);
     }
 
@@ -51,7 +52,7 @@ public class SegurancaController {
     @PostMapping("/bloqueios")
     @ResponseStatus(HttpStatus.CREATED)
     public BloqueioResponse bloquear(@RequestHeader("X-Usuario-Id") Long actorId,
-                                     @RequestBody BloqueioRequest request) {
+                                     @Valid @RequestBody BloqueioRequest request) {
         return bloqueios.bloquear(usuarios.buscar(actorId), request == null ? null : request.usuarioId());
     }
 

@@ -1,5 +1,8 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.dto.GamificacaoDtos.DesafioRequest;
+import com.techmentor.api.dto.GamificacaoDtos.DesafioResponse;
+import com.techmentor.api.dto.GamificacaoDtos.UsuarioDesafioResponse;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Desafio;
@@ -9,9 +12,9 @@ import com.techmentor.api.repository.DesafioRepository;
 import com.techmentor.api.repository.ProgressoAulaRepository;
 import com.techmentor.api.repository.UsuarioDesafioRepository;
 import com.techmentor.api.repository.UsuarioRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,9 +40,19 @@ public class DesafioService {
         return desafioRepository.save(desafio);
     }
 
+    @Transactional
+    public DesafioResponse criarDesafio(DesafioRequest request) {
+        return DesafioResponse.from(criarDesafio(request.toEntity()));
+    }
+
     public List<Desafio> listarDesafiosAtivos() {
         LocalDate hoje = LocalDate.now();
         return desafioRepository.findByInicioLessThanEqualAndFimGreaterThanEqual(hoje, hoje);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DesafioResponse> listarDesafiosAtivosDTO() {
+        return listarDesafiosAtivos().stream().map(DesafioResponse::from).toList();
     }
 
     public UsuarioDesafio participar(String titulo, Long usuarioId) {
@@ -64,12 +77,24 @@ public class DesafioService {
         return usuarioDesafioRepository.save(participacao);
     }
 
+    @Transactional
+    public UsuarioDesafioResponse participarDTO(String titulo, Long usuarioId) {
+        UsuarioDesafio participacao = participar(titulo, usuarioId);
+        participacao.setAulasConcluidas(contarProgresso(participacao.getUsuario(), participacao.getDesafio()));
+        return UsuarioDesafioResponse.from(participacao);
+    }
+
     public List<UsuarioDesafio> listarDesafiosDaUsuaria(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
         List<UsuarioDesafio> lista = usuarioDesafioRepository.findByUsuario(usuario);
         lista.forEach(ud -> ud.setAulasConcluidas(contarProgresso(usuario, ud.getDesafio())));
         return lista;
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioDesafioResponse> listarDesafiosDaUsuariaDTO(Long usuarioId) {
+        return listarDesafiosDaUsuaria(usuarioId).stream().map(UsuarioDesafioResponse::from).toList();
     }
 
     public Desafio atualizarDesafio(String titulo, Desafio dados) {
@@ -86,7 +111,13 @@ public class DesafioService {
         desafio.setXpRecompensa(dados.getXpRecompensa());
         desafio.setInicio(dados.getInicio());
         desafio.setFim(dados.getFim());
+        desafio.setMetaAulas(dados.getMetaAulas());
         return desafioRepository.save(desafio);
+    }
+
+    @Transactional
+    public DesafioResponse atualizarDesafio(String titulo, DesafioRequest request) {
+        return DesafioResponse.from(atualizarDesafio(titulo, request.toEntity()));
     }
 
     @Transactional

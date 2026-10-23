@@ -1,6 +1,6 @@
 package com.techmentor.api.controller;
 
-import com.techmentor.api.model.HistoricoXp;
+import com.techmentor.api.dto.GamificacaoDtos.HistoricoXpResponse;
 import com.techmentor.api.service.XpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ public class HistoricoXpController {
     private final XpService xpService;
 
     @GetMapping("/usuarios/{usuarioId}")
-    public ResponseEntity<List<HistoricoXp>> listar(@PathVariable Long usuarioId) {
-        return ResponseEntity.ok(xpService.listar(usuarioId));
+    public ResponseEntity<List<HistoricoXpResponse>> listar(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(xpService.listarDTO(usuarioId));
     }
 }

@@ -1,6 +1,7 @@
 package com.techmentor.api.controller;
 
 import com.techmentor.api.dto.OportunidadeDtos.*;
+import jakarta.validation.Valid;
 import com.techmentor.api.service.OportunidadeService;
 import com.techmentor.api.service.UsuarioAtualService;
 import org.springframework.http.HttpStatus;
@@ -27,14 +28,14 @@ public class OportunidadeController {
     @PostMapping("/oportunidades")
     @ResponseStatus(HttpStatus.CREATED)
     public OportunidadeResponse criar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                      @RequestBody OportunidadeRequest request) {
+                                      @Valid @RequestBody OportunidadeRequest request) {
         return oportunidades.criar(usuarios.buscar(actorId), request);
     }
 
     @PutMapping("/oportunidades/{id}")
     public OportunidadeResponse atualizar(@RequestHeader("X-Usuario-Id") Long actorId,
                                           @PathVariable Long id,
-                                          @RequestBody OportunidadeRequest request) {
+                                          @Valid @RequestBody OportunidadeRequest request) {
         return oportunidades.atualizar(usuarios.buscar(actorId), id, request);
     }
 

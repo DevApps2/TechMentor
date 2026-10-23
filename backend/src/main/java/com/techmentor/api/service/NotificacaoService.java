@@ -1,5 +1,6 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.dto.GamificacaoDtos.NotificacaoResponse;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Notificacao;
 import com.techmentor.api.model.Usuario;
@@ -23,6 +24,11 @@ public class NotificacaoService {
         return lida == null
                 ? notificacaoRepository.findByUsuarioOrderByCriadaEmDesc(usuario)
                 : notificacaoRepository.findByUsuarioAndLidaOrderByCriadaEmDesc(usuario, lida);
+    }
+
+    @Transactional
+    public List<NotificacaoResponse> listarDTO(Long usuarioId, Boolean lida) {
+        return listar(usuarioId, lida).stream().map(NotificacaoResponse::from).toList();
     }
 
     // id nulo = marca todas as não lidas; com id = marca só aquela
