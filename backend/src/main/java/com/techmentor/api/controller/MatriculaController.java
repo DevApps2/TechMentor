@@ -1,6 +1,6 @@
 package com.techmentor.api.controller;
 
-import com.techmentor.api.model.Matricula;
+import com.techmentor.api.dto.CursoDtos.MatriculaResponse;
 import com.techmentor.api.service.MatriculaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +16,13 @@ public class MatriculaController {
     private final MatriculaService matriculaService;
 
     @PostMapping("/{tituloCurso}/usuarios/{usuarioId}")
-    public ResponseEntity<Matricula> matricular(@PathVariable String tituloCurso,
-                                                @PathVariable Long usuarioId) {
-        return ResponseEntity.status(201).body(matriculaService.matricular(tituloCurso, usuarioId));
+    public ResponseEntity<MatriculaResponse> matricular(@PathVariable String tituloCurso,
+                                                        @PathVariable Long usuarioId) {
+        return ResponseEntity.status(201).body(matriculaService.matricularDTO(tituloCurso, usuarioId));
     }
 
     @GetMapping("/usuarios/{usuarioId}")
-    public ResponseEntity<List<Matricula>> listarMatriculas(@PathVariable Long usuarioId) {
-        return ResponseEntity.ok(matriculaService.listarMatriculas(usuarioId));
+    public ResponseEntity<List<MatriculaResponse>> listarMatriculas(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(matriculaService.listarMatriculasDTO(usuarioId));
     }
 }

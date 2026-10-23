@@ -19,8 +19,9 @@ public class Mentoria {
     @JoinColumn(name = "aluna_id")
     private Usuario aluna;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "horario_id", unique = true)
+    // Um mesmo horário pode voltar a ser usado depois que o agendamento é cancelado.
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "horario_id")
     private HorarioDisponivel horario;
 
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Status status = Status.AGENDADA;

@@ -1,5 +1,7 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.dto.CursoDtos.AulaRequest;
+import com.techmentor.api.dto.CursoDtos.AulaResponse;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Aula;
@@ -9,6 +11,7 @@ import com.techmentor.api.repository.AulaRepository;
 import com.techmentor.api.repository.ModuloRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,11 @@ public class AulaService {
         aula.setId(null);
         aula.setModulo(modulo);
         return aulaRepository.save(aula);
+    }
+
+    @Transactional
+    public AulaResponse criarAula(String tituloCurso, int ordemModulo, AulaRequest request) {
+        return AulaResponse.from(CriarAula(tituloCurso, ordemModulo, request.toEntity()));
     }
 
     public void deletarAula(String tituloCurso, int ordemModulo, int ordemAula) {
@@ -63,6 +71,11 @@ public class AulaService {
         aula.setXpRecompensa(dados.getXpRecompensa());
         aula.setConteudoUrl(dados.getConteudoUrl());
         return aulaRepository.save(aula);
+    }
+
+    @Transactional
+    public AulaResponse atualizarAula(String tituloCurso, int ordemModulo, int ordemAula, AulaRequest request) {
+        return AulaResponse.from(atualizarAula(tituloCurso, ordemModulo, ordemAula, request.toEntity()));
     }
 
 }
