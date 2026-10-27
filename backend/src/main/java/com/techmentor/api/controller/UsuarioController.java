@@ -1,43 +1,60 @@
 package com.techmentor.api.controller;
-import com.techmentor.api.dto.UsuarioResponseDTO;
-import com.techmentor.api.model.Usuario;
+
+import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
+import com.techmentor.api.dto.UsuarioDtos.Response;
+import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
 import com.techmentor.api.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/usuarios")
+@Tag(name = "Usuário", description = "Cadastrar, criar, listar e deleter usuários")
 public class UsuarioController {
 
     private final UsuarioService service;
 
-    public UsuarioController(UsuarioService service) {
-        this.service = service;
-    }
-
-    @GetMapping()
-    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios(){
+    @Operation(summary = "Listar usuários")
+    @GetMapping
+    public ResponseEntity<List<Response>> listarUsuarios() {
         return ResponseEntity.ok(service.listarUsuarios());
     }
 
-    @PostMapping()
-    public ResponseEntity<String> cadastrar(@RequestBody @Validated Usuario usuario){
-        this.service.criarUsuario(usuario);
-        return ResponseEntity.status(201).build();
+    @Operation(summary = "Cadastrar usuário")
+    @PostMapping
+    public ResponseEntity<Response> cadastrar(
+            @Valid @RequestBody CreateRequest dto) {
+
+        Response resposta = service.criarUsuario(dto);
+
+        return ResponseEntity.status(201).body(resposta);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id){
-        this.service.deletarUsuario(id);
-        return ResponseEntity.noContent().build();
-    }
-
+    @Operation(summary = "Atualizar usuário")
     @PutMapping("/{id}")
-    public ResponseEntity<Void> atualizar(@PathVariable Long id, @RequestBody Usuario usuario){
-        this.service.atualizarUsuario(id, usuario);
+    public ResponseEntity<Void> atualizar(
+            @Parameter(description = "ID do usuário") @PathVariable Long id,
+            @Valid @RequestBody UpdateRequest dto) {
+
+        service.atualizarUsuario(id, dto);
+
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Deletar usuário")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@Parameter(description = "ID do usuário") @PathVariable Long id) {
+
+        service.desativarUsuario(id);
+
+        return ResponseEntity.status(200).build();
     }
 }
