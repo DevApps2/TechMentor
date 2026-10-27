@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.*;
         uniqueConstraints = @UniqueConstraint(columnNames = {"usuario_id", "oportunidade_id"}))
 @Getter @Setter @NoArgsConstructor
 public class InscricaoOportunidade {
+    @Schema(description = "Situação da candidatura/inscrição: ENVIADA, EM_ANALISE, APROVADA ou RECUSADA")
     public enum Status { ENVIADA, EM_ANALISE, APROVADA, RECUSADA }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

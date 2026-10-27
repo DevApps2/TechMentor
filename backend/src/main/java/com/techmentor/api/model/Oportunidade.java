@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import java.util.*;
 @Entity @Table(name = "oportunidades")
 @Getter @Setter @NoArgsConstructor
 public class Oportunidade {
+    @Schema(description = "Tipo da oportunidade: ESTAGIO, EMPREGO, BOLSA ou EVENTO")
     public enum Tipo { ESTAGIO, EMPREGO, BOLSA, EVENTO }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

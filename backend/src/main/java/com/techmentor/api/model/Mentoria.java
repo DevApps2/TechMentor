@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.*;
 @Entity @Table(name = "mentorias")
 @Getter @Setter @NoArgsConstructor
 public class Mentoria {
+    @Schema(description = "Situação do agendamento de mentoria: AGENDADA, CONFIRMADA, CONCLUIDA ou CANCELADA")
     public enum Status { AGENDADA, CONFIRMADA, CONCLUIDA, CANCELADA }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

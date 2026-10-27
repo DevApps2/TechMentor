@@ -2,6 +2,7 @@ package com.techmentor.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class Curso {
 
     @Transient
     private Long totalAulas;
+    @Schema(description = "Categoria do curso: PROGRAMACAO, DADOS, DESIGN, CARREIRA ou OUTROS")
     public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS }
 
 

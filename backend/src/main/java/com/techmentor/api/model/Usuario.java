@@ -2,6 +2,7 @@ package com.techmentor.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import java.time.*;
 @Getter @Setter @NoArgsConstructor
 @JsonPropertyOrder({"id", "nome", "email", "fotoUrl", "tipo", "xpTotal", "nivel", "sequenciaDias", "ultimaAtividade", "criadoEm"})
 public class Usuario {
+    @Schema(description = "Tipo do usuário: ALUNA, MENTORA ou ADMIN")
     public enum Tipo { ALUNA, MENTORA, ADMIN }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
@@ -24,10 +26,14 @@ public class Usuario {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false) private String senhaHash; // guardar com BCrypt, nunca a senha pura
 
+    @Column(nullable = false)
+    private boolean ativo = true;
+
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Tipo tipo = Tipo.ALUNA;
     private String fotoUrl;
 
     // Gamificação (home: "1.240 XP", "Nível 7", "5 dias de sequência")
+
     private int xpTotal = 0;
     private int nivel = 1;
     private int sequenciaDias = 0;

@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,9 @@ import java.util.*;
 @Entity @Table(name = "denuncias")
 @Getter @Setter @NoArgsConstructor
 public class Denuncia {
+    @Schema(description = "Motivo da denúncia: ASSEDIO, DISCURSO_DE_ODIO, SPAM, PERFIL_FALSO ou OUTRO")
     public enum Motivo { ASSEDIO, DISCURSO_DE_ODIO, SPAM, PERFIL_FALSO, OUTRO }
+    @Schema(description = "Situação da denúncia: ABERTA, EM_ANALISE ou RESOLVIDA")
     public enum Status { ABERTA, EM_ANALISE, RESOLVIDA }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class UsuarioDesafio {
     @Transient
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long aulasConcluidas;
+    @Schema(description = "Situação da participação no desafio: EM_ANDAMENTO ou CONCLUIDO")
     public enum Status { EM_ANDAMENTO, CONCLUIDO }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

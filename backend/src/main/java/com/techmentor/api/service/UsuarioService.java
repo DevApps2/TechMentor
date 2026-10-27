@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -79,12 +80,16 @@ public class UsuarioService {
         return usuario;
     }
 
-    public void deletarUsuario(Long id) {
+    public void desativarUsuario(Long id) {
 
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Usuário não encontrado!");
+        Usuario usuario = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+
+        if(!usuario.isAtivo()){
+            throw new ConflictException("Usuário já desativado!");
         }
 
-        repository.deleteById(id);
+        usuario.setAtivo(false);
+        repository.save(usuario);
     }
 }
