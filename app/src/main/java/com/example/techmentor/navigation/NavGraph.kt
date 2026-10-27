@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.techmentor.ui.home.HomeScreen
+import com.example.techmentor.ui.login.LoginScreen
+import com.example.techmentor.ui.register.RegisterScreen
 
 @Composable
 fun NavGraph() {
@@ -13,8 +15,16 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "login"
     ) {
+        composable("login") {
+            LoginScreen(navController = navController)
+        }
+
+        composable("register") {
+            RegisterScreen(navController = navController)
+        }
+
         composable("home") {
             HomeScreen(navController = navController)
         }

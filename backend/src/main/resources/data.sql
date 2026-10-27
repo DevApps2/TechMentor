@@ -12,9 +12,9 @@
 -- ---------------------------------------------------------------------
 -- Usuários (1 admin, 3 mentoras, 5 alunas)
 -- ---------------------------------------------------------------------
-INSERT INTO usuarios (nome, email, senha_hash, tipo, xp_total, nivel, sequencia_dias, ultima_atividade, criado_em)
+INSERT INTO usuarios (nome, email, senha_hash, tipo, xp_total, nivel, sequencia_dias, ultima_atividade, criado_em, ativo)
 SELECT v.nome, v.email, '$2a$10$T1vKvajnbNRTSoUxL6KSeu./ZxACOCfBJYfRRmrCyZklDHuq12p.m', v.tipo,
-       v.xp_total, v.nivel, v.sequencia_dias, v.ultima_atividade, '2026-10-01 09:00:00'
+       v.xp_total, v.nivel, v.sequencia_dias, v.ultima_atividade, '2026-10-01 09:00:00', TRUE
 FROM (
     SELECT 'Administradora TechMentor' AS nome, 'admin@techmentor.com' AS email, 'ADMIN' AS tipo, 0 AS xp_total, 1 AS nivel, 0 AS sequencia_dias, NULL AS ultima_atividade
     UNION ALL SELECT 'Maria Silva',      'maria.silva@techmentor.com',   'MENTORA', 0, 1, 0, NULL
@@ -25,7 +25,7 @@ FROM (
     UNION ALL SELECT 'Daniela Martins',  'daniela.martins@email.com',    'ALUNA', 360, 3, 5, '2026-10-25'
     UNION ALL SELECT 'Elisa Ferreira',   'elisa.ferreira@email.com',     'ALUNA',   0, 1, 0, NULL
     UNION ALL SELECT 'Perfil Suspeito',  'suspeito@email.com',           'ALUNA',   0, 1, 0, NULL
-)
+) v
 WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.email = v.email);
 
 -- ---------------------------------------------------------------------

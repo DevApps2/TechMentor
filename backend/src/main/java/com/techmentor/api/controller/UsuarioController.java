@@ -1,6 +1,7 @@
 package com.techmentor.api.controller;
 
 import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
+import com.techmentor.api.dto.UsuarioDtos.LoginRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
 import com.techmentor.api.service.UsuarioService;
@@ -28,14 +29,10 @@ public class UsuarioController {
         return ResponseEntity.ok(service.listarUsuarios());
     }
 
-    @Operation(summary = "Cadastrar usuário")
-    @PostMapping
-    public ResponseEntity<Response> cadastrar(
-            @Valid @RequestBody CreateRequest dto) {
-
-        Response resposta = service.criarUsuario(dto);
-
-        return ResponseEntity.status(201).body(resposta);
+    @Operation(summary = "Entrar na plataforma", description = "Valida e-mail e senha e devolve os dados do usuário. Retorna 401 se as credenciais forem inválidas.")
+    @PostMapping("/login")
+    public ResponseEntity<Response> login(@Valid @RequestBody LoginRequest dto) {
+        return ResponseEntity.ok(Response.from(service.loginUsuario(dto.email(), dto.senha())));
     }
 
     @Operation(summary = "Atualizar usuário")

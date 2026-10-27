@@ -29,6 +29,18 @@ public final class UsuarioDtos {
             String senha
     ) { }
 
+    @Schema(description = "Credenciais para entrar na plataforma")
+    public record LoginRequest(
+            @Schema(description = "E-mail cadastrado", example = "ana.souza@email.com")
+            @NotBlank(message = "O e-mail é obrigatório")
+            @Email(message = "Informe um e-mail válido")
+            String email,
+
+            @Schema(description = "Senha do usuário", example = "senhaSegura123")
+            @NotBlank(message = "A senha é obrigatória")
+            String senha
+    ) { }
+
     @Schema(description = "Dados para atualizar um usuário")
     public record UpdateRequest(
             @Schema(description = "Nome completo do usuário", example = "Ana Souza")

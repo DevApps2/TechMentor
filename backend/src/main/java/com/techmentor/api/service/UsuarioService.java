@@ -77,6 +77,10 @@ public class UsuarioService {
             throw new NotAuthorizedException("Credenciais inválidas!");
         }
 
+        if (!usuario.isAtivo()) {
+            throw new NotAuthorizedException("Credenciais inválidas!");
+        }
+
         return usuario;
     }
 
