@@ -2,7 +2,9 @@ package com.techmentor.api.service;
 
 import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
+import com.techmentor.api.dto.UsuarioDtos.Resumo;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
+import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotAuthorizedException;
 import com.techmentor.api.exceptions.NotFoundException;
@@ -24,9 +26,21 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     public List<Response> listarUsuarios() {
-        return repository.findAll()
+        return repository.findByAtivoTrue()
                 .stream()
                 .map(Response::from)
+                .toList();
+    }
+
+    /** Busca usuários ativos pelo nome (para denunciar ou bloquear); no máximo 20, sem o próprio solicitante. */
+    public List<Resumo> buscarPorNome(String nome, Long solicitanteId) {
+        String termo = nome == null ? "" : nome.trim();
+        if (termo.length() < 2) {
+            throw ApiException.badRequest("Digite pelo menos 2 letras para buscar.");
+        }
+        return repository.findTop20ByAtivoTrueAndNomeContainingIgnoreCaseOrderByNomeAsc(termo).stream()
+                .filter(u -> !u.getId().equals(solicitanteId))
+                .map(Resumo::from)
                 .toList();
     }
 
@@ -48,8 +62,13 @@ public class UsuarioService {
         return Response.from(usuarioSalvo);
     }
 
+    public Response buscarPorId(Long id) {
+        return Response.from(repository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!")));
+    }
+
     @Transactional
-    public void atualizarUsuario(Long id, UpdateRequest dto) {
+    public Response atualizarUsuario(Long id, UpdateRequest dto) {
 
         Usuario existente = repository.findById(id)
                 .orElseThrow(() ->
@@ -65,6 +84,18 @@ public class UsuarioService {
         existente.setNome(dto.nome());
         existente.setEmail(dto.email());
         existente.setFotoUrl(dto.fotoUrl());
+        if (dto.bio() != null) {
+            existente.setBio(dto.bio());
+        }
+        if (dto.areasInteresse() != null) {
+            existente.getAreasInteresse().clear();
+            dto.areasInteresse().stream()
+                    .map(String::trim)
+                    .filter(area -> !area.isEmpty())
+                    .forEach(existente.getAreasInteresse()::add);
+        }
+
+        return Response.from(existente);
     }
 
     public Usuario loginUsuario(String email, String senha) {

@@ -6,9 +6,11 @@ import com.techmentor.api.dto.GamificacaoDtos.UsuarioDesafioResponse;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Desafio;
+import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.model.UsuarioDesafio;
 import com.techmentor.api.repository.DesafioRepository;
+import com.techmentor.api.repository.MentoriaRepository;
 import com.techmentor.api.repository.ProgressoAulaRepository;
 import com.techmentor.api.repository.UsuarioDesafioRepository;
 import com.techmentor.api.repository.UsuarioRepository;
@@ -30,6 +32,8 @@ public class DesafioService {
     private final NotificacaoService notificacaoService;
     private final XpService xpService;
     private final ProgressoAulaRepository progressoAulaRepository;
+    private final ConquistaService conquistaService;
+    private final MentoriaRepository mentoriaRepository;
 
 
     public Desafio criarDesafio(Desafio desafio) {
@@ -112,6 +116,7 @@ public class DesafioService {
         desafio.setInicio(dados.getInicio());
         desafio.setFim(dados.getFim());
         desafio.setMetaAulas(dados.getMetaAulas());
+        desafio.setTipo(dados.getTipo());
         return desafioRepository.save(desafio);
     }
 
@@ -141,12 +146,19 @@ public class DesafioService {
 
                 xpService.registrar(usuario, desafio.getXpRecompensa(), "Desafio: " + desafio.getTitulo());
                 notificacaoService.notificar(usuario, "Desafio concluído!", desafio.getTitulo());
+                conquistaService.desbloquear(usuario, ConquistaService.PRIMEIRO_DESAFIO);
             }
         }
     }
 
+    /** Aulas concluídas ou mentorias agendadas (conforme o tipo do desafio) dentro do período dele. */
     private long contarProgresso(Usuario usuario, Desafio desafio) {
-        return progressoAulaRepository.countByUsuarioAndConcluidaEmBetween(usuario,
-                desafio.getInicio().atStartOfDay(), desafio.getFim().plusDays(1).atStartOfDay());
+        LocalDateTime de = desafio.getInicio().atStartOfDay();
+        LocalDateTime ate = desafio.getFim().plusDays(1).atStartOfDay();
+        if (desafio.getTipo() == Desafio.Tipo.MENTORIA) {
+            return mentoriaRepository.countByAlunaIdAndStatusNotAndCriadaEmBetween(
+                    usuario.getId(), Mentoria.Status.CANCELADA, de, ate);
+        }
+        return progressoAulaRepository.countByUsuarioAndConcluidaEmBetween(usuario, de, ate);
     }
 }

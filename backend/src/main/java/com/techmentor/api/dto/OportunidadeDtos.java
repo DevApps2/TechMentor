@@ -29,7 +29,13 @@ public final class OportunidadeDtos {
             @Schema(description = "Link externo para mais informações ou inscrição", example = "https://acme.com/carreiras/estagio-java")
             @Size(max = 255) String linkExterno,
             @Schema(description = "Data limite para inscrição", example = "2026-12-15")
-            LocalDate prazoInscricao) { }
+            LocalDate prazoInscricao,
+            @Schema(description = "Benefícios oferecidos", example = "Mentoria e horário flexível")
+            @Size(max = 2000) String beneficios,
+            @Schema(description = "Área da oportunidade", example = "Programação")
+            @Size(max = 80) String area,
+            @Schema(description = "Nível esperado (texto livre)", example = "Iniciante")
+            @Size(max = 50) String nivel) { }
 
     @Schema(description = "Oportunidade, vaga ou evento publicado na plataforma")
     public record OportunidadeResponse(
@@ -52,7 +58,13 @@ public final class OportunidadeDtos {
             @Schema(description = "Data limite para inscrição", example = "2026-12-15")
             LocalDate prazoInscricao,
             @Schema(description = "Indica se a oportunidade ainda está ativa", example = "true")
-            boolean ativa) { }
+            boolean ativa,
+            @Schema(description = "Benefícios oferecidos", example = "Mentoria e horário flexível", nullable = true)
+            String beneficios,
+            @Schema(description = "Área da oportunidade", example = "Programação", nullable = true)
+            String area,
+            @Schema(description = "Nível esperado", example = "Iniciante", nullable = true)
+            String nivel) { }
 
     @Schema(description = "Candidatura ou inscrição de uma usuária em uma oportunidade")
     public record InscricaoResponse(
