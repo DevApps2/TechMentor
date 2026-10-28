@@ -1,6 +1,7 @@
 package com.techmentor.api.controller;
 
 import com.techmentor.api.dto.OportunidadeDtos.*;
+import com.techmentor.api.model.Oportunidade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,9 +24,13 @@ public class OportunidadeController {
         this.usuarios = usuarios;
     }
 
-    @Operation(summary = "Listar oportunidades")
+    @Operation(summary = "Listar oportunidades", description = "Oportunidades ativas, com o prazo mais próximo primeiro. Filtros opcionais por tipo e por área.")
     @GetMapping("/oportunidades")
-    public List<OportunidadeResponse> listar() { return oportunidades.listar(); }
+    public List<OportunidadeResponse> listar(
+            @Parameter(description = "Tipo: ESTAGIO, EMPREGO, BOLSA ou EVENTO (opcional)") @RequestParam(required = false) Oportunidade.Tipo tipo,
+            @Parameter(description = "Área, por exemplo Programação (opcional)") @RequestParam(required = false) String area) {
+        return oportunidades.listar(tipo, area);
+    }
 
     @Operation(summary = "Obter oportunidade por ID")
     @GetMapping("/oportunidades/{id}")

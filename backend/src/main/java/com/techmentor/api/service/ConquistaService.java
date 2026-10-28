@@ -21,6 +21,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConquistaService {
 
+    // Conquistas desbloqueadas automaticamente pelo sistema (os nomes precisam existir no cadastro de conquistas).
+    public static final String PRIMEIRA_AULA = "Primeira aula";
+    public static final String CURSO_CONCLUIDO = "Curso concluído";
+    public static final String SEQUENCIA_3_DIAS = "Sequência de 3 dias";
+    public static final String PRIMEIRA_MENTORIA = "Primeira mentoria";
+    public static final String PRIMEIRO_DESAFIO = "Primeiro desafio";
+    public static final String PRIMEIRA_CANDIDATURA = "Explorando oportunidades";
+
     private final ConquistaRepository conquistaRepository;
     private final UsuarioConquistaRepository usuarioConquistaRepository;
     private final UsuarioRepository usuarioRepository;

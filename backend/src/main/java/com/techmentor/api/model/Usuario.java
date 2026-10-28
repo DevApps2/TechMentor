@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity @Table(name = "usuarios")
 @Getter @Setter @NoArgsConstructor
@@ -31,6 +33,14 @@ public class Usuario {
 
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Tipo tipo = Tipo.ALUNA;
     private String fotoUrl;
+
+    // Perfil ("Apresentação" e "Áreas de interesse" do app)
+    @Column(length = 500) private String bio;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "usuario_areas_interesse", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Column(name = "area", length = 80)
+    private Set<String> areasInteresse = new LinkedHashSet<>();
 
     // Gamificação (home: "1.240 XP", "Nível 7", "5 dias de sequência")
 

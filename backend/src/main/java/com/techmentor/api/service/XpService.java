@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -18,9 +19,15 @@ public class XpService {
 
     private final HistoricoXpRepository historicoXpRepository;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacaoService notificacaoService;
 
     public void registrar(Usuario usuario, int pontos, String motivo) {
+        int nivelAnterior = NivelRegraService.nivelPara(usuario.getXpTotal());
+
         usuario.setXpTotal(usuario.getXpTotal() + pontos);
+        int nivelAtual = NivelRegraService.nivelPara(usuario.getXpTotal());
+        usuario.setNivel(nivelAtual);
+        atualizarSequencia(usuario, LocalDate.now());
         usuarioRepository.save(usuario);
 
         HistoricoXp historico = new HistoricoXp();
@@ -28,6 +35,22 @@ public class XpService {
         historico.setPontos(pontos);
         historico.setMotivo(motivo);
         historicoXpRepository.save(historico);
+
+        if (nivelAtual > nivelAnterior) {
+            notificacaoService.notificar(usuario, "Você subiu de nível!",
+                    "Agora você é nível " + nivelAtual + " · " + NivelRegraService.titulo(nivelAtual));
+        }
+    }
+
+    /** Ganhar XP conta como atividade do dia: dias seguidos aumentam a sequência, uma pausa a reinicia. */
+    void atualizarSequencia(Usuario usuario, LocalDate hoje) {
+        LocalDate ultima = usuario.getUltimaAtividade();
+        if (hoje.equals(ultima)) {
+            return;
+        }
+        boolean diaSeguinte = ultima != null && ultima.plusDays(1).equals(hoje);
+        usuario.setSequenciaDias(diaSeguinte ? usuario.getSequenciaDias() + 1 : 1);
+        usuario.setUltimaAtividade(hoje);
     }
 
     public List<HistoricoXp> listar(Long usuarioId) {

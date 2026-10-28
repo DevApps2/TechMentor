@@ -1,5 +1,6 @@
 package com.techmentor.api.controller;
 
+import com.techmentor.api.dto.GamificacaoDtos.AulaProgressoResponse;
 import com.techmentor.api.dto.GamificacaoDtos.ProgressoAulaResponse;
 import com.techmentor.api.dto.GamificacaoDtos.ProgressoCursoResponse;
 import com.techmentor.api.service.ProgressoAulaService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,7 +21,16 @@ public class ProgressoAulaController {
 
     private final ProgressoAulaService progressoAulaService;
 
-    @Operation(summary = "Concluir aula")
+    @Operation(summary = "Listar aulas do curso com o estado de cada uma",
+            description = "Cada aula vem como CONCLUIDA, ATUAL (a próxima a estudar) ou BLOQUEADA, na ordem de estudo.")
+    @GetMapping("/{titulo}/usuarios/{usuarioId}/aulas")
+    public ResponseEntity<List<AulaProgressoResponse>> listarAulas(@Parameter(description = "Título do curso") @PathVariable String titulo,
+                                                                   @Parameter(description = "ID da usuária") @PathVariable Long usuarioId) {
+        return ResponseEntity.ok(progressoAulaService.listarAulasDoCurso(titulo, usuarioId));
+    }
+
+    @Operation(summary = "Concluir aula",
+            description = "Conclui a aula (a anterior precisa estar concluída) e matricula a usuária no curso se ainda não estiver.")
     @PostMapping("/{titulo}/{ordemModulo}/{ordemAula}/usuarios/{usuarioId}")
     public ResponseEntity<ProgressoAulaResponse> concluirAula(@Parameter(description = "Título do curso") @PathVariable String titulo,
                                                               @Parameter(description = "Ordem do módulo no curso") @PathVariable int ordemModulo,

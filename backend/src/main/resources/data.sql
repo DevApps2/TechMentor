@@ -12,21 +12,39 @@
 -- ---------------------------------------------------------------------
 -- Usuários (1 admin, 3 mentoras, 5 alunas)
 -- ---------------------------------------------------------------------
-INSERT INTO usuarios (nome, email, senha_hash, tipo, xp_total, nivel, sequencia_dias, ultima_atividade, criado_em)
+INSERT INTO usuarios (nome, email, senha_hash, tipo, xp_total, nivel, sequencia_dias, ultima_atividade, criado_em, ativo)
 SELECT v.nome, v.email, '$2a$10$T1vKvajnbNRTSoUxL6KSeu./ZxACOCfBJYfRRmrCyZklDHuq12p.m', v.tipo,
-       v.xp_total, v.nivel, v.sequencia_dias, v.ultima_atividade, '2026-10-01 09:00:00'
+       v.xp_total, v.nivel, v.sequencia_dias, v.ultima_atividade, '2026-10-01 09:00:00', TRUE
 FROM (
     SELECT 'Administradora TechMentor' AS nome, 'admin@techmentor.com' AS email, 'ADMIN' AS tipo, 0 AS xp_total, 1 AS nivel, 0 AS sequencia_dias, NULL AS ultima_atividade
     UNION ALL SELECT 'Maria Silva',      'maria.silva@techmentor.com',   'MENTORA', 0, 1, 0, NULL
     UNION ALL SELECT 'Juliana Costa',    'juliana.costa@techmentor.com', 'MENTORA', 0, 1, 0, NULL
     UNION ALL SELECT 'Fernanda Alves',   'fernanda.alves@techmentor.com','MENTORA', 0, 1, 0, NULL
-    UNION ALL SELECT 'Beatriz Santos',   'beatriz.santos@email.com',     'ALUNA', 140, 2, 3, '2026-10-25'
+    UNION ALL SELECT 'Beatriz Santos',   'beatriz.santos@email.com',     'ALUNA', 140, 1, 3, '2026-10-25'
     UNION ALL SELECT 'Camila Rocha',     'camila.rocha@email.com',       'ALUNA',  90, 1, 2, '2026-10-24'
-    UNION ALL SELECT 'Daniela Martins',  'daniela.martins@email.com',    'ALUNA', 360, 3, 5, '2026-10-25'
+    UNION ALL SELECT 'Daniela Martins',  'daniela.martins@email.com',    'ALUNA', 360, 2, 5, '2026-10-25'
     UNION ALL SELECT 'Elisa Ferreira',   'elisa.ferreira@email.com',     'ALUNA',   0, 1, 0, NULL
     UNION ALL SELECT 'Perfil Suspeito',  'suspeito@email.com',           'ALUNA',   0, 1, 0, NULL
-)
+) v
 WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.email = v.email);
+
+-- Apresentação (bio) e áreas de interesse de algumas alunas
+UPDATE usuarios SET bio = 'Estudante de Desenvolvimento de Sistemas'
+WHERE email = 'beatriz.santos@email.com' AND bio IS NULL;
+
+UPDATE usuarios SET bio = 'Em transição de carreira para tecnologia'
+WHERE email = 'camila.rocha@email.com' AND bio IS NULL;
+
+INSERT INTO usuario_areas_interesse (usuario_id, area)
+SELECT u.id, v.area
+FROM (
+    SELECT 'beatriz.santos@email.com' AS email, 'Desenvolvimento Web' AS area
+    UNION ALL SELECT 'beatriz.santos@email.com', 'Dados'
+    UNION ALL SELECT 'camila.rocha@email.com',   'Dados'
+    UNION ALL SELECT 'camila.rocha@email.com',   'IA'
+) v
+JOIN usuarios u ON u.email = v.email
+WHERE NOT EXISTS (SELECT 1 FROM usuario_areas_interesse x WHERE x.usuario_id = u.id AND x.area = v.area);
 
 -- ---------------------------------------------------------------------
 -- Áreas de atuação, perfis de mentora e vínculo mentora x área
@@ -40,6 +58,9 @@ FROM (
     UNION ALL SELECT 'UX/UI'
     UNION ALL SELECT 'Carreira'
     UNION ALL SELECT 'DevOps'
+    UNION ALL SELECT 'Programação'
+    UNION ALL SELECT 'IA'
+    UNION ALL SELECT 'Cibersegurança'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM areas_atuacao a WHERE a.nome = v.nome);
 
@@ -64,7 +85,9 @@ SELECT p.id, a.id
 FROM (
     SELECT 'maria.silva@techmentor.com' AS email, 'Back-end' AS area
     UNION ALL SELECT 'maria.silva@techmentor.com',    'Carreira'
+    UNION ALL SELECT 'maria.silva@techmentor.com',    'Programação'
     UNION ALL SELECT 'juliana.costa@techmentor.com',  'Dados'
+    UNION ALL SELECT 'juliana.costa@techmentor.com',  'IA'
     UNION ALL SELECT 'juliana.costa@techmentor.com',  'Carreira'
     UNION ALL SELECT 'fernanda.alves@techmentor.com', 'UX/UI'
     UNION ALL SELECT 'fernanda.alves@techmentor.com', 'Front-end'
@@ -118,19 +141,30 @@ WHERE NOT EXISTS (SELECT 1 FROM avaliacoes_mentoria a WHERE a.mentoria_id = m.id
 -- ---------------------------------------------------------------------
 -- Cursos, módulos e aulas ("Java para iniciantes" reaproveita o que já existir)
 -- ---------------------------------------------------------------------
-INSERT INTO cursos (titulo, descricao, categoria, icone_url, ativo)
-SELECT v.titulo, v.descricao, v.categoria, v.icone_url, 1
+INSERT INTO cursos (titulo, descricao, categoria, nivel, icone_url, ativo)
+SELECT v.titulo, v.descricao, v.categoria, v.nivel, v.icone_url, 1
 FROM (
     SELECT 'Java para iniciantes' AS titulo, 'Aprenda os fundamentos de Java do zero.' AS descricao,
-           'PROGRAMACAO' AS categoria, 'https://cdn.techmentor.com/icones/java.png' AS icone_url
+           'PROGRAMACAO' AS categoria, 'INICIANTE' AS nivel, 'https://cdn.techmentor.com/icones/java.png' AS icone_url
     UNION ALL SELECT 'Python para Análise de Dados', 'Manipule e visualize dados com Python, pandas e matplotlib.',
-           'DADOS', 'https://cdn.techmentor.com/icones/python.png'
+           'DADOS', 'INICIANTE', 'https://cdn.techmentor.com/icones/python.png'
     UNION ALL SELECT 'Fundamentos de UX Design', 'Pesquisa com usuárias, wireframes e prototipação de interfaces.',
-           'DESIGN', 'https://cdn.techmentor.com/icones/ux.png'
+           'DESIGN', 'INICIANTE', 'https://cdn.techmentor.com/icones/ux.png'
     UNION ALL SELECT 'Carreira em Tecnologia', 'Currículo, LinkedIn, entrevistas e planejamento de carreira.',
-           'CARREIRA', 'https://cdn.techmentor.com/icones/carreira.png'
+           'CARREIRA', 'INICIANTE', 'https://cdn.techmentor.com/icones/carreira.png'
+    UNION ALL SELECT 'Cibersegurança Essencial', 'Conceitos de segurança da informação, ameaças comuns e boas práticas.',
+           'SEGURANCA', 'INTERMEDIARIO', 'https://cdn.techmentor.com/icones/ciberseguranca.png'
+    UNION ALL SELECT 'Redes de Computadores', 'Como funcionam redes, protocolos, endereçamento e a internet.',
+           'REDES', 'INICIANTE', 'https://cdn.techmentor.com/icones/redes.png'
+    UNION ALL SELECT 'UX/UI na prática', 'Projeto de interfaces do briefing ao protótipo, com estudos de caso.',
+           'DESIGN', 'INICIANTE', 'https://cdn.techmentor.com/icones/uxui.png'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM cursos c WHERE c.titulo = v.titulo);
+
+-- Cursos que já existiam no banco antes da coluna "nivel"
+UPDATE cursos SET nivel = 'INICIANTE'
+WHERE nivel IS NULL AND titulo IN ('Java para iniciantes', 'Python para Análise de Dados',
+                                   'Fundamentos de UX Design', 'Carreira em Tecnologia');
 
 INSERT INTO modulos (curso_id, titulo, ordem)
 SELECT c.id, v.titulo, v.ordem
@@ -143,6 +177,9 @@ FROM (
     UNION ALL SELECT 'Fundamentos de UX Design',       'Do wireframe ao protótipo', 2
     UNION ALL SELECT 'Carreira em Tecnologia',         'Currículo e LinkedIn', 1
     UNION ALL SELECT 'Carreira em Tecnologia',         'Entrevistas técnicas e comportamentais', 2
+    UNION ALL SELECT 'Cibersegurança Essencial',       'Fundamentos de segurança', 1
+    UNION ALL SELECT 'Redes de Computadores',          'Como a internet funciona', 1
+    UNION ALL SELECT 'UX/UI na prática',               'Do briefing ao protótipo', 1
 ) v
 JOIN cursos c ON c.titulo = v.curso
 WHERE NOT EXISTS (SELECT 1 FROM modulos m WHERE m.curso_id = c.id AND m.ordem = v.ordem);
@@ -166,6 +203,12 @@ FROM (
     UNION ALL SELECT 'Carreira em Tecnologia', 1, 'Otimizando seu LinkedIn',              2, 12, 'https://cdn.techmentor.com/aulas/carreira-02.mp4'
     UNION ALL SELECT 'Carreira em Tecnologia', 2, 'Como se preparar para entrevistas técnicas', 1, 22, 'https://cdn.techmentor.com/aulas/carreira-03.mp4'
     UNION ALL SELECT 'Carreira em Tecnologia', 2, 'Perguntas comportamentais',           2, 18, 'https://cdn.techmentor.com/aulas/carreira-04.mp4'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Ameaças e vulnerabilidades',       1, 20, 'https://cdn.techmentor.com/aulas/ciber-01.mp4'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Senhas e autenticação',            2, 18, 'https://cdn.techmentor.com/aulas/ciber-02.mp4'
+    UNION ALL SELECT 'Redes de Computadores', 1, 'O que é uma rede',                    1, 15, 'https://cdn.techmentor.com/aulas/redes-01.mp4'
+    UNION ALL SELECT 'Redes de Computadores', 1, 'IP, DNS e HTTP',                      2, 22, 'https://cdn.techmentor.com/aulas/redes-02.mp4'
+    UNION ALL SELECT 'UX/UI na prática', 1, 'Lendo um briefing',                        1, 12, 'https://cdn.techmentor.com/aulas/uxui-01.mp4'
+    UNION ALL SELECT 'UX/UI na prática', 1, 'Primeiras telas no Figma',                 2, 25, 'https://cdn.techmentor.com/aulas/uxui-02.mp4'
 ) v
 JOIN cursos c ON c.titulo = v.curso
 JOIN modulos m ON m.curso_id = c.id AND m.ordem = v.modulo
@@ -219,8 +262,10 @@ FROM (
            'https://cdn.techmentor.com/conquistas/sequencia-3.png', 30
     UNION ALL SELECT 'Curso concluído', 'Concluiu todas as aulas de um curso.',
            'https://cdn.techmentor.com/conquistas/curso-concluido.png', 100
-    UNION ALL SELECT 'Mentoria agendada', 'Agendou a primeira mentoria.',
+    UNION ALL SELECT 'Primeira mentoria', 'Agendou a primeira mentoria. Você deu o primeiro passo!',
            'https://cdn.techmentor.com/conquistas/mentoria.png', 20
+    UNION ALL SELECT 'Primeiro desafio', 'Concluiu o primeiro desafio. Você encarou e venceu!',
+           'https://cdn.techmentor.com/conquistas/desafio.png', 40
     UNION ALL SELECT 'Explorando oportunidades', 'Candidatou-se à primeira oportunidade.',
            'https://cdn.techmentor.com/conquistas/oportunidade.png', 20
 ) v
@@ -240,15 +285,17 @@ JOIN usuarios u ON u.email = v.email
 JOIN conquistas c ON c.nome = v.conquista
 WHERE NOT EXISTS (SELECT 1 FROM usuario_conquistas uc WHERE uc.usuario_id = u.id AND uc.conquista_id = c.id);
 
-INSERT INTO desafios (titulo, descricao, xp_recompensa, inicio, fim, meta_aulas)
-SELECT v.titulo, v.descricao, v.xp, v.inicio, v.fim, v.meta
+INSERT INTO desafios (titulo, descricao, xp_recompensa, inicio, fim, meta_aulas, tipo)
+SELECT v.titulo, v.descricao, v.xp, v.inicio, v.fim, v.meta, v.tipo
 FROM (
     SELECT 'Primeiros passos em Java' AS titulo, 'Conclua 4 aulas de Java até o fim do mês.' AS descricao,
-           100 AS xp, '2026-10-19' AS inicio, '2026-10-31' AS fim, 4 AS meta
+           100 AS xp, '2026-10-19' AS inicio, '2026-10-31' AS fim, 4 AS meta, 'AULAS' AS tipo
     UNION ALL SELECT 'Semana de Dados', 'Conclua 3 aulas de Python para Análise de Dados em uma semana.',
-           80, '2026-11-09', '2026-11-15', 3
+           80, '2026-11-09', '2026-11-15', 3, 'AULAS'
     UNION ALL SELECT 'Desafio UX 5 dias', 'Conclua 2 aulas de UX Design antes do fim do mês.',
-           60, '2026-10-20', '2026-10-31', 2
+           60, '2026-10-20', '2026-10-31', 2, 'AULAS'
+    UNION ALL SELECT 'Agende sua primeira mentoria', 'Agende uma conversa com uma mentora e ganhe XP extra.',
+           150, '2026-10-20', '2026-11-30', 1, 'MENTORIA'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM desafios d WHERE d.titulo = v.titulo);
 
@@ -302,31 +349,48 @@ WHERE NOT EXISTS (SELECT 1 FROM notificacoes n WHERE n.usuario_id = u.id AND n.t
 -- ---------------------------------------------------------------------
 -- Oportunidades e inscrições/candidaturas
 -- ---------------------------------------------------------------------
-INSERT INTO oportunidades (tipo, titulo, organizacao, descricao, requisitos, localidade, link_externo, prazo_inscricao, ativa)
-SELECT v.tipo, v.titulo, v.organizacao, v.descricao, v.requisitos, v.localidade, v.link, v.prazo, 1
+INSERT INTO oportunidades (tipo, titulo, organizacao, descricao, requisitos, beneficios, area, nivel, localidade, link_externo, prazo_inscricao, ativa)
+SELECT v.tipo, v.titulo, v.organizacao, v.descricao, v.requisitos, v.beneficios, v.area, v.nivel, v.localidade, v.link, v.prazo, 1
 FROM (
     SELECT 'ESTAGIO' AS tipo, 'Estágio em Desenvolvimento Java' AS titulo, 'Acme Tecnologia' AS organizacao,
            'Atuação no time de back-end com Java e Spring Boot.' AS descricao,
            'Cursando Ciência da Computação ou áreas afins.' AS requisitos,
+           'Mentoria e horário flexível.' AS beneficios, 'Programação' AS area, 'Iniciante' AS nivel,
            'São Paulo - SP (híbrido)' AS localidade, 'https://acme.com/carreiras/estagio-java' AS link, '2026-12-15' AS prazo
     UNION ALL SELECT 'EMPREGO', 'Analista de Dados Júnior', 'DataWorks',
            'Construção de dashboards e análises para o time de produto.',
            'Conhecimento de SQL e Python; vivência com BI é um diferencial.',
+           'Trabalho remoto e trilha de desenvolvimento.', 'Dados', 'Júnior',
            'Remoto', 'https://dataworks.com/vagas/analista-dados-jr', '2026-11-30'
     UNION ALL SELECT 'BOLSA', 'Bolsa Mulheres em Tecnologia', 'Instituto Código Feminino',
            'Bolsa integral para formação em desenvolvimento de software com mentoria.',
            'Ser mulher, maior de 18 anos e estar fora do mercado de tecnologia.',
+           'Acesso a aulas e encontros de orientação.', 'Programação', 'Iniciante',
            'Online', 'https://codigofeminino.org/bolsas', '2026-12-01'
     UNION ALL SELECT 'EVENTO', 'TechMentor Day 2026', 'TechMentor',
            'Evento online com palestras, painéis e rodadas de mentoria relâmpago.',
            'Aberto ao público; inscrição gratuita.',
+           'Palestras e troca de experiências.', 'Carreira', 'Todos os níveis',
            'Online', 'https://techmentor.com/eventos/techmentor-day-2026', '2026-11-20'
     UNION ALL SELECT 'EVENTO', 'Workshop de Portfólio em UX', 'Pixel Studio',
            'Workshop prático para montar e apresentar seu portfólio de UX.',
            'Interesse em design de produto.',
+           'Material de apoio e feedback ao vivo.', 'Design', 'Iniciante',
            'Rio de Janeiro - RJ', 'https://pixelstudio.com/workshops/portfolio-ux', '2026-11-25'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM oportunidades o WHERE o.titulo = v.titulo);
+
+-- Oportunidades que já existiam no banco antes das colunas "beneficios", "area" e "nivel"
+UPDATE oportunidades SET beneficios = 'Mentoria e horário flexível.', area = 'Programação', nivel = 'Iniciante'
+WHERE titulo = 'Estágio em Desenvolvimento Java' AND area IS NULL;
+UPDATE oportunidades SET beneficios = 'Trabalho remoto e trilha de desenvolvimento.', area = 'Dados', nivel = 'Júnior'
+WHERE titulo = 'Analista de Dados Júnior' AND area IS NULL;
+UPDATE oportunidades SET beneficios = 'Acesso a aulas e encontros de orientação.', area = 'Programação', nivel = 'Iniciante'
+WHERE titulo = 'Bolsa Mulheres em Tecnologia' AND area IS NULL;
+UPDATE oportunidades SET beneficios = 'Palestras e troca de experiências.', area = 'Carreira', nivel = 'Todos os níveis'
+WHERE titulo = 'TechMentor Day 2026' AND area IS NULL;
+UPDATE oportunidades SET beneficios = 'Material de apoio e feedback ao vivo.', area = 'Design', nivel = 'Iniciante'
+WHERE titulo = 'Workshop de Portfólio em UX' AND area IS NULL;
 
 INSERT INTO inscricoes_oportunidade (usuario_id, oportunidade_id, status, criada_em)
 SELECT u.id, o.id, v.status, v.criada_em
@@ -385,5 +449,17 @@ FROM (
            'Atendimento gratuito, 24 horas, para orientar e acolher mulheres em situação de violência.', 'Ligue 180'
     UNION ALL SELECT 'CANAL_AJUDA', 'Centro de Valorização da Vida (CVV)',
            'Apoio emocional e prevenção do suicídio, gratuito e 24 horas.', 'Ligue 188'
+    UNION ALL SELECT 'ORIENTACAO', 'Cuide das suas informações',
+           'Nunca compartilhe senhas ou dados bancários. Prefira conversar dentro da plataforma. Confie nos seus instintos e denuncie abusos.', NULL
+    UNION ALL SELECT 'ORIENTACAO', 'Proteja suas informações',
+           'Não compartilhe senhas, documentos nem dados bancários em conversas.', NULL
+    UNION ALL SELECT 'ORIENTACAO', 'Antes de encontrar alguém',
+           'Prefira canais conhecidos, confirme informações e avise uma pessoa de confiança.', NULL
+    UNION ALL SELECT 'ORIENTACAO', 'Se algo incomodar',
+           'Interrompa a conversa, guarde evidências e procure ajuda pelos canais apropriados.', NULL
+    UNION ALL SELECT 'CANAL_AJUDA', 'Em caso de emergência',
+           'Procure os serviços de emergência da sua região. No Brasil, ligue 190 para a Polícia Militar.', '190'
+    UNION ALL SELECT 'CANAL_AJUDA', 'Apoio emocional',
+           'O CVV atende gratuitamente pelo número 188.', '188'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM conteudos_seguranca c WHERE c.titulo = v.titulo);

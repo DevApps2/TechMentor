@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.techmentor.api.model.ConteudoSeguranca;
 import com.techmentor.api.service.BloqueioService;
+import com.techmentor.api.service.ConteudoSegurancaService;
 import com.techmentor.api.service.DenunciaService;
 import com.techmentor.api.service.UsuarioAtualService;
 import org.springframework.http.HttpStatus;
@@ -19,11 +21,22 @@ public class SegurancaController {
     private final DenunciaService denuncias;
     private final BloqueioService bloqueios;
     private final UsuarioAtualService usuarios;
+    private final ConteudoSegurancaService conteudos;
 
-    public SegurancaController(DenunciaService denuncias, BloqueioService bloqueios, UsuarioAtualService usuarios) {
+    public SegurancaController(DenunciaService denuncias, BloqueioService bloqueios, UsuarioAtualService usuarios,
+                               ConteudoSegurancaService conteudos) {
         this.denuncias = denuncias;
         this.bloqueios = bloqueios;
         this.usuarios = usuarios;
+        this.conteudos = conteudos;
+    }
+
+    @Operation(summary = "Listar orientações e canais de ajuda",
+            description = "Conteúdo da tela de Segurança. Sem o filtro, devolve orientações e canais de ajuda.")
+    @GetMapping("/seguranca/conteudos")
+    public List<ConteudoSegurancaResponse> listarConteudos(
+            @Parameter(description = "ORIENTACAO ou CANAL_AJUDA (opcional)") @RequestParam(required = false) ConteudoSeguranca.Tipo tipo) {
+        return conteudos.listar(tipo);
     }
 
     @Operation(summary = "Registrar denúncia")

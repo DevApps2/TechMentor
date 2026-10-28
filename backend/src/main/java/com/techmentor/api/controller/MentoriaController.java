@@ -38,9 +38,13 @@ public class MentoriaController {
         return mentoras.criarArea(usuarios.buscar(actorId), request == null ? null : request.nome());
     }
 
-    @Operation(summary = "Listar mentoras")
+    @Operation(summary = "Listar mentoras", description = "Busca opcional por nome, cargo ou área, e filtro por uma área (nome exato).")
     @GetMapping("/mentoras")
-    public List<MentoraResponse> listarMentoras() { return mentoras.listarMentoras(); }
+    public List<MentoraResponse> listarMentoras(
+            @Parameter(description = "Texto para buscar no nome, cargo ou áreas (opcional)") @RequestParam(required = false) String busca,
+            @Parameter(description = "Nome exato de uma área de atuação (opcional)") @RequestParam(required = false) String area) {
+        return mentoras.listarMentoras(busca, area);
+    }
 
     @Operation(summary = "Obter mentora por ID")
     @GetMapping("/mentoras/{id}")
