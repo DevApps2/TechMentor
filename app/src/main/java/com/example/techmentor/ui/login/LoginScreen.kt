@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -36,10 +35,13 @@ import com.example.techmentor.ui.auth.BrandHeader
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OrDivider
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.LoginRequest
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -57,6 +59,22 @@ fun LoginScreen(
 
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
+
+    var aviso by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Quando a conta é criada, a tela de cadastro volta para cá e deixa o e-mail aqui
+    val estadoSalvo = navController.currentBackStackEntry?.savedStateHandle
+    val emailCriado by (estadoSalvo?.getStateFlow("emailCriado", "") ?: MutableStateFlow("")).collectAsState()
+
+    LaunchedEffect(emailCriado) {
+        if (emailCriado.isNotEmpty()) {
+            email = emailCriado
+            password = ""
+            error = null
+            aviso = "Conta criada! Entre com seu e-mail e senha."
+            estadoSalvo?.set("emailCriado", "")
+        }
+    }
 
     fun submit() {
         if (loading) return
@@ -108,12 +126,24 @@ fun LoginScreen(
         // CAMPOS
         // ==================================================
 
+        // AVISO DE CONTA CRIADA
+        aviso?.let { mensagem ->
+            Text(
+                text = mensagem,
+                modifier = Modifier.padding(bottom = 12.dp),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AuthColors.Success
+            )
+        }
+
         AuthField(
             label = "E-mail",
             value = email,
             onValueChange = {
                 email = it
                 error = null
+                aviso = null
             },
             placeholder = "voce@exemplo.com",
             keyboardOptions = KeyboardOptions(
@@ -135,9 +165,10 @@ fun LoginScreen(
             onValueChange = {
                 password = it
                 error = null
+                aviso = null
             },
             placeholder = "••••••••",
-            visualTransformation = PasswordVisualTransformation(),
+            isPassword = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done

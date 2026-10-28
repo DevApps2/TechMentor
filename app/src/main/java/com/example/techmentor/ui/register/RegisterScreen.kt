@@ -17,7 +17,6 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -29,6 +28,15 @@ import com.example.techmentor.ui.auth.BrandHeader
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OrDivider
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.techmentor.data.ApiClient
+import com.example.techmentor.data.CadastroRequest
+import com.example.techmentor.data.ErroResponse
+import com.google.gson.Gson
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 // Mesmos limites do cadastro na API (UsuarioDtos.CreateRequest)
 private const val NAME_MAX_LENGTH = 120
@@ -47,8 +55,12 @@ fun RegisterScreen(
     var error by rememberSaveable { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
+    var loading by remember { mutableStateOf(false) }
 
     fun submit() {
+        if (loading) return
+
         error = when {
             name.isBlank() -> "Informe seu nome."
             name.trim().length > NAME_MAX_LENGTH -> "O nome deve ter no máximo $NAME_MAX_LENGTH caracteres."
@@ -58,13 +70,26 @@ fun RegisterScreen(
             password.length > PASSWORD_MAX_LENGTH -> "A senha deve ter no máximo $PASSWORD_MAX_LENGTH caracteres."
             else -> null
         }
+        if (error != null) return
 
-        if (error == null) {
-            // Login e cadastro saem da pilha: o botão voltar não retorna a eles
-            navController.navigate("home") {
-                popUpTo("login") {
-                    inclusive = true
+        loading = true
+        scope.launch {
+            try {
+                ApiClient.api.cadastrar(CadastroRequest(name.trim(), email.trim(), password))
+
+                // Conta criada: volta para o login com o e-mail já preenchido
+                navController.previousBackStackEntry?.savedStateHandle?.set("emailCriado", email.trim())
+                navController.popBackStack()
+            } catch (e: HttpException) {
+                error = when (e.code()) {
+                    409 -> "Esse e-mail já está cadastrado."
+                    400 -> mensagemDaApi(e) ?: "Confira os dados informados."
+                    else -> "Erro no servidor (${e.code()})."
                 }
+            } catch (e: IOException) {
+                error = "Sem conexão com o servidor."
+            } finally {
+                loading = false
             }
         }
     }
@@ -141,7 +166,7 @@ fun RegisterScreen(
                 error = null
             },
             placeholder = "••••••••",
-            visualTransformation = PasswordVisualTransformation(),
+            isPassword = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
@@ -169,7 +194,7 @@ fun RegisterScreen(
         )
 
         GradientButton(
-            text = "Criar minha conta",
+            text = if (loading) "Criando conta..." else "Criar minha conta",
             onClick = {
                 focusManager.clearFocus()
                 submit()
@@ -194,3 +219,8 @@ fun RegisterScreen(
         )
     }
 }
+
+private fun mensagemDaApi(e: HttpException): String? =
+    runCatching {
+        Gson().fromJson(e.response()?.errorBody()?.string(), ErroResponse::class.java)?.erro
+    }.getOrNull()

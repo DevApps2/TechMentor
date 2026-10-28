@@ -7,4 +7,7 @@ interface TechMentorApi {
 
     @POST("usuarios/login")
     suspend fun login(@Body body: LoginRequest): UsuarioResponse
+
+    @POST("usuarios")
+    suspend fun cadastrar(@Body body: CadastroRequest): UsuarioResponse
 }

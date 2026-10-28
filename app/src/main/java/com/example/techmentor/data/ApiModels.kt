@@ -12,3 +12,7 @@ data class UsuarioResponse(
     val nivel: Int,
     val sequenciaDias: Int
 )
+
+data class CadastroRequest(val nome: String, val email: String, val senha: String)
+
+data class ErroResponse(val erro: String?)
