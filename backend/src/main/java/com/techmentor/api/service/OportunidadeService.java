@@ -17,16 +17,23 @@ import java.util.List;
 public class OportunidadeService {
     private final OportunidadeRepository oportunidades;
     private final InscricaoOportunidadeRepository inscricoes;
+    private final ConquistaService conquistas;
 
     public OportunidadeService(OportunidadeRepository oportunidades,
-                               InscricaoOportunidadeRepository inscricoes) {
+                               InscricaoOportunidadeRepository inscricoes,
+                               ConquistaService conquistas) {
         this.oportunidades = oportunidades;
         this.inscricoes = inscricoes;
+        this.conquistas = conquistas;
     }
 
+    /** Oportunidades ativas pelo prazo mais próximo; filtros opcionais por tipo e por área. */
     @Transactional(readOnly = true)
-    public List<OportunidadeResponse> listar() {
-        return oportunidades.findByAtivaTrueOrderByPrazoInscricaoAsc().stream().map(this::toResponse).toList();
+    public List<OportunidadeResponse> listar(Oportunidade.Tipo tipo, String area) {
+        return oportunidades.findByAtivaTrueOrderByPrazoInscricaoAsc().stream()
+                .filter(o -> tipo == null || o.getTipo() == tipo)
+                .filter(o -> area == null || area.isBlank() || area.trim().equalsIgnoreCase(o.getArea()))
+                .map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +84,9 @@ public class OportunidadeService {
         InscricaoOportunidade inscricao = new InscricaoOportunidade();
         inscricao.setUsuario(actor);
         inscricao.setOportunidade(oportunidade);
-        return toResponse(inscricoes.save(inscricao));
+        InscricaoOportunidade salva = inscricoes.save(inscricao);
+        conquistas.desbloquear(actor, ConquistaService.PRIMEIRA_CANDIDATURA);
+        return toResponse(salva);
     }
 
     @Transactional(readOnly = true)
@@ -113,6 +122,9 @@ public class OportunidadeService {
         oportunidade.setOrganizacao(request.organizacao());
         oportunidade.setDescricao(request.descricao());
         oportunidade.setRequisitos(request.requisitos());
+        oportunidade.setBeneficios(request.beneficios());
+        oportunidade.setArea(request.area());
+        oportunidade.setNivel(request.nivel());
         oportunidade.setLocalidade(request.localidade());
         oportunidade.setLinkExterno(request.linkExterno());
         oportunidade.setPrazoInscricao(request.prazoInscricao());
@@ -124,7 +136,7 @@ public class OportunidadeService {
         return new OportunidadeResponse(oportunidade.getId(), oportunidade.getTipo(), oportunidade.getTitulo(),
                 oportunidade.getOrganizacao(), oportunidade.getDescricao(), oportunidade.getRequisitos(),
                 oportunidade.getLocalidade(), oportunidade.getLinkExterno(), oportunidade.getPrazoInscricao(),
-                oportunidade.isAtiva());
+                oportunidade.isAtiva(), oportunidade.getBeneficios(), oportunidade.getArea(), oportunidade.getNivel());
     }
 
     private InscricaoResponse toResponse(InscricaoOportunidade inscricao) {

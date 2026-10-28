@@ -23,12 +23,17 @@ public class AgendamentoService {
     private final HorarioDisponivelRepository horarios;
     private final MentoriaRepository mentorias;
     private final BloqueioUsuarioRepository bloqueios;
+    private final ConquistaService conquistas;
+    private final DesafioService desafios;
 
     public AgendamentoService(HorarioDisponivelRepository horarios, MentoriaRepository mentorias,
-                              BloqueioUsuarioRepository bloqueios) {
+                              BloqueioUsuarioRepository bloqueios, ConquistaService conquistas,
+                              DesafioService desafios) {
         this.horarios = horarios;
         this.mentorias = mentorias;
         this.bloqueios = bloqueios;
+        this.conquistas = conquistas;
+        this.desafios = desafios;
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +78,10 @@ public class AgendamentoService {
         mentoria.setAluna(actor);
         mentoria.setHorario(horario);
         mentoria.setAssunto(request.assunto());
-        return toResponse(mentorias.save(mentoria));
+        Mentoria salva = mentorias.save(mentoria);
+        conquistas.desbloquear(actor, ConquistaService.PRIMEIRA_MENTORIA);
+        desafios.verificarDesafios(actor);
+        return toResponse(salva);
     }
 
     public AgendamentoResponse cancelar(Usuario actor, Long id) {

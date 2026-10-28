@@ -20,6 +20,9 @@ public class Oportunidade {
     private String organizacao;
     @Column(length = 2000) private String descricao;
     @Column(length = 2000) private String requisitos;
+    @Column(length = 2000) private String beneficios;
+    @Column(length = 80) private String area;
+    @Column(length = 50) private String nivel;
     private String localidade;
     private String linkExterno;
     private LocalDate prazoInscricao;

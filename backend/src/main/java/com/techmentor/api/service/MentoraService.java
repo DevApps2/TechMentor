@@ -44,9 +44,21 @@ public class MentoraService {
         return new AreaResponse(area.getId(), area.getNome());
     }
 
+    /** Lista as mentoras; "busca" procura no nome, cargo e áreas, e "area" filtra por uma área exata. */
     @Transactional(readOnly = true)
-    public List<MentoraResponse> listarMentoras() {
-        return mentoras.findAll().stream().map(this::toResponse).toList();
+    public List<MentoraResponse> listarMentoras(String busca, String area) {
+        String termo = busca == null ? "" : busca.trim().toLowerCase();
+        return mentoras.findAll().stream()
+                .filter(m -> area == null || area.isBlank() || m.getAreas().stream()
+                        .anyMatch(a -> a.getNome().equalsIgnoreCase(area.trim())))
+                .filter(m -> termo.isEmpty() || contem(m.getUsuario().getNome(), termo)
+                        || contem(m.getCargo(), termo)
+                        || m.getAreas().stream().anyMatch(a -> contem(a.getNome(), termo)))
+                .map(this::toResponse).toList();
+    }
+
+    private boolean contem(String texto, String termo) {
+        return texto != null && texto.toLowerCase().contains(termo);
     }
 
     @Transactional(readOnly = true)

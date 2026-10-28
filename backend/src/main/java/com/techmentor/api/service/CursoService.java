@@ -77,6 +77,7 @@ public class CursoService {
             }
             existente.setDescricao(curso.getDescricao());
             existente.setCategoria(curso.getCategoria());
+            existente.setNivel(curso.getNivel());
             existente.setIconeUrl(curso.getIconeUrl());
             existente.setAtivo(true);
             return cursoRepository.save(existente);
@@ -103,6 +104,7 @@ public class CursoService {
         existente.setTitulo(curso.getTitulo());
         existente.setDescricao(curso.getDescricao());
         existente.setCategoria(curso.getCategoria());
+        existente.setNivel(curso.getNivel());
         existente.setIconeUrl(curso.getIconeUrl());
         existente.setAtivo(curso.isAtivo());
 

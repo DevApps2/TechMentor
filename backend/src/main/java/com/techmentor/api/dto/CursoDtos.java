@@ -27,13 +27,16 @@ public final class CursoDtos {
             @Schema(description = "URL do ícone do curso", example = "https://cdn.techmentor.com/icones/java.png")
             @Size(max = 255) String iconeUrl,
             @Schema(description = "Indica se o curso está ativo; se omitido, o curso é criado como ativo", example = "true")
-            Boolean ativo
+            Boolean ativo,
+            @Schema(description = "Nível da trilha (opcional)", example = "INICIANTE")
+            Curso.Nivel nivel
     ) {
         public Curso toEntity() {
             Curso curso = new Curso();
             curso.setTitulo(titulo);
             curso.setDescricao(descricao);
             curso.setCategoria(categoria);
+            curso.setNivel(nivel);
             curso.setIconeUrl(iconeUrl);
             if (ativo != null) curso.setAtivo(ativo);
             return curso;
@@ -50,20 +53,31 @@ public final class CursoDtos {
             String descricao,
             @Schema(description = "Categoria do curso", example = "PROGRAMACAO")
             Curso.Categoria categoria,
+            @Schema(description = "Nível da trilha; nulo se não informado", example = "INICIANTE", nullable = true)
+            Curso.Nivel nivel,
             @Schema(description = "URL do ícone do curso", example = "https://cdn.techmentor.com/icones/java.png")
             String iconeUrl,
             @Schema(description = "Indica se o curso está ativo", example = "true")
             boolean ativo,
             @Schema(description = "Total de aulas do curso", example = "12")
             Long totalAulas,
+            @Schema(description = "Duração total do curso em minutos (soma das aulas)", example = "390")
+            int duracaoTotalMinutos,
+            @Schema(description = "XP total que o curso concede (soma das aulas)", example = "450")
+            int xpTotal,
             @Schema(description = "Módulos do curso, ordenados pela ordem")
             List<ModuloResponse> modulos
     ) {
         public static CursoResponse from(Curso curso) {
             List<ModuloResponse> modulos = curso.getModulos() == null ? List.of()
                     : curso.getModulos().stream().map(ModuloResponse::from).toList();
+            int duracao = modulos.stream().flatMap(m -> m.aulas().stream())
+                    .mapToInt(AulaResponse::duracaoMinutos).sum();
+            int xp = modulos.stream().flatMap(m -> m.aulas().stream())
+                    .mapToInt(AulaResponse::xpRecompensa).sum();
             return new CursoResponse(curso.getId(), curso.getTitulo(), curso.getDescricao(),
-                    curso.getCategoria(), curso.getIconeUrl(), curso.isAtivo(), curso.getTotalAulas(), modulos);
+                    curso.getCategoria(), curso.getNivel(), curso.getIconeUrl(), curso.isAtivo(),
+                    curso.getTotalAulas(), duracao, xp, modulos);
         }
     }
 
@@ -160,15 +174,26 @@ public final class CursoDtos {
             Long cursoId,
             @Schema(description = "Título do curso", example = "Java para iniciantes")
             String tituloCurso,
+            @Schema(description = "Categoria do curso", example = "PROGRAMACAO")
+            Curso.Categoria categoria,
             @Schema(description = "Data e hora da matrícula", example = "2026-10-26T14:30:00")
             java.time.LocalDateTime matriculadaEm,
             @Schema(description = "Data e hora da conclusão do curso; nulo enquanto não concluído", example = "2026-11-30T18:00:00", nullable = true)
-            java.time.LocalDateTime concluidoEm
+            java.time.LocalDateTime concluidoEm,
+            @Schema(description = "Aulas do curso já concluídas pela usuária", example = "8")
+            long aulasConcluidas,
+            @Schema(description = "Total de aulas do curso", example = "18")
+            long totalAulas,
+            @Schema(description = "Percentual concluído do curso (0 a 100)", example = "44")
+            int percentualConcluido
     ) {
-        public static MatriculaResponse from(Matricula matricula) {
+        public static MatriculaResponse from(Matricula matricula, long aulasConcluidas, long totalAulas) {
+            int percentual = totalAulas == 0 ? 0 : (int) (aulasConcluidas * 100 / totalAulas);
             return new MatriculaResponse(matricula.getId(), matricula.getUsuario().getId(),
                     matricula.getCurso().getId(), matricula.getCurso().getTitulo(),
-                    matricula.getMatriculadaEm(), matricula.getConcluidoEm());
+                    matricula.getCurso().getCategoria(),
+                    matricula.getMatriculadaEm(), matricula.getConcluidoEm(),
+                    aulasConcluidas, totalAulas, percentual);
         }
     }
 }

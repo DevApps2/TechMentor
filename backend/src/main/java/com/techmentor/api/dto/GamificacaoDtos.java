@@ -93,10 +93,12 @@ public final class GamificacaoDtos {
             @NotNull LocalDate inicio,
             @Schema(description = "Data de término do desafio; deve ser igual ou posterior ao início", example = "2026-11-07")
             @NotNull LocalDate fim,
-            @Schema(description = "Quantidade de aulas a concluir para vencer o desafio", example = "5")
-            @Positive int metaAulas
+            @Schema(description = "Meta para vencer o desafio: quantidade de aulas (tipo AULAS) ou de mentorias agendadas (tipo MENTORIA)", example = "5")
+            @Positive int metaAulas,
+            @Schema(description = "O que o desafio conta: AULAS (padrão) ou MENTORIA", example = "AULAS")
+            Desafio.Tipo tipo
     ) {
-        @AssertTrue(message = "A data.sql final deve ser igual ou posterior à data.sql inicial")
+        @AssertTrue(message = "A data final deve ser igual ou posterior à data inicial")
         public boolean periodoValido() {
             return inicio == null || fim == null || !fim.isBefore(inicio);
         }
@@ -109,6 +111,7 @@ public final class GamificacaoDtos {
             desafio.setInicio(inicio);
             desafio.setFim(fim);
             desafio.setMetaAulas(metaAulas);
+            desafio.setTipo(tipo == null ? Desafio.Tipo.AULAS : tipo);
             return desafio;
         }
     }
@@ -127,12 +130,15 @@ public final class GamificacaoDtos {
             LocalDate inicio,
             @Schema(description = "Data de término do desafio", example = "2026-11-07")
             LocalDate fim,
-            @Schema(description = "Quantidade de aulas a concluir para vencer o desafio", example = "5")
-            int metaAulas
+            @Schema(description = "Meta para vencer o desafio: aulas (tipo AULAS) ou mentorias agendadas (tipo MENTORIA)", example = "5")
+            int metaAulas,
+            @Schema(description = "O que o desafio conta: AULAS ou MENTORIA", example = "AULAS")
+            Desafio.Tipo tipo
     ) {
         public static DesafioResponse from(Desafio desafio) {
             return new DesafioResponse(desafio.getId(), desafio.getTitulo(), desafio.getDescricao(),
-                    desafio.getXpRecompensa(), desafio.getInicio(), desafio.getFim(), desafio.getMetaAulas());
+                    desafio.getXpRecompensa(), desafio.getInicio(), desafio.getFim(), desafio.getMetaAulas(),
+                    desafio.getTipo() == null ? Desafio.Tipo.AULAS : desafio.getTipo());
         }
     }
 
@@ -148,15 +154,19 @@ public final class GamificacaoDtos {
             String tituloDesafio,
             @Schema(description = "Situação da participação", example = "EM_ANDAMENTO")
             UsuarioDesafio.Status status,
-            @Schema(description = "Aulas concluídas pela usuária dentro do período do desafio", example = "3")
+            @Schema(description = "Progresso da usuária no período do desafio: aulas concluídas (tipo AULAS) ou mentorias agendadas (tipo MENTORIA)", example = "3")
             Long aulasConcluidas,
             @Schema(description = "Data e hora da conclusão do desafio; nulo enquanto não concluído", example = "2026-11-05T20:15:00", nullable = true)
-            LocalDateTime concluidoEm
+            LocalDateTime concluidoEm,
+            @Schema(description = "O que o desafio conta: AULAS ou MENTORIA", example = "AULAS")
+            Desafio.Tipo tipo
     ) {
         public static UsuarioDesafioResponse from(UsuarioDesafio item) {
+            Desafio desafio = item.getDesafio();
             return new UsuarioDesafioResponse(item.getId(), item.getUsuario().getId(),
-                    item.getDesafio().getId(), item.getDesafio().getTitulo(), item.getStatus(),
-                    item.getAulasConcluidas(), item.getConcluidoEm());
+                    desafio.getId(), desafio.getTitulo(), item.getStatus(),
+                    item.getAulasConcluidas(), item.getConcluidoEm(),
+                    desafio.getTipo() == null ? Desafio.Tipo.AULAS : desafio.getTipo());
         }
     }
 
@@ -226,5 +236,30 @@ public final class GamificacaoDtos {
             long aulasConcluidas,
             @Schema(description = "Total de aulas do curso", example = "12")
             long totalAulas
+    ) { }
+
+    @Schema(description = "Situação de uma aula para a usuária: CONCLUIDA, ATUAL (próxima a estudar) ou BLOQUEADA")
+    public enum StatusAula { CONCLUIDA, ATUAL, BLOQUEADA }
+
+    @Schema(description = "Aula do curso com o estado dela para uma usuária")
+    public record AulaProgressoResponse(
+            @Schema(description = "ID da aula", example = "1")
+            Long aulaId,
+            @Schema(description = "Posição do módulo no curso", example = "1")
+            int ordemModulo,
+            @Schema(description = "Título do módulo", example = "Introdução")
+            String tituloModulo,
+            @Schema(description = "Posição da aula no módulo", example = "1")
+            int ordemAula,
+            @Schema(description = "Título da aula", example = "Variáveis e tipos de dados")
+            String titulo,
+            @Schema(description = "Duração da aula em minutos", example = "15")
+            int duracaoMinutos,
+            @Schema(description = "XP concedido ao concluir a aula", example = "20")
+            int xpRecompensa,
+            @Schema(description = "Situação da aula para a usuária", example = "ATUAL")
+            StatusAula status,
+            @Schema(description = "Quando a usuária concluiu a aula; nulo se ainda não concluiu", nullable = true)
+            LocalDateTime concluidaEm
     ) { }
 }

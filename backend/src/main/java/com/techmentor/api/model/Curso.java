@@ -24,8 +24,11 @@ public class Curso {
 
     @Transient
     private Long totalAulas;
-    @Schema(description = "Categoria do curso: PROGRAMACAO, DADOS, DESIGN, CARREIRA ou OUTROS")
-    public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS }
+    @Schema(description = "Categoria do curso: PROGRAMACAO, DADOS, DESIGN, CARREIRA, SEGURANCA, IA, REDES ou OUTROS")
+    public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS, SEGURANCA, IA, REDES }
+
+    @Schema(description = "Nível da trilha: INICIANTE, INTERMEDIARIO ou AVANCADO")
+    public enum Nivel { INICIANTE, INTERMEDIARIO, AVANCADO }
 
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -37,6 +40,7 @@ public class Curso {
     @Column(nullable = false, length = 150) private String titulo;
     @Column(length = 1000) private String descricao;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Categoria categoria;
+    @Enumerated(EnumType.STRING) @Column(length = 20) private Nivel nivel;
     @Column(length = 255) private String iconeUrl;
     @Column(nullable = false) private boolean ativo = true;
 }

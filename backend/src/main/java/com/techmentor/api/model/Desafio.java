@@ -12,11 +12,15 @@ import java.util.*;
 @Getter @Setter @NoArgsConstructor
 @JsonPropertyOrder({"id", "titulo", "descricao", "xpRecompensa", "inicio", "fim"})
 public class Desafio {
+    /** O que o desafio conta: AULAS concluídas ou MENTORIAS agendadas dentro do período. */
+    public enum Tipo { AULAS, MENTORIA }
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true) private String titulo;
     @Column(length = 1000) private String descricao;
     private int xpRecompensa;
     private LocalDate inicio;
     private LocalDate fim;
-    private int metaAulas = 1;
+    private int metaAulas = 1; // meta de aulas (tipo AULAS) ou de mentorias (tipo MENTORIA)
+    @Enumerated(EnumType.STRING) @Column(length = 20) private Tipo tipo = Tipo.AULAS;
 }
