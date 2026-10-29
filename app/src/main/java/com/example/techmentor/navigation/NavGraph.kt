@@ -10,6 +10,7 @@ import com.example.techmentor.ui.login.LoginScreen
 import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.profile.ProfileScreen
 
 @Composable
 fun NavGraph() {
@@ -55,6 +56,10 @@ fun NavGraph() {
 
         composable("safety") {
             PlaceholderScreen("Segurança")
+        }
+
+        composable("profile") {
+            ProfileScreen(navController = navController)
         }
     }
 }

@@ -50,3 +50,22 @@ data class AgendamentoResponse(
     val assunto: String?,
     val criadaEm: String?
 )
+
+// Conquista desbloqueada por uma usuária (GET /conquistas/usuarios/{id})
+data class UsuarioConquistaResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val conquistaId: Long,
+    val nomeConquista: String,
+    val desbloqueadaEm: String?
+)
+
+// Corpo do PUT /usuarios/{id}. Campos nulos não são enviados:
+// bio e areasInteresse omitidos = a API mantém o que já existe.
+data class AtualizarUsuarioRequest(
+    val nome: String,
+    val email: String,
+    val fotoUrl: String?,
+    val bio: String?,
+    val areasInteresse: List<String>?
+)

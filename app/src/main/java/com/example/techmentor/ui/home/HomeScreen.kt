@@ -919,7 +919,8 @@ fun IconTile(
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavController
+    navController: NavController,
+    rotaAtual: String = "home"
 ) {
 
     Row(
@@ -936,51 +937,44 @@ fun BottomNavigationBar(
         BottomNavItem(
             symbol = "⌂",
             label = "Início",
-            selected = true,
-            onClick = {
-                navController.navigate("home") {
-                    popUpTo("home") {
-                        inclusive = false
-                    }
-                }
-            }
+            selected = rotaAtual == "home",
+            onClick = { irPara(navController, "home") }
         )
 
         BottomNavItem(
             symbol = "⌕",
             label = "Explorar",
-            selected = false,
-            onClick = {
-                navController.navigate("mentorship")
-            }
+            selected = rotaAtual in listOf("mentorship", "opportunities", "safety"),
+            onClick = { irPara(navController, "mentorship") }
         )
 
         BottomNavItem(
             symbol = "▣",
             label = "Aprender",
-            selected = false,
-            onClick = {
-                navController.navigate("learning")
-            }
+            selected = rotaAtual == "learning",
+            onClick = { irPara(navController, "learning") }
         )
 
         BottomNavItem(
             symbol = "★",
             label = "Conquistas",
-            selected = false,
-            onClick = {
-                navController.navigate("achievements")
-            }
+            selected = rotaAtual == "achievements",
+            onClick = { irPara(navController, "achievements") }
         )
 
         BottomNavItem(
             symbol = "●",
             label = "Perfil",
-            selected = false,
-            onClick = {
-                // Será conectado depois
-            }
+            selected = rotaAtual == "profile",
+            onClick = { irPara(navController, "profile") }
         )
+    }
+}
+
+private fun irPara(navController: NavController, rota: String) {
+    navController.navigate(rota) {
+        popUpTo("home") { inclusive = false }
+        launchSingleTop = true
     }
 }
 
