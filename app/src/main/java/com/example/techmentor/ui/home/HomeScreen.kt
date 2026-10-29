@@ -33,11 +33,119 @@ import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+import androidx.compose.runtime.remember
+import com.example.techmentor.data.Sessao
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.data.MatriculaResponse
+import com.example.techmentor.data.UsuarioResponse
+import com.example.techmentor.ui.auth.GradientButton
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel()
+) {
+
+    val estado by viewModel.estado.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Volta ao login se a sessão não existe mais (ex.: o banco foi reiniciado)
+    LaunchedEffect(estado.sessaoExpirada) {
+        if (estado.sessaoExpirada) {
+            Sessao.sair()
+            navController.navigate("login") {
+                popUpTo("home") { inclusive = true }
+            }
+        }
+    }
+
+    // Carrega ao abrir e recarrega ao voltar para a Home (ex.: depois de concluir uma aula)
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.carregar()
+    }
+
+    // Enquanto a Home está na tela, atualiza sozinha a cada 30 segundos
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(30_000)
+                viewModel.carregar()
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF8F8FB))
+            .statusBarsPadding()
+    ) {
+
+        Box(
+            modifier = Modifier.weight(1f)
+        ) {
+
+            val usuario = estado.usuario
+
+            when {
+                usuario != null -> HomeContent(
+                    usuario = usuario,
+                    cursoEmAndamento = estado.cursoEmAndamento,
+                    proximaMentoria = estado.proximaMentoria,
+                    navController = navController,
+                    onSair = {
+                        Sessao.sair()
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                )
+
+                estado.carregando || estado.sessaoExpirada -> HomeCarregando()
+
+                else -> HomeErro(
+                    mensagem = estado.erro ?: "Não foi possível carregar a Home.",
+                    onTentarDeNovo = { viewModel.carregar() }
+                )
+            }
+        }
+
+        BottomNavigationBar(
+            navController = navController
+        )
+    }
+}
+
+
+// ======================================================
+// CONTEÚDO DA HOME
+// ======================================================
+
+@Composable
+private fun HomeContent(
+    usuario: UsuarioResponse,
+    cursoEmAndamento: MatriculaResponse?,
+    proximaMentoria: AgendamentoResponse?,
+    navController: NavController,
+    onSair: () -> Unit
 ) {
 
     val scrollState = rememberScrollState()
@@ -45,150 +153,186 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8FB))
+            .verticalScroll(scrollState)
+            .padding(
+                start = 20.dp,
+                end = 20.dp,
+                top = 18.dp,
+                bottom = 24.dp
+            ),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(scrollState)
-                .padding(
-                    start = 20.dp,
-                    end = 20.dp,
-                    top = 18.dp,
-                    bottom = 24.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+        WelcomeSection(
+            nome = usuario.nome,
+            onSair = onSair
+        )
+
+        JourneyCard(usuario = usuario)
+
+        SectionHeader(
+            title = if (proximaMentoria != null) "Sua próxima mentoria" else "Próximo passo",
+            action = "Ver mentoras",
+            onAction = {
+                navController.navigate("mentorship")
+            }
+        )
+
+        NextActionCard(
+            titulo = proximaMentoria?.let { "Mentoria com ${it.mentoraNome}" }
+                ?: "Converse com uma mentora",
+            descricao = proximaMentoria?.let { descricaoDaMentoria(it) }
+                ?: "Explore horários e agende uma conversa.",
+            onClick = {
+                navController.navigate("mentorship")
+            }
+        )
+
+        SectionHeader(
+            title = "Continue aprendendo",
+            action = "Ver tudo",
+            onAction = {
+                navController.navigate("learning")
+            }
+        )
+
+        ContinueLearningCard(
+            curso = cursoEmAndamento,
+            onClick = {
+                navController.navigate("learning")
+            }
+        )
+
+        Text(
+            text = "Explore o TechMentor",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF20202A)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // ==================================================
-            // CABEÇALHO
-            // ==================================================
-
-            WelcomeSection()
-
-            // ==================================================
-            // SUA JORNADA
-            // ==================================================
-
-            JourneyCard()
-
-            // ==================================================
-            // PRÓXIMO PASSO
-            // ==================================================
-
-            SectionHeader(
-                title = "Próximo passo",
-                action = "Ver mentoras",
-                onAction = {
-                    navController.navigate("mentorship")
-                }
+            ExploreCard(
+                modifier = Modifier.weight(1f),
+                title = "Mentoria",
+                description = "Converse e evolua",
+                symbol = "♧",
+                background = Color(0xFFEDE9FE),
+                iconColor = Color(0xFF6D28D9),
+                onClick = { navController.navigate("mentorship") }
             )
 
-            NextActionCard(
-                onClick = {
-                    navController.navigate("mentorship")
-                }
+            ExploreCard(
+                modifier = Modifier.weight(1f),
+                title = "Aprender",
+                description = "Novas habilidades",
+                symbol = "▣",
+                background = Color(0xFFE6EFFF),
+                iconColor = Color(0xFF2563EB),
+                onClick = { navController.navigate("learning") }
             )
-
-            // ==================================================
-            // CONTINUE APRENDENDO
-            // ==================================================
-
-            SectionHeader(
-                title = "Continue aprendendo",
-                action = "Ver tudo",
-                onAction = {
-                    navController.navigate("learning")
-                }
-            )
-
-            ContinueLearningCard(
-                onClick = {
-                    navController.navigate("learning")
-                }
-            )
-
-            // ==================================================
-            // EXPLORE TECHMENTOR
-            // ==================================================
-
-            Text(
-                text = "Explore o TechMentor",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF20202A)
-            )
-
-            // PRIMEIRA LINHA
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                ExploreCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Mentoria",
-                    description = "Converse e evolua",
-                    symbol = "♧",
-                    background = Color(0xFFEDE9FE),
-                    iconColor = Color(0xFF6D28D9),
-                    onClick = {
-                        navController.navigate("mentorship")
-                    }
-                )
-
-                ExploreCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Aprender",
-                    description = "Novas habilidades",
-                    symbol = "▣",
-                    background = Color(0xFFE6EFFF),
-                    iconColor = Color(0xFF2563EB),
-                    onClick = {
-                        navController.navigate("learning")
-                    }
-                )
-            }
-
-            // SEGUNDA LINHA
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                ExploreCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Oportunidades",
-                    description = "Dê o próximo passo",
-                    symbol = "▤",
-                    background = Color(0xFFFEF3C7),
-                    iconColor = Color(0xFFD97706),
-                    onClick = {
-                        navController.navigate("opportunities")
-                    }
-                )
-
-                ExploreCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Segurança",
-                    description = "Apoio e proteção",
-                    symbol = "◆",
-                    background = Color(0xFFFCE7F3),
-                    iconColor = Color(0xFFDB2777),
-                    onClick = {
-                        navController.navigate("safety")
-                    }
-                )
-            }
         }
 
-        // ==================================================
-        // BARRA INFERIOR
-        // ==================================================
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
 
-        BottomNavigationBar(
-            navController = navController
+            ExploreCard(
+                modifier = Modifier.weight(1f),
+                title = "Oportunidades",
+                description = "Dê o próximo passo",
+                symbol = "▤",
+                background = Color(0xFFFEF3C7),
+                iconColor = Color(0xFFD97706),
+                onClick = { navController.navigate("opportunities") }
+            )
+
+            ExploreCard(
+                modifier = Modifier.weight(1f),
+                title = "Segurança",
+                description = "Apoio e proteção",
+                symbol = "◆",
+                background = Color(0xFFFCE7F3),
+                iconColor = Color(0xFFDB2777),
+                onClick = { navController.navigate("safety") }
+            )
+        }
+    }
+}
+
+
+// ======================================================
+// CARREGANDO E ERRO
+// ======================================================
+
+@Composable
+private fun HomeCarregando() {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+
+        EsqueletoBloco(altura = 56.dp)
+        EsqueletoBloco(altura = 150.dp)
+        EsqueletoBloco(altura = 78.dp)
+        EsqueletoBloco(altura = 90.dp)
+    }
+}
+
+@Composable
+private fun EsqueletoBloco(altura: Dp) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(altura)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFFECEAF2))
+    )
+}
+
+@Composable
+private fun HomeErro(
+    mensagem: String,
+    onTentarDeNovo: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Ops!",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF20202A)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = mensagem,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF797486)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        GradientButton(
+            text = "Tentar novamente",
+            onClick = onTentarDeNovo
         )
     }
 }
@@ -199,7 +343,10 @@ fun HomeScreen(
 // ======================================================
 
 @Composable
-fun WelcomeSection() {
+fun WelcomeSection(
+    nome: String,
+    onSair: () -> Unit
+) {
 
     val date = SimpleDateFormat(
         "EEEE, d 'DE' MMMM",
@@ -207,6 +354,11 @@ fun WelcomeSection() {
     )
         .format(Date())
         .uppercase()
+
+    val primeiroNome = nome.trim().split(" ").firstOrNull().orEmpty().ifEmpty { "você" }
+    val inicial = nome.trim().firstOrNull()?.uppercase() ?: "?"
+
+    var menuAberto by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -225,20 +377,16 @@ fun WelcomeSection() {
                 color = Color(0xFF8C8796)
             )
 
-            Spacer(
-                modifier = Modifier.height(5.dp)
-            )
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
-                text = "Olá, Júlia!",
+                text = "Olá, $primeiroNome!",
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF17151F)
             )
 
-            Spacer(
-                modifier = Modifier.height(3.dp)
-            )
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = "Pronta para dar mais um passo?",
@@ -247,21 +395,39 @@ fun WelcomeSection() {
             )
         }
 
-        // AVATAR
-        Box(
-            modifier = Modifier
-                .size(54.dp)
-                .clip(RoundedCornerShape(17.dp))
-                .background(Color(0xFFEDE9FE)),
-            contentAlignment = Alignment.Center
-        ) {
+        // AVATAR (toque para abrir o menu)
+        Box {
 
-            Text(
-                text = "J",
-                fontSize = 23.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF6D28D9)
-            )
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(17.dp))
+                    .background(Color(0xFFEDE9FE))
+                    .clickable { menuAberto = true },
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = inicial,
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF6D28D9)
+                )
+            }
+
+            DropdownMenu(
+                expanded = menuAberto,
+                onDismissRequest = { menuAberto = false }
+            ) {
+
+                DropdownMenuItem(
+                    text = { Text("Sair") },
+                    onClick = {
+                        menuAberto = false
+                        onSair()
+                    }
+                )
+            }
         }
     }
 }
@@ -272,7 +438,9 @@ fun WelcomeSection() {
 // ======================================================
 
 @Composable
-fun JourneyCard() {
+fun JourneyCard(
+    usuario: UsuarioResponse
+) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -312,12 +480,10 @@ fun JourneyCard() {
                         color = Color(0xFFDCD8FF)
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(5.dp)
-                    )
+                    Spacer(modifier = Modifier.height(5.dp))
 
                     Text(
-                        text = "1.240 XP acumulados",
+                        text = "${formatarNumero(usuario.xpTotal)} XP acumulados",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -337,7 +503,7 @@ fun JourneyCard() {
                 ) {
 
                     Text(
-                        text = "Nível 7",
+                        text = "Nível ${usuario.nivel}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -345,9 +511,7 @@ fun JourneyCard() {
                 }
             }
 
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
+            Spacer(modifier = Modifier.height(18.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -361,43 +525,37 @@ fun JourneyCard() {
                 )
 
                 Text(
-                    text = "1.500 XP",
+                    text = "${formatarNumero(usuario.xpProximoNivel)} XP",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFD9D5FA)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(7.dp)
-            )
+            Spacer(modifier = Modifier.height(7.dp))
 
-            // BARRA DE PROGRESSO
+            // BARRA DE PROGRESSO DO NÍVEL
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(7.dp)
                     .clip(RoundedCornerShape(5.dp))
-                    .background(
-                        Color.White.copy(alpha = 0.20f)
-                    )
+                    .background(Color.White.copy(alpha = 0.20f))
             ) {
 
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.827f)
+                        .fillMaxWidth(fracaoDoNivel(usuario))
                         .height(7.dp)
                         .clip(RoundedCornerShape(5.dp))
                         .background(Color.White)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(9.dp)
-            )
+            Spacer(modifier = Modifier.height(9.dp))
 
             Text(
-                text = "Faltam 260 XP · 5 dias de sequência",
+                text = "Faltam ${formatarNumero(usuario.xpFaltante)} XP · ${textoSequencia(usuario.sequenciaDias)}",
                 fontSize = 12.sp,
                 color = Color(0xFFDCD8FF)
             )
@@ -449,6 +607,8 @@ fun SectionHeader(
 
 @Composable
 fun NextActionCard(
+    titulo: String,
+    descricao: String,
     onClick: () -> Unit
 ) {
 
@@ -477,27 +637,25 @@ fun NextActionCard(
                 iconColor = Color(0xFF6D28D9)
             )
 
-            Spacer(
-                modifier = Modifier.width(12.dp)
-            )
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
 
                 Text(
-                    text = "Converse com uma mentora",
+                    text = titulo,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF20202A)
+                    color = Color(0xFF20202A),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(
-                    modifier = Modifier.height(3.dp)
-                )
+                Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
-                    text = "Explore horários e agende uma conversa.",
+                    text = descricao,
                     fontSize = 12.sp,
                     color = Color(0xFF625D6C)
                 )
@@ -512,15 +670,28 @@ fun NextActionCard(
     }
 }
 
-
 // ======================================================
 // CONTINUE APRENDENDO
 // ======================================================
 
 @Composable
 fun ContinueLearningCard(
+    curso: MatriculaResponse?,
     onClick: () -> Unit
 ) {
+
+    val categoria = if (curso != null) rotuloCategoria(curso.categoria) else "COMECE AGORA"
+    val titulo = curso?.tituloCurso ?: "Escolha sua primeira trilha"
+    val detalhe = if (curso != null) {
+        "${curso.aulasConcluidas} de ${curso.totalAulas} aulas"
+    } else {
+        "Aulas curtas e XP a cada passo"
+    }
+    val fracao: Float? = if (curso != null && curso.totalAulas > 0) {
+        curso.aulasConcluidas.toFloat() / curso.totalAulas
+    } else {
+        null
+    }
 
     Card(
         modifier = Modifier
@@ -564,63 +735,60 @@ fun ContinueLearningCard(
                 )
             }
 
-            Spacer(
-                modifier = Modifier.width(12.dp)
-            )
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
 
                 Text(
-                    text = "PROGRAMAÇÃO",
+                    text = categoria,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF7C3AED)
                 )
 
-                Spacer(
-                    modifier = Modifier.height(2.dp)
-                )
+                Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Lógica de Programação",
+                    text = titulo,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF20202A)
+                    color = Color(0xFF20202A),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Text(
-                    text = "8 de 18 aulas",
+                    text = detalhe,
                     fontSize = 11.sp,
                     color = Color(0xFF85808C)
                 )
 
-                Spacer(
-                    modifier = Modifier.height(6.dp)
-                )
+                if (fracao != null) {
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(Color(0xFFE9E6EF))
-                ) {
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(8f / 18f)
+                            .fillMaxWidth()
                             .height(5.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color(0xFF7C3AED))
-                    )
+                            .background(Color(0xFFE9E6EF))
+                    ) {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fracao)
+                                .height(5.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(Color(0xFF7C3AED))
+                        )
+                    }
                 }
             }
 
-            Spacer(
-                modifier = Modifier.width(10.dp)
-            )
+            Spacer(modifier = Modifier.width(10.dp))
 
             Box(
                 modifier = Modifier
@@ -757,8 +925,9 @@ fun BottomNavigationBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(76.dp)
             .background(Color.White)
+            .navigationBarsPadding()
+            .height(76.dp)
             .padding(horizontal = 6.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
