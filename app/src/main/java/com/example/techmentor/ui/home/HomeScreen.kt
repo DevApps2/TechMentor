@@ -1,6 +1,8 @@
 package com.example.techmentor.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,8 +12,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,45 +25,59 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import androidx.compose.runtime.remember
-import com.example.techmentor.data.Sessao
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.MatriculaResponse
+import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.auth.GradientButton
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.delay
+import com.example.techmentor.ui.components.Icone
+import com.example.techmentor.ui.components.IconeLinha
+import com.example.techmentor.ui.theme.ManropeFamily
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+// Cores do protótipo
+private val Fundo = Color(0xFFF8F8FB)
+private val Roxo = Color(0xFF7C3AED)
+private val RoxoEscuro = Color(0xFF6D28D9)
+private val Azul = Color(0xFF2563EB)
+private val TextoEscuro = Color(0xFF17151F)
+private val LocaleBr: Locale = Locale.forLanguageTag("pt-BR")
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -65,7 +85,6 @@ fun HomeScreen(
 ) {
 
     val estado by viewModel.estado.collectAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Volta ao login se a sessão não existe mais (ex.: o banco foi reiniciado)
     LaunchedEffect(estado.sessaoExpirada) {
@@ -77,25 +96,15 @@ fun HomeScreen(
         }
     }
 
-    // Carrega ao abrir e recarrega ao voltar para a Home (ex.: depois de concluir uma aula)
+    // Carrega ao abrir e ao voltar para a Home; fora isso, só puxando a tela para baixo
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
-    }
-
-    // Enquanto a Home está na tela, atualiza sozinha a cada 30 segundos
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            while (true) {
-                delay(30_000)
-                viewModel.carregar()
-            }
-        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8FB))
+            .background(Fundo)
             .statusBarsPadding()
     ) {
 
@@ -106,18 +115,24 @@ fun HomeScreen(
             val usuario = estado.usuario
 
             when {
-                usuario != null -> HomeContent(
-                    usuario = usuario,
-                    cursoEmAndamento = estado.cursoEmAndamento,
-                    proximaMentoria = estado.proximaMentoria,
-                    navController = navController,
-                    onSair = {
-                        Sessao.sair()
-                        navController.navigate("login") {
-                            popUpTo("home") { inclusive = true }
+                usuario != null -> PullToRefreshBox(
+                    isRefreshing = estado.atualizando,
+                    onRefresh = { viewModel.carregar(manual = true) },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    HomeContent(
+                        usuario = usuario,
+                        cursoEmAndamento = estado.cursoEmAndamento,
+                        proximaMentoria = estado.proximaMentoria,
+                        navController = navController,
+                        onSair = {
+                            Sessao.sair()
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
 
                 estado.carregando || estado.sessaoExpirada -> HomeCarregando()
 
@@ -148,34 +163,32 @@ private fun HomeContent(
     onSair: () -> Unit
 ) {
 
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = 20.dp,
                 end = 20.dp,
-                top = 18.dp,
+                top = 20.dp,
                 bottom = 24.dp
-            ),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            )
     ) {
 
         WelcomeSection(
             nome = usuario.nome,
+            fotoUrl = usuario.fotoUrl,
             onSair = onSair
         )
+
+        Spacer(modifier = Modifier.height(19.dp))
 
         JourneyCard(usuario = usuario)
 
         SectionHeader(
             title = if (proximaMentoria != null) "Sua próxima mentoria" else "Próximo passo",
             action = "Ver mentoras",
-            onAction = {
-                navController.navigate("mentorship")
-            }
+            onAction = { navController.navigate("mentorship") }
         )
 
         NextActionCard(
@@ -183,45 +196,38 @@ private fun HomeContent(
                 ?: "Converse com uma mentora",
             descricao = proximaMentoria?.let { descricaoDaMentoria(it) }
                 ?: "Explore horários e agende uma conversa.",
-            onClick = {
-                navController.navigate("mentorship")
-            }
+            onClick = { navController.navigate("mentorship") }
         )
 
         SectionHeader(
             title = "Continue aprendendo",
             action = "Ver tudo",
-            onAction = {
-                navController.navigate("learning")
-            }
+            onAction = { navController.navigate("learning") }
         )
 
         ContinueLearningCard(
             curso = cursoEmAndamento,
-            onClick = {
-                navController.navigate("learning")
-            }
+            onClick = { navController.navigate("learning") }
         )
 
-        Text(
-            text = "Explore o TechMentor",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF20202A)
+        SectionHeader(
+            title = "Explore o TechMentor",
+            action = null,
+            onAction = {}
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
             ExploreCard(
                 modifier = Modifier.weight(1f),
                 title = "Mentoria",
                 description = "Converse e evolua",
-                symbol = "♧",
+                icone = Icone.USUARIOS,
                 background = Color(0xFFEDE9FE),
-                iconColor = Color(0xFF6D28D9),
+                iconColor = RoxoEscuro,
                 onClick = { navController.navigate("mentorship") }
             )
 
@@ -229,23 +235,25 @@ private fun HomeContent(
                 modifier = Modifier.weight(1f),
                 title = "Aprender",
                 description = "Novas habilidades",
-                symbol = "▣",
+                icone = Icone.LIVRO,
                 background = Color(0xFFE6EFFF),
-                iconColor = Color(0xFF2563EB),
+                iconColor = Azul,
                 onClick = { navController.navigate("learning") }
             )
         }
 
+        Spacer(modifier = Modifier.height(10.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
             ExploreCard(
                 modifier = Modifier.weight(1f),
                 title = "Oportunidades",
                 description = "Dê o próximo passo",
-                symbol = "▤",
+                icone = Icone.MALETA,
                 background = Color(0xFFFEF3C7),
                 iconColor = Color(0xFFD97706),
                 onClick = { navController.navigate("opportunities") }
@@ -255,7 +263,7 @@ private fun HomeContent(
                 modifier = Modifier.weight(1f),
                 title = "Segurança",
                 description = "Apoio e proteção",
-                symbol = "◆",
+                icone = Icone.ESCUDO,
                 background = Color(0xFFFCE7F3),
                 iconColor = Color(0xFFDB2777),
                 onClick = { navController.navigate("safety") }
@@ -275,14 +283,14 @@ private fun HomeCarregando() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
 
         EsqueletoBloco(altura = 56.dp)
-        EsqueletoBloco(altura = 150.dp)
-        EsqueletoBloco(altura = 78.dp)
-        EsqueletoBloco(altura = 90.dp)
+        EsqueletoBloco(altura = 156.dp)
+        EsqueletoBloco(altura = 74.dp)
+        EsqueletoBloco(altura = 89.dp)
     }
 }
 
@@ -314,8 +322,9 @@ private fun HomeErro(
 
         Text(
             text = "Ops!",
+            fontFamily = ManropeFamily,
             fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = Color(0xFF20202A)
         )
 
@@ -339,19 +348,17 @@ private fun HomeErro(
 
 
 // ======================================================
-// CABEÇALHO
+// CABEÇALHO (data, nome e foto)
 // ======================================================
 
 @Composable
 fun WelcomeSection(
     nome: String,
+    fotoUrl: String?,
     onSair: () -> Unit
 ) {
 
-    val date = SimpleDateFormat(
-        "EEEE, d 'DE' MMMM",
-        Locale.forLanguageTag("pt-BR")
-    )
+    val date = SimpleDateFormat("EEEE, d 'DE' MMMM", LocaleBr)
         .format(Date())
         .uppercase()
 
@@ -372,7 +379,7 @@ fun WelcomeSection(
 
             Text(
                 text = date,
-                fontSize = 11.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF8C8796)
             )
@@ -381,26 +388,32 @@ fun WelcomeSection(
 
             Text(
                 text = "Olá, $primeiroNome!",
+                fontFamily = ManropeFamily,
                 fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF17151F)
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.5).sp,
+                color = TextoEscuro,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = "Pronta para dar mais um passo?",
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 color = Color(0xFF797486)
             )
         }
 
-        // AVATAR (toque para abrir o menu)
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // AVATAR: a inicial fica por baixo e a foto (se existir) cobre quando carregar
         Box {
 
             Box(
                 modifier = Modifier
-                    .size(54.dp)
+                    .size(50.dp)
                     .clip(RoundedCornerShape(17.dp))
                     .background(Color(0xFFEDE9FE))
                     .clickable { menuAberto = true },
@@ -409,10 +422,20 @@ fun WelcomeSection(
 
                 Text(
                     text = inicial,
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6D28D9)
+                    fontFamily = ManropeFamily,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = RoxoEscuro
                 )
+
+                if (!fotoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = fotoUrl,
+                        contentDescription = "Foto de perfil de $primeiroNome",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
             DropdownMenu(
@@ -434,7 +457,7 @@ fun WelcomeSection(
 
 
 // ======================================================
-// CARD DA JORNADA
+// SUA JORNADA
 // ======================================================
 
 @Composable
@@ -442,76 +465,81 @@ fun JourneyCard(
     usuario: UsuarioResponse
 ) {
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
+    val forma = RoundedCornerShape(24.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(forma)
+            .background(
+                Brush.linearGradient(
+                    0f to Color(0xFF6D28D9),
+                    0.56f to Color(0xFF4F46E5),
+                    1f to Color(0xFF2563EB)
+                )
+            )
     ) {
+
+        // anel decorativo no canto superior direito
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 55.dp, y = (-70).dp)
+                .size(150.dp)
+                .border(28.dp, Color.White.copy(alpha = 0.07f), CircleShape)
+        )
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF6D28D9),
-                            Color(0xFF4F46E5),
-                            Color(0xFF2563EB)
-                        )
-                    )
-                )
-                .padding(20.dp)
+                .padding(18.dp)
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
                 Column {
 
                     Text(
                         text = "SUA JORNADA",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFDCD8FF)
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.4.sp,
+                        color = Color.White.copy(alpha = 0.72f)
                     )
 
-                    Spacer(modifier = Modifier.height(5.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "${formatarNumero(usuario.xpTotal)} XP acumulados",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontFamily = ManropeFamily,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .background(
-                            Color.White.copy(alpha = 0.16f),
-                            RoundedCornerShape(15.dp)
-                        )
-                        .padding(
-                            horizontal = 11.dp,
-                            vertical = 7.dp
-                        )
+                        .clip(RoundedCornerShape(15.dp))
+                        .background(Color.White.copy(alpha = 0.16f))
+                        .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(15.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
 
                     Text(
                         text = "Nível ${usuario.nivel}",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -521,13 +549,13 @@ fun JourneyCard(
                 Text(
                     text = "Próximo nível",
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
                 Text(
                     text = "${formatarNumero(usuario.xpProximoNivel)} XP",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
                     color = Color(0xFFD9D5FA)
                 )
             }
@@ -538,25 +566,35 @@ fun JourneyCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(7.dp)
+                    .height(6.dp)
                     .clip(RoundedCornerShape(5.dp))
-                    .background(Color.White.copy(alpha = 0.20f))
+                    .background(Color.White.copy(alpha = 0.19f))
             ) {
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(fracaoDoNivel(usuario))
-                        .height(7.dp)
+                        .height(6.dp)
                         .clip(RoundedCornerShape(5.dp))
-                        .background(Color.White)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color.White, Color(0xFFBFDBFE))
+                            )
+                        )
                 )
             }
 
-            Spacer(modifier = Modifier.height(9.dp))
+            Spacer(modifier = Modifier.height(7.dp))
 
             Text(
-                text = "Faltam ${formatarNumero(usuario.xpFaltante)} XP · ${textoSequencia(usuario.sequenciaDias)}",
-                fontSize = 12.sp,
+                text = buildAnnotatedString {
+                    append("Faltam ")
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append("${formatarNumero(usuario.xpFaltante)} XP")
+                    }
+                    append(" · ${textoSequencia(usuario.sequenciaDias)}")
+                },
+                fontSize = 11.sp,
                 color = Color(0xFFDCD8FF)
             )
         }
@@ -565,38 +603,42 @@ fun JourneyCard(
 
 
 // ======================================================
-// CABEÇALHO DE SEÇÃO
+// TÍTULO DE SEÇÃO
 // ======================================================
 
 @Composable
 fun SectionHeader(
     title: String,
-    action: String,
+    action: String?,
     onAction: () -> Unit
 ) {
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 22.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         Text(
             text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF20202A)
+            fontFamily = ManropeFamily,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.3).sp,
+            color = TextoEscuro
         )
 
-        Text(
-            text = action,
-            modifier = Modifier.clickable {
-                onAction()
-            },
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF7C3AED)
-        )
+        if (action != null) {
+            Text(
+                text = action,
+                modifier = Modifier.clickable { onAction() },
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Roxo
+            )
+        }
     }
 }
 
@@ -615,13 +657,9 @@ fun NextActionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            },
+            .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
 
         Row(
@@ -632,9 +670,9 @@ fun NextActionCard(
         ) {
 
             IconTile(
-                symbol = "♧",
+                icone = Icone.USUARIOS,
                 background = Color(0xFFEDE9FE),
-                iconColor = Color(0xFF6D28D9)
+                iconColor = RoxoEscuro
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -670,6 +708,7 @@ fun NextActionCard(
     }
 }
 
+
 // ======================================================
 // CONTINUE APRENDENDO
 // ======================================================
@@ -693,124 +732,119 @@ fun ContinueLearningCard(
         null
     }
 
-    Card(
+    val forma = RoundedCornerShape(18.dp)
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            .clip(forma)
+            .background(Color.White)
+            .border(1.dp, Color(0xFFECE9F1), forma)
+            .clickable { onClick() }
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(width = 58.dp, height = 63.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(Color(0xFFEDE9FE), Color(0xFFDBEAFE))
+                    )
+                ),
+            contentAlignment = Alignment.Center
         ) {
 
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(15.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFFEDE9FE),
-                                Color(0xFFDBEAFE)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
+            IconeLinha(
+                icone = Icone.CODIGO,
+                cor = RoxoEscuro,
+                tamanho = 27.dp
+            )
+        }
 
-                Text(
-                    text = "</>",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6D28D9)
-                )
-            }
+        Spacer(modifier = Modifier.width(12.dp))
 
-            Spacer(modifier = Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Text(
+                text = categoria,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.7.sp,
+                color = Roxo
+            )
 
-                Text(
-                    text = categoria,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF7C3AED)
-                )
+            Spacer(modifier = Modifier.height(3.dp))
 
-                Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = titulo,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextoEscuro,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
-                Text(
-                    text = titulo,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF20202A),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Spacer(modifier = Modifier.height(3.dp))
 
-                Text(
-                    text = detalhe,
-                    fontSize = 11.sp,
-                    color = Color(0xFF85808C)
-                )
+            Text(
+                text = detalhe,
+                fontSize = 9.sp,
+                color = Color(0xFF85808C)
+            )
 
-                if (fracao != null) {
+            if (fracao != null) {
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(7.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(Color(0xFFE9E6EF))
+                ) {
 
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(5.dp)
+                            .fillMaxWidth(fracao)
+                            .height(6.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color(0xFFE9E6EF))
-                    ) {
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(fracao)
-                                .height(5.dp)
-                                .clip(RoundedCornerShape(5.dp))
-                                .background(Color(0xFF7C3AED))
-                        )
-                    }
+                            .background(
+                                Brush.horizontalGradient(listOf(Roxo, Azul))
+                            )
+                    )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(35.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF7C3AED)),
-                contentAlignment = Alignment.Center
-            ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Roxo)
+                .padding(start = 2.dp),
+            contentAlignment = Alignment.Center
+        ) {
 
-                Text(
-                    text = "▶",
-                    fontSize = 14.sp,
-                    color = Color.White
-                )
-            }
+            IconeLinha(
+                icone = Icone.PLAY,
+                cor = Color.White,
+                tamanho = 17.dp
+            )
         }
     }
 }
 
 
 // ======================================================
-// CARD DE EXPLORAÇÃO
+// EXPLORE O TECHMENTOR
 // ======================================================
 
 @Composable
@@ -818,222 +852,217 @@ fun ExploreCard(
     modifier: Modifier = Modifier,
     title: String,
     description: String,
-    symbol: String,
+    icone: Icone,
     background: Color,
     iconColor: Color,
     onClick: () -> Unit
 ) {
 
-    Card(
+    val forma = RoundedCornerShape(17.dp)
+
+    Row(
         modifier = modifier
-            .height(125.dp)
-            .clickable {
-                onClick()
-            },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            .heightIn(min = 78.dp)
+            .clip(forma)
+            .background(Color.White)
+            .border(1.dp, Color(0xFFEEECF2), forma)
+            .clickable { onClick() }
+            .padding(13.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
+        IconTile(
+            icone = icone,
+            background = background,
+            iconColor = iconColor
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.weight(1f)
         ) {
 
-            IconTile(
-                symbol = symbol,
-                background = background,
-                iconColor = iconColor
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextoEscuro,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Bottom
-            ) {
+            Spacer(modifier = Modifier.height(3.dp))
 
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-
-                    Text(
-                        text = title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF20202A)
-                    )
-
-                    Text(
-                        text = description,
-                        fontSize = 11.sp,
-                        color = Color(0xFF8A8691),
-                        maxLines = 2
-                    )
-                }
-
-                Text(
-                    text = "›",
-                    fontSize = 23.sp,
-                    color = Color(0xFF8A8691)
-                )
-            }
+            Text(
+                text = description,
+                fontSize = 10.sp,
+                lineHeight = 12.sp,
+                color = Color(0xFF8A8691),
+                maxLines = 2
+            )
         }
+
+        IconeLinha(
+            icone = Icone.SETA,
+            cor = TextoEscuro,
+            tamanho = 17.dp
+        )
     }
 }
 
-
-// ======================================================
-// ÍCONE
-// ======================================================
-
 @Composable
 fun IconTile(
-    symbol: String,
+    icone: Icone,
     background: Color,
     iconColor: Color
 ) {
 
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(38.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(background),
         contentAlignment = Alignment.Center
     ) {
 
-        Text(
-            text = symbol,
-            fontSize = 21.sp,
-            fontWeight = FontWeight.Bold,
-            color = iconColor
+        IconeLinha(
+            icone = icone,
+            cor = iconColor,
+            tamanho = 22.dp
         )
     }
 }
 
 
 // ======================================================
-// BOTTOM NAVIGATION
+// BARRA INFERIOR
 // ======================================================
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavController
+    navController: NavController,
+    rotaAtual: String = "home"
 ) {
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .navigationBarsPadding()
-            .height(76.dp)
-            .padding(horizontal = 6.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        BottomNavItem(
-            symbol = "⌂",
-            label = "Início",
-            selected = true,
-            onClick = {
-                navController.navigate("home") {
-                    popUpTo("home") {
-                        inclusive = false
-                    }
-                }
-            }
+        // linha fina no topo da barra
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0xFFE9E7EE))
         )
 
-        BottomNavItem(
-            symbol = "⌕",
-            label = "Explorar",
-            selected = false,
-            onClick = {
-                navController.navigate("mentorship")
-            }
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(76.dp)
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-        BottomNavItem(
-            symbol = "▣",
-            label = "Aprender",
-            selected = false,
-            onClick = {
-                navController.navigate("learning")
-            }
-        )
+            BottomNavItem(
+                icone = Icone.CASA,
+                label = "Início",
+                selected = rotaAtual == "home",
+                onClick = { irPara(navController, "home") }
+            )
 
-        BottomNavItem(
-            symbol = "★",
-            label = "Conquistas",
-            selected = false,
-            onClick = {
-                navController.navigate("achievements")
-            }
-        )
+            BottomNavItem(
+                icone = Icone.BUSCA,
+                label = "Explorar",
+                selected = rotaAtual in listOf("mentorship", "opportunities", "safety"),
+                onClick = { irPara(navController, "mentorship") }
+            )
 
-        BottomNavItem(
-            symbol = "●",
-            label = "Perfil",
-            selected = false,
-            onClick = {
-                // Será conectado depois
-            }
-        )
+            BottomNavItem(
+                icone = Icone.LIVRO,
+                label = "Aprender",
+                selected = rotaAtual == "learning",
+                onClick = { irPara(navController, "learning") }
+            )
+
+            BottomNavItem(
+                icone = Icone.TROFEU,
+                label = "Conquistas",
+                selected = rotaAtual == "achievements",
+                onClick = { irPara(navController, "achievements") }
+            )
+
+            BottomNavItem(
+                icone = Icone.PERFIL,
+                label = "Perfil",
+                selected = rotaAtual == "profile",
+                onClick = { irPara(navController, "profile") }
+            )
+        }
     }
 }
 
-
-// ======================================================
-// ITEM DA BOTTOM NAV
-// ======================================================
+private fun irPara(navController: NavController, rota: String) {
+    navController.navigate(rota) {
+        popUpTo("home") { inclusive = false }
+        launchSingleTop = true
+    }
+}
 
 @Composable
 fun BottomNavItem(
-    symbol: String,
+    icone: Icone,
     label: String,
     selected: Boolean,
     onClick: () -> Unit
 ) {
 
-    Column(
+    val cor = if (selected) Roxo else Color(0xFF96919E)
+
+    Box(
         modifier = Modifier
-            .size(
-                width = 70.dp,
-                height = 60.dp
-            )
-            .clickable {
-                onClick()
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .size(width = 70.dp, height = 62.dp)
+            .clickable { onClick() },
+        contentAlignment = Alignment.TopCenter
     ) {
 
-        Text(
-            text = symbol,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (selected) {
-                Color(0xFF7C3AED)
-            } else {
-                Color(0xFF96919E)
-            }
-        )
+        // marca roxa no topo do item ativo
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .width(27.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp))
+                    .background(Roxo)
+            )
+        }
 
-        Spacer(
-            modifier = Modifier.height(3.dp)
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
 
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = if (selected) {
-                Color(0xFF7C3AED)
-            } else {
-                Color(0xFF96919E)
-            }
-        )
+            IconeLinha(
+                icone = icone,
+                cor = cor,
+                tamanho = 21.dp,
+                espessura = if (selected) 2.4f else 1.8f
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = cor
+            )
+        }
     }
 }

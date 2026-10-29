@@ -10,18 +10,30 @@ import com.example.techmentor.ui.login.LoginScreen
 import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.profile.ProfileScreen
+import com.example.techmentor.ui.splash.SplashScreen
 
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
 
-    // Quem já entrou antes abre direto na Home
-    val inicio = remember { if (Sessao.usuarioId != null) "home" else "login" }
+    // Depois da abertura, quem já entrou antes vai direto para a Home
+    val destinoAposAbertura = remember { if (Sessao.usuarioId != null) "home" else "login" }
 
     NavHost(
         navController = navController,
-        startDestination = inicio
+        startDestination = "splash"
     ) {
+        composable("splash") {
+            SplashScreen(
+                onTerminar = {
+                    navController.navigate(destinoAposAbertura) {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable("login") {
             LoginScreen(navController = navController)
         }
@@ -49,12 +61,13 @@ fun NavGraph() {
         composable("achievements") {
             PlaceholderScreen("Conquistas")
         }
-        composable("achievements") {
-            PlaceholderScreen("Conquistas")
-        }
 
         composable("safety") {
             PlaceholderScreen("Segurança")
+        }
+
+        composable("profile") {
+            ProfileScreen(navController = navController)
         }
     }
 }

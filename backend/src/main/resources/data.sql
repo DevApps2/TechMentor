@@ -35,6 +35,15 @@ WHERE email = 'beatriz.santos@email.com' AND bio IS NULL;
 UPDATE usuarios SET bio = 'Em transição de carreira para tecnologia'
 WHERE email = 'camila.rocha@email.com' AND bio IS NULL;
 
+-- Fotos de perfil de teste (só preenche quem ainda não tem foto)
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=47' WHERE email = 'beatriz.santos@email.com'    AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=45' WHERE email = 'camila.rocha@email.com'      AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=44' WHERE email = 'daniela.martins@email.com'   AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=49' WHERE email = 'elisa.ferreira@email.com'    AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=32' WHERE email = 'maria.silva@techmentor.com'   AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=36' WHERE email = 'juliana.costa@techmentor.com' AND foto_url IS NULL;
+UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=25' WHERE email = 'fernanda.alves@techmentor.com' AND foto_url IS NULL;
+
 INSERT INTO usuario_areas_interesse (usuario_id, area)
 SELECT u.id, v.area
 FROM (

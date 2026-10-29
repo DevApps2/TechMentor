@@ -11,15 +11,22 @@ import com.example.techmentor.R
 // Fontes variáveis (Google Fonts, licença OFL): o peso é aplicado por FontVariation.
 // Antes do Android 8 (API 26) o sistema ignora a variação e usa o peso padrão do arquivo.
 
+// Quanto a fonte fica mais grossa em relação ao peso pedido (100 = um passo; 0 = como estava)
+private const val ENGROSSAR = 130
+
 @OptIn(ExperimentalTextApi::class)
 private fun variableFont(resId: Int, weight: FontWeight, opticalSize: Boolean = false): Font {
+
+    // Manrope e DM Sans vão até 800 no arquivo; passar disso não faz efeito
+    val pesoReal = (weight.weight + ENGROSSAR).coerceAtMost(800)
+
     val settings = if (opticalSize) {
         FontVariation.Settings(
-            FontVariation.weight(weight.weight),
+            FontVariation.weight(pesoReal),
             FontVariation.opticalSizing(14.sp)
         )
     } else {
-        FontVariation.Settings(FontVariation.weight(weight.weight))
+        FontVariation.Settings(FontVariation.weight(pesoReal))
     }
 
     return Font(
