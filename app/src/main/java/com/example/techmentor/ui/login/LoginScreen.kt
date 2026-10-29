@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
-
+import com.example.techmentor.data.Sessao
 @Composable
 fun LoginScreen(
     navController: NavController
@@ -90,7 +90,7 @@ fun LoginScreen(
         scope.launch {
             try {
                 val usuario = ApiClient.api.login(LoginRequest(email.trim(), password))
-                // usuario.id é o que você vai guardar para mandar no header X-Usuario-Id
+                Sessao.entrar(usuario.id)
                 navController.navigate("home") {
                     popUpTo("login") { inclusive = true }
                 }
