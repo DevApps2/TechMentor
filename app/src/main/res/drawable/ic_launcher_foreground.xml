@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- "<" -->
+    <path
+        android:pathData="M43,41L30,54L43,67"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- ">" -->
+    <path
+        android:pathData="M65,41L78,54L65,67"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- "/" azul claro, igual ao logo do app -->
+    <path
+        android:pathData="M58,38L50,70"
+        android:strokeColor="#FFBDE3FF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round" />
+</vector>
