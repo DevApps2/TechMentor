@@ -27,6 +27,8 @@ import java.io.IOException
 
 data class ProfileUiState(
     val carregando: Boolean = true,
+    // true enquanto o "puxar para atualizar" está buscando dados novos
+    val atualizando: Boolean = false,
     val erro: String? = null,
     val usuario: UsuarioResponse? = null,
     val totalConquistas: Int = 0,
@@ -47,7 +49,7 @@ class ProfileViewModel : ViewModel() {
 
     private var tarefa: Job? = null
 
-    fun carregar() {
+    fun carregar(manual: Boolean = false) {
         // Evita duas cargas ao mesmo tempo
         if (tarefa?.isActive == true) return
 
@@ -60,7 +62,11 @@ class ProfileViewModel : ViewModel() {
         tarefa = viewModelScope.launch {
             // O "carregando" só aparece na primeira vez; depois atualiza por baixo dos panos
             _estado.update {
-                if (it.usuario == null) it.copy(carregando = true, erro = null) else it
+                when {
+                    it.usuario == null -> it.copy(carregando = true, erro = null)
+                    manual -> it.copy(atualizando = true)
+                    else -> it
+                }
             }
 
             try {
@@ -107,6 +113,8 @@ class ProfileViewModel : ViewModel() {
                 }
             } catch (e: IOException) {
                 _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
+            } finally {
+                _estado.update { it.copy(atualizando = false) }
             }
         }
     }

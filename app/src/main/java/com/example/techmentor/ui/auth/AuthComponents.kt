@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.techmentor.ui.theme.DmSansFamily
 import com.example.techmentor.ui.theme.ManropeFamily
+import androidx.compose.foundation.layout.heightIn
 
 // Componentes compartilhados pelas telas de login e de criação de conta.
 
@@ -281,7 +282,9 @@ internal fun AuthField(
     keyboardActions: KeyboardActions,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     // Campo de senha: esconde o texto e mostra o olhinho para revelar/ocultar
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    // NOVO: campo de texto longo (ex.: "Apresentação"): bloco maior e Enter quebra a linha
+    multilinha: Boolean = false
 ) {
 
     var mostrarSenha by remember { mutableStateOf(false) }
@@ -316,7 +319,9 @@ internal fun AuthField(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focado = it.isFocused },
-            singleLine = true,
+            singleLine = !multilinha,                 // NOVO
+            minLines = if (multilinha) 4 else 1,      // NOVO: começa com 4 linhas de altura
+            maxLines = if (multilinha) 8 else 1,      // NOVO: cresce até 8 e depois rola dentro do campo
             textStyle = TextStyle(
                 fontFamily = DmSansFamily,
                 fontSize = 13.sp,
@@ -332,7 +337,8 @@ internal fun AuthField(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(47.dp)
+                        // NOVO: no multilinha a altura é "no mínimo 47" e cresce com o texto
+                        .then(if (multilinha) Modifier.heightIn(min = 47.dp) else Modifier.height(47.dp))
                         .clip(shape)
                         .background(if (focado) Color.White else AuthColors.FieldBackground)
                         .border(
@@ -342,13 +348,19 @@ internal fun AuthField(
                             ),
                             shape = shape
                         )
-                        .padding(start = 13.dp, end = if (isPassword) 4.dp else 13.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(
+                            start = 13.dp,
+                            end = if (isPassword) 4.dp else 13.dp,
+                            top = if (multilinha) 13.dp else 0.dp,      // NOVO: respiro em cima e embaixo
+                            bottom = if (multilinha) 13.dp else 0.dp
+                        ),
+                    // NOVO: no bloco grande o texto começa no topo, não no meio
+                    verticalAlignment = if (multilinha) Alignment.Top else Alignment.CenterVertically
                 ) {
 
                     Box(
                         modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart
+                        contentAlignment = if (multilinha) Alignment.TopStart else Alignment.CenterStart
                     ) {
 
                         if (value.isEmpty()) {
@@ -387,7 +399,6 @@ internal fun AuthField(
         )
     }
 }
-
 
 // ======================================================
 // ÍCONE DO OLHO (mostrar/ocultar senha)
