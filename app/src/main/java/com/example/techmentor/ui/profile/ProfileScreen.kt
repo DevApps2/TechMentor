@@ -58,6 +58,14 @@ import com.example.techmentor.ui.theme.ManropeFamily
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import com.example.techmentor.ui.auth.AuthColors
+import com.example.techmentor.ui.auth.AuthField
 
 private val Fundo = Color(0xFFF8F8FB)
 private val Roxo = Color(0xFF7C3AED)
@@ -120,7 +128,15 @@ fun ProfileScreen(
                 usuario != null -> ProfileContent(
                     estado = estado,
                     usuario = usuario,
-                    navController = navController
+                    navController = navController,
+                    onSalvar = viewModel::salvar,
+                    onLimparErro = { viewModel.limparErroEdicao() },
+                    onSair = {
+                        Sessao.sair()
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
                 )
 
                 estado.carregando || estado.sessaoExpirada -> ProfileCarregando()
@@ -145,10 +161,36 @@ fun ProfileScreen(
 // ======================================================
 
 @Composable
+private fun BotaoSair(onClick: () -> Unit) {
+
+    val forma = RoundedCornerShape(13.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clip(forma)
+            .border(BorderStroke(1.dp, Color(0xFFFECACA)), forma)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = "Sair da conta",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFDC2626)
+        )
+    }
+}
+@Composable
 private fun ProfileContent(
     estado: ProfileUiState,
     usuario: UsuarioResponse,
-    navController: NavController
+    navController: NavController,
+    onSalvar: (String, String, String, List<String>, () -> Unit) -> Unit,
+    onLimparErro: () -> Unit,
+    onSair: () -> Unit
 ) {
 
     var editando by remember { mutableStateOf(false) }
@@ -161,7 +203,7 @@ private fun ProfileContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        AvatarPerfil(nome = usuario.nome)
+        AvatarPerfil(nome = usuario.nome, fotoUrl = usuario.fotoUrl)
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -186,12 +228,28 @@ private fun ProfileContent(
 
         BotaoEditar(
             editando = editando,
-            onClick = { editando = !editando }
+            onClick = {
+                onLimparErro()
+                editando = !editando
+            }
         )
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // (Parte 5: o card de edição entra aqui)
+        if (editando) {
+            CardDeEdicao(
+                usuario = usuario,
+                salvando = estado.salvando,
+                erro = estado.erroEdicao,
+                onSalvar = { nome, bio, foto, areas ->
+                    onSalvar(nome, bio, foto, areas) { editando = false }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            BotaoSair(onClick = onSair)
+        }
 
         Estatisticas(
             xp = usuario.xpTotal,
@@ -218,7 +276,7 @@ private fun ProfileContent(
 }
 
 @Composable
-private fun AvatarPerfil(nome: String) {
+private fun AvatarPerfil(nome: String, fotoUrl: String?) {
 
     val forma = RoundedCornerShape(31.dp)
 
@@ -246,6 +304,15 @@ private fun AvatarPerfil(nome: String) {
             fontWeight = FontWeight.ExtraBold,
             color = RoxoEscuro
         )
+
+        if (!fotoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = fotoUrl,
+                contentDescription = "Foto de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -272,6 +339,79 @@ private fun BotaoEditar(
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = RoxoEscuro
+        )
+    }
+}
+
+@Composable
+private fun CardDeEdicao(
+    usuario: UsuarioResponse,
+    salvando: Boolean,
+    erro: String?,
+    onSalvar: (nome: String, bio: String, fotoUrl: String, areas: List<String>) -> Unit
+) {
+
+    var nome by remember { mutableStateOf(usuario.nome) }
+    var bio by remember { mutableStateOf(usuario.bio.orEmpty()) }
+    var foto by remember { mutableStateOf(usuario.fotoUrl.orEmpty()) }
+    var areas by remember { mutableStateOf(usuario.areasInteresse.orEmpty().joinToString(", ")) }
+
+    SecaoBranca(titulo = "Editar perfil") {
+
+        AuthField(
+            label = "Nome",
+            value = nome,
+            onValueChange = { nome = it },
+            placeholder = "Seu nome",
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions.Default
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        AuthField(
+            label = "Apresentação",
+            value = bio,
+            onValueChange = { bio = it },
+            placeholder = "Conte um pouco sobre você",
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions.Default
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        AuthField(
+            label = "Link da foto",
+            value = foto,
+            onValueChange = { foto = it },
+            placeholder = "https://...",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions.Default
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        AuthField(
+            label = "Áreas de interesse (separe por vírgula)",
+            value = areas,
+            onValueChange = { areas = it },
+            placeholder = "Dados, Back-end, UX/UI",
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions.Default
+        )
+
+        if (erro != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = erro, fontSize = 11.sp, color = AuthColors.Error)
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        GradientButton(
+            text = if (salvando) "Salvando..." else "Salvar alterações",
+            onClick = {
+                if (!salvando) onSalvar(nome, bio, foto, areas.split(","))
+            }
         )
     }
 }
@@ -773,4 +913,6 @@ private fun ProfileErro(
             onClick = onTentarDeNovo
         )
     }
+
+
 }
