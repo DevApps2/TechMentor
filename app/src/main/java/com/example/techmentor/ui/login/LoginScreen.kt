@@ -40,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.techmentor.data.ApiClient
+import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.LoginRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -95,9 +96,9 @@ fun LoginScreen(
                     popUpTo("login") { inclusive = true }
                 }
             } catch (e: HttpException) {
-                error = if (e.code() == 401) "E-mail ou senha incorretos." else "Erro no servidor (${e.code()})."
+                error = if (e.code() == 401) "E-mail ou senha incorretos." else ERRO_CONEXAO
             } catch (e: IOException) {
-                error = "Sem conexão com o servidor."
+                error = ERRO_CONEXAO
             } finally {
                 loading = false
             }

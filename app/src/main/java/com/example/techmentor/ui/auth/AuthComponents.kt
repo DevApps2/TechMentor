@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -285,6 +286,9 @@ internal fun AuthField(
 
     var mostrarSenha by remember { mutableStateOf(false) }
 
+    // No protótipo, o campo em foco troca o fundo para branco e a borda para roxo
+    var focado by remember { mutableStateOf(false) }
+
     val transformacao = if (isPassword && !mostrarSenha) {
         PasswordVisualTransformation()
     } else {
@@ -301,7 +305,7 @@ internal fun AuthField(
         )
 
         Spacer(
-            modifier = Modifier.height(8.dp)
+            modifier = Modifier.height(6.dp)
         )
 
         val shape = RoundedCornerShape(12.dp)
@@ -309,7 +313,9 @@ internal fun AuthField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focado = it.isFocused },
             singleLine = true,
             textStyle = TextStyle(
                 fontFamily = DmSansFamily,
@@ -328,9 +334,12 @@ internal fun AuthField(
                         .fillMaxWidth()
                         .height(47.dp)
                         .clip(shape)
-                        .background(AuthColors.FieldBackground)
+                        .background(if (focado) Color.White else AuthColors.FieldBackground)
                         .border(
-                            border = BorderStroke(1.dp, AuthColors.FieldBorder),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (focado) AuthColors.Purple else AuthColors.FieldBorder
+                            ),
                             shape = shape
                         )
                         .padding(start = 13.dp, end = if (isPassword) 4.dp else 13.dp),

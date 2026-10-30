@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.ApiClient
+import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.AtualizarUsuarioRequest
 import com.example.techmentor.data.ErroResponse
 import com.example.techmentor.data.MatriculaResponse
@@ -98,10 +99,10 @@ class ProfileViewModel : ViewModel() {
                 if (e.code() == 404 || e.code() == 401) {
                     _estado.update { it.copy(carregando = false, sessaoExpirada = true) }
                 } else {
-                    _estado.update { it.copy(carregando = false, erro = "Erro no servidor (${e.code()}).") }
+                    _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
                 }
             } catch (e: IOException) {
-                _estado.update { it.copy(carregando = false, erro = "Sem conexão com o servidor.") }
+                _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
             }
         }
     }
@@ -151,11 +152,11 @@ class ProfileViewModel : ViewModel() {
                 val mensagem = when (e.code()) {
                     400 -> mensagemDaApi(e) ?: "Confira os dados informados."
                     404 -> "Usuário não encontrado."
-                    else -> "Erro no servidor (${e.code()})."
+                    else -> ERRO_CONEXAO
                 }
                 _estado.update { it.copy(salvando = false, erroEdicao = mensagem) }
             } catch (e: IOException) {
-                _estado.update { it.copy(salvando = false, erroEdicao = "Sem conexão com o servidor.") }
+                _estado.update { it.copy(salvando = false, erroEdicao = ERRO_CONEXAO) }
             }
         }
     }
