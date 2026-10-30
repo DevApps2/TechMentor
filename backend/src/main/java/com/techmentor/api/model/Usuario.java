@@ -37,6 +37,8 @@ public class Usuario {
     // Perfil ("Apresentação" e "Áreas de interesse" do app)
     @Column(length = 500) private String bio;
 
+
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "usuario_areas_interesse", joinColumns = @JoinColumn(name = "usuario_id"))
     @Column(name = "area", length = 80)

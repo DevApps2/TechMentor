@@ -1,10 +1,13 @@
 package com.example.techmentor.data
 
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface TechMentorApi {
@@ -31,5 +34,12 @@ interface TechMentorApi {
     suspend fun atualizarUsuario(
         @Path("id") id: Long,
         @Body body: AtualizarUsuarioRequest
+    ): UsuarioResponse
+
+    @Multipart
+    @POST("usuarios/{id}/foto")
+    suspend fun enviarFoto(
+        @Path("id") id: Long,
+        @Part foto: MultipartBody.Part
     ): UsuarioResponse
 }

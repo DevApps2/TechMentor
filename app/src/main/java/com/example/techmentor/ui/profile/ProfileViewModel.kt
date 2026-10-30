@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -33,7 +36,8 @@ data class ProfileUiState(
     val sessaoExpirada: Boolean = false,
     // edição do perfil
     val salvando: Boolean = false,
-    val erroEdicao: String? = null
+    val erroEdicao: String? = null,
+    val enviandoFoto: Boolean = false,
 )
 
 class ProfileViewModel : ViewModel() {
@@ -157,6 +161,33 @@ class ProfileViewModel : ViewModel() {
                 _estado.update { it.copy(salvando = false, erroEdicao = mensagem) }
             } catch (e: IOException) {
                 _estado.update { it.copy(salvando = false, erroEdicao = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    fun enviarFoto(jpeg: ByteArray) {
+        val usuarioId = Sessao.usuarioId ?: return
+        if (_estado.value.enviandoFoto) return
+
+        viewModelScope.launch {
+            _estado.update { it.copy(enviandoFoto = true, erroEdicao = null) }
+
+            try {
+                val parte = MultipartBody.Part.createFormData(
+                    "foto",
+                    "foto.jpg",
+                    jpeg.toRequestBody("image/jpeg".toMediaType())
+                )
+
+                val atualizado = ApiClient.api.enviarFoto(usuarioId, parte)
+
+                _estado.update { it.copy(usuario = atualizado, enviandoFoto = false) }
+            } catch (e: HttpException) {
+                _estado.update {
+                    it.copy(enviandoFoto = false, erroEdicao = mensagemDaApi(e) ?: ERRO_CONEXAO)
+                }
+            } catch (e: IOException) {
+                _estado.update { it.copy(enviandoFoto = false, erroEdicao = ERRO_CONEXAO) }
             }
         }
     }

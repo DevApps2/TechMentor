@@ -1,5 +1,12 @@
 package com.example.techmentor.ui.profile
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +28,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +44,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,26 +58,26 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
+import com.example.techmentor.ui.auth.AuthColors
+import com.example.techmentor.ui.auth.AuthField
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.auth.OutlinedAuthButton
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.formatarNumero
 import com.example.techmentor.ui.home.parseDataHora
 import com.example.techmentor.ui.theme.ManropeFamily
 import kotlinx.coroutines.delay
+import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import com.example.techmentor.ui.auth.AuthColors
-import com.example.techmentor.ui.auth.AuthField
+import android.graphics.Matrix
+import android.media.ExifInterface
 
 private val Fundo = Color(0xFFF8F8FB)
 private val Roxo = Color(0xFF7C3AED)
@@ -130,6 +142,7 @@ fun ProfileScreen(
                     usuario = usuario,
                     navController = navController,
                     onSalvar = viewModel::salvar,
+                    onEnviarFoto = viewModel::enviarFoto,
                     onLimparErro = { viewModel.limparErroEdicao() },
                     onSair = {
                         Sessao.sair()
@@ -161,34 +174,12 @@ fun ProfileScreen(
 // ======================================================
 
 @Composable
-private fun BotaoSair(onClick: () -> Unit) {
-
-    val forma = RoundedCornerShape(13.dp)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .clip(forma)
-            .border(BorderStroke(1.dp, Color(0xFFFECACA)), forma)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-
-        Text(
-            text = "Sair da conta",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFDC2626)
-        )
-    }
-}
-@Composable
 private fun ProfileContent(
     estado: ProfileUiState,
     usuario: UsuarioResponse,
     navController: NavController,
     onSalvar: (String, String, String, List<String>, () -> Unit) -> Unit,
+    onEnviarFoto: (ByteArray) -> Unit,
     onLimparErro: () -> Unit,
     onSair: () -> Unit
 ) {
@@ -240,15 +231,15 @@ private fun ProfileContent(
             CardDeEdicao(
                 usuario = usuario,
                 salvando = estado.salvando,
+                enviandoFoto = estado.enviandoFoto,
                 erro = estado.erroEdicao,
+                onEnviarFoto = onEnviarFoto,
                 onSalvar = { nome, bio, foto, areas ->
                     onSalvar(nome, bio, foto, areas) { editando = false }
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            BotaoSair(onClick = onSair)
+            Spacer(modifier = Modifier.height(11.dp))
         }
 
         Estatisticas(
@@ -272,6 +263,10 @@ private fun ProfileContent(
         Spacer(modifier = Modifier.height(10.dp))
 
         HistoricoDeMentorias(lista = estado.historicoMentorias)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        BotaoSair(onClick = onSair)
     }
 }
 
@@ -307,7 +302,7 @@ private fun AvatarPerfil(nome: String, fotoUrl: String?) {
 
         if (!fotoUrl.isNullOrBlank()) {
             AsyncImage(
-                model = fotoUrl,
+                model = ApiClient.urlDaFoto(fotoUrl),
                 contentDescription = "Foto de perfil",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -344,16 +339,56 @@ private fun BotaoEditar(
 }
 
 @Composable
+private fun BotaoSair(onClick: () -> Unit) {
+
+    val forma = RoundedCornerShape(13.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clip(forma)
+            .border(BorderStroke(1.dp, Color(0xFFFECACA)), forma)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = "Sair da conta",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFDC2626)
+        )
+    }
+}
+
+
+// ======================================================
+// EDIÇÃO DO PERFIL
+// ======================================================
+
+@Composable
 private fun CardDeEdicao(
     usuario: UsuarioResponse,
     salvando: Boolean,
+    enviandoFoto: Boolean,
     erro: String?,
+    onEnviarFoto: (ByteArray) -> Unit,
     onSalvar: (nome: String, bio: String, fotoUrl: String, areas: List<String>) -> Unit
 ) {
 
+    val context = LocalContext.current
+
+    val escolherFoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            reduzirFoto(context, uri)?.let(onEnviarFoto)
+        }
+    }
+
     var nome by remember { mutableStateOf(usuario.nome) }
     var bio by remember { mutableStateOf(usuario.bio.orEmpty()) }
-    var foto by remember { mutableStateOf(usuario.fotoUrl.orEmpty()) }
     var areas by remember { mutableStateOf(usuario.areasInteresse.orEmpty().joinToString(", ")) }
 
     SecaoBranca(titulo = "Editar perfil") {
@@ -380,13 +415,15 @@ private fun CardDeEdicao(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        AuthField(
-            label = "Link da foto",
-            value = foto,
-            onValueChange = { foto = it },
-            placeholder = "https://...",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions.Default
+        OutlinedAuthButton(
+            text = if (enviandoFoto) "Enviando foto..." else "Escolher foto da galeria",
+            onClick = {
+                if (!enviandoFoto) {
+                    escolherFoto.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -410,11 +447,60 @@ private fun CardDeEdicao(
         GradientButton(
             text = if (salvando) "Salvando..." else "Salvar alterações",
             onClick = {
-                if (!salvando) onSalvar(nome, bio, foto, areas.split(","))
+                if (!salvando) onSalvar(nome, bio, usuario.fotoUrl.orEmpty(), areas.split(","))
             }
         )
     }
 }
+/** Reduz a foto para no máximo 800 px, corrige a rotação e converte para JPEG. */
+private fun reduzirFoto(context: Context, uri: Uri): ByteArray? {
+
+    val original = runCatching {
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+    }.getOrNull() ?: return null
+
+    val maior = maxOf(original.width, original.height)
+    val escala = if (maior > 800) 800f / maior else 1f
+
+    // a matriz diz como transformar a imagem: reduzir e girar, de uma vez só
+    val matriz = Matrix().apply {
+        postScale(escala, escala)
+        postRotate(lerRotacao(context, uri).toFloat())
+    }
+
+    val ajustada = Bitmap.createBitmap(
+        original, 0, 0, original.width, original.height, matriz, true
+    )
+
+    val saida = ByteArrayOutputStream()
+    ajustada.compress(Bitmap.CompressFormat.JPEG, 85, saida)
+    return saida.toByteArray()
+}
+
+/** Lê no arquivo quantos graus a foto precisa girar para ficar em pé. */
+private fun lerRotacao(context: Context, uri: Uri): Int {
+
+    val orientacao = runCatching {
+        context.contentResolver.openInputStream(uri)?.use {
+            ExifInterface(it).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+        }
+    }.getOrNull() ?: ExifInterface.ORIENTATION_NORMAL
+
+    return when (orientacao) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> 90
+        ExifInterface.ORIENTATION_ROTATE_180 -> 180
+        ExifInterface.ORIENTATION_ROTATE_270 -> 270
+        else -> 0
+    }
+}
+
+
+// ======================================================
+// ESTATÍSTICAS
+// ======================================================
 
 @Composable
 private fun Estatisticas(
@@ -913,6 +999,4 @@ private fun ProfileErro(
             onClick = onTentarDeNovo
         )
     }
-
-
 }

@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.MatriculaResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
@@ -414,7 +415,7 @@ fun WelcomeSection(
 
             if (!fotoUrl.isNullOrBlank()) {
                 AsyncImage(
-                    model = fotoUrl,
+                    model = ApiClient.urlDaFoto(fotoUrl),
                     contentDescription = "Foto de perfil de $primeiroNome",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

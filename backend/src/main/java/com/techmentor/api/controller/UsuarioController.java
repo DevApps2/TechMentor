@@ -11,9 +11,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
@@ -65,6 +66,16 @@ public class UsuarioController {
             @Valid @RequestBody UpdateRequest dto) {
 
         return ResponseEntity.ok(service.atualizarUsuario(id, dto));
+    }
+
+    @Operation(summary = "Enviar foto de perfil",
+            description = "Recebe uma imagem (JPG, PNG ou WEBP) e atualiza a foto do usuário. Devolve o usuário atualizado.")
+    @PostMapping(value = "/{id}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Response> enviarFoto(
+            @Parameter(description = "ID do usuário") @PathVariable Long id,
+            @RequestParam("foto") MultipartFile foto) {
+
+        return ResponseEntity.ok(service.atualizarFoto(id, foto));
     }
 
     @Operation(summary = "Deletar usuário")

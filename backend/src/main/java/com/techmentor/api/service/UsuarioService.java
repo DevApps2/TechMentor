@@ -11,12 +11,23 @@ import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+
+
+
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +35,9 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.pasta-fotos:fotos}")
+    private String pastaFotos;
 
     public List<Response> listarUsuarios() {
         return repository.findByAtivoTrue()
@@ -126,5 +140,42 @@ public class UsuarioService {
 
         usuario.setAtivo(false);
         repository.save(usuario);
+    }
+
+
+
+    @Transactional
+    public Response atualizarFoto(Long id, MultipartFile arquivo) {
+
+        Usuario usuario = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw ApiException.badRequest("Envie uma imagem.");
+        }
+
+        String extensao = switch (arquivo.getContentType() == null ? "" : arquivo.getContentType()) {
+            case "image/jpeg" -> "jpg";
+            case "image/png" -> "png";
+            case "image/webp" -> "webp";
+            default -> null;
+        };
+        if (extensao == null) {
+            throw ApiException.badRequest("Use uma imagem JPG, PNG ou WEBP.");
+        }
+
+        try {
+            Path pasta = Path.of(pastaFotos).toAbsolutePath();
+            Files.createDirectories(pasta);
+
+            String nome = "usuario-" + id + "-" + UUID.randomUUID() + "." + extensao;
+            arquivo.transferTo(pasta.resolve(nome));
+
+            usuario.setFotoUrl("/fotos/" + nome);
+        } catch (IOException e) {
+            throw ApiException.badRequest("Não foi possível salvar a imagem.");
+        }
+
+        return Response.from(usuario);
     }
 }

@@ -23,4 +23,16 @@ object ApiClient {
             .build()
             .create(TechMentorApi::class.java)
     }
+
+    /**
+     * O backend devolve a foto de duas formas:
+     * - link completo (https://...), como nas fotos de teste do seed
+     * - caminho relativo (/fotos/arquivo.jpg), quando a foto veio da galeria
+     * Esta função devolve sempre uma URL pronta para o Coil carregar.
+     */
+    fun urlDaFoto(fotoUrl: String?): String? = when {
+        fotoUrl.isNullOrBlank() -> null
+        fotoUrl.startsWith("/") -> BASE_URL.trimEnd('/') + fotoUrl
+        else -> fotoUrl
+    }
 }
