@@ -9,6 +9,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface TechMentorApi {
 
@@ -26,6 +27,31 @@ interface TechMentorApi {
 
     @GET("api/agendamentos")
     suspend fun listarAgendamentos(@Header("X-Usuario-Id") usuarioId: Long): List<AgendamentoResponse>
+
+    // ---- Mentoria ----
+
+    @GET("api/areas-atuacao")
+    suspend fun listarAreas(): List<AreaResponse>
+
+    // busca e area são opcionais: quando nulos, o Retrofit nem manda o parâmetro
+    @GET("api/mentoras")
+    suspend fun listarMentoras(
+        @Query("busca") busca: String?,
+        @Query("area") area: String?
+    ): List<MentoraResponse>
+
+    @GET("api/mentoras/{id}")
+    suspend fun obterMentora(@Path("id") id: Long): MentoraResponse
+
+    // a API devolve só os horários ainda não reservados
+    @GET("api/mentoras/{id}/disponibilidades")
+    suspend fun listarHorarios(@Path("id") mentoraId: Long): List<HorarioResponse>
+
+    @POST("api/agendamentos")
+    suspend fun criarAgendamento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Body body: AgendamentoRequest
+    ): AgendamentoResponse
 
     @GET("conquistas/usuarios/{id}")
     suspend fun listarConquistasDoUsuario(@Path("id") id: Long): List<UsuarioConquistaResponse>

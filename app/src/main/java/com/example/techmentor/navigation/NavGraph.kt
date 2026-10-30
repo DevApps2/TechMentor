@@ -7,6 +7,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.techmentor.ui.home.HomeScreen
 import com.example.techmentor.ui.login.LoginScreen
+import com.example.techmentor.ui.mentoria.AgendamentoScreen
+import com.example.techmentor.ui.mentoria.MentoraPerfilScreen
+import com.example.techmentor.ui.mentoria.MentoriaScreen
 import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
 import androidx.navigation.NavType
@@ -55,7 +58,27 @@ fun NavGraph() {
         }
 
         composable("mentorship") {
-            PlaceholderScreen("Mentoria")
+            MentoriaScreen(navController = navController)
+        }
+
+        composable(
+            route = "mentorship/{mentoraId}",
+            arguments = listOf(navArgument("mentoraId") { type = NavType.LongType })
+        ) { entrada ->
+            MentoraPerfilScreen(
+                navController = navController,
+                mentoraId = entrada.arguments?.getLong("mentoraId") ?: 0L
+            )
+        }
+
+        composable(
+            route = "mentorship/{mentoraId}/agendar",
+            arguments = listOf(navArgument("mentoraId") { type = NavType.LongType })
+        ) { entrada ->
+            AgendamentoScreen(
+                navController = navController,
+                mentoraId = entrada.arguments?.getLong("mentoraId") ?: 0L
+            )
         }
 
         composable("opportunities") {
