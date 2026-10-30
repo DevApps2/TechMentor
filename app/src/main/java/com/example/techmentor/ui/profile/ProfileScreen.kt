@@ -3,6 +3,7 @@ package com.example.techmentor.ui.profile
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -31,7 +32,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,8 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -72,7 +73,6 @@ import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.formatarNumero
 import com.example.techmentor.ui.home.parseDataHora
 import com.example.techmentor.ui.theme.ManropeFamily
-import kotlinx.coroutines.delay
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -87,6 +87,10 @@ private val TextoEscuro = Color(0xFF17151F)
 private val TextoMudo = Color(0xFF6F6A76)
 private val Borda = Color(0xFFEBE8EF)
 
+private const val LIMITE_BIO = 500
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
@@ -94,7 +98,6 @@ fun ProfileScreen(
 ) {
 
     val estado by viewModel.estado.collectAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Volta ao login se a sessão não existe mais (ex.: o banco foi reiniciado)
     LaunchedEffect(estado.sessaoExpirada) {
@@ -106,19 +109,9 @@ fun ProfileScreen(
         }
     }
 
-    // Carrega ao abrir e recarrega ao voltar para a tela
+    // Carrega ao abrir e ao voltar para a tela; fora isso, só puxando a tela para baixo
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
-    }
-
-    // Enquanto a tela está aberta, atualiza sozinha a cada 30 segundos
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            while (true) {
-                delay(30_000)
-                viewModel.carregar()
-            }
-        }
     }
 
     Column(
@@ -137,20 +130,26 @@ fun ProfileScreen(
             val usuario = estado.usuario
 
             when {
-                usuario != null -> ProfileContent(
-                    estado = estado,
-                    usuario = usuario,
-                    navController = navController,
-                    onSalvar = viewModel::salvar,
-                    onEnviarFoto = viewModel::enviarFoto,
-                    onLimparErro = { viewModel.limparErroEdicao() },
-                    onSair = {
-                        Sessao.sair()
-                        navController.navigate("login") {
-                            popUpTo("home") { inclusive = true }
+                usuario != null -> PullToRefreshBox(
+                    isRefreshing = estado.atualizando,
+                    onRefresh = { viewModel.carregar(manual = true) },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    ProfileContent(
+                        estado = estado,
+                        usuario = usuario,
+                        navController = navController,
+                        onSalvar = viewModel::salvar,
+                        onEnviarFoto = viewModel::enviarFoto,
+                        onLimparErro = { viewModel.limparErroEdicao() },
+                        onSair = {
+                            Sessao.sair()
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
 
                 estado.carregando || estado.sessaoExpirada -> ProfileCarregando()
 
@@ -407,10 +406,20 @@ private fun CardDeEdicao(
         AuthField(
             label = "Apresentação",
             value = bio,
-            onValueChange = { bio = it },
+            onValueChange = { if (it.length <= LIMITE_BIO) bio = it },
             placeholder = "Conte um pouco sobre você",
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions.Default
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardActions = KeyboardActions.Default,
+            multilinha = true
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "${bio.length}/$LIMITE_BIO",
+            modifier = Modifier.align(Alignment.End),
+            fontSize = 10.sp,
+            color = TextoMudo
         )
 
         Spacer(modifier = Modifier.height(12.dp))
