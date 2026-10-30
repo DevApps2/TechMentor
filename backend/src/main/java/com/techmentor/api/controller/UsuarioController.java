@@ -5,6 +5,7 @@ import com.techmentor.api.dto.UsuarioDtos.LoginRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
 import com.techmentor.api.dto.UsuarioDtos.Resumo;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
+import com.techmentor.api.service.EmailService;
 import com.techmentor.api.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +25,7 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService service;
+    private final EmailService emailService;
 
     @Operation(summary = "Listar usuários")
     @GetMapping

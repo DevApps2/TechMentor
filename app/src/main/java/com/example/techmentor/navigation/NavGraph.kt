@@ -9,7 +9,11 @@ import com.example.techmentor.ui.home.HomeScreen
 import com.example.techmentor.ui.login.LoginScreen
 import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
+import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
 
@@ -68,6 +72,20 @@ fun NavGraph() {
 
         composable("profile") {
             ProfileScreen(navController = navController)
+        }
+
+        composable("esqueci-senha") {
+            EsqueciSenhaScreen(navController = navController)
+        }
+
+        composable(
+            route = "redefinir-senha/{email}",
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { entrada ->
+            RedefinirSenhaScreen(
+                navController = navController,
+                email = entrada.arguments?.getString("email").orEmpty()
+            )
         }
     }
 }

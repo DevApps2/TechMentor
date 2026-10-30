@@ -42,4 +42,10 @@ interface TechMentorApi {
         @Path("id") id: Long,
         @Part foto: MultipartBody.Part
     ): UsuarioResponse
+
+    @POST("usuarios/senha/esqueci")
+    suspend fun esqueciSenha(@Body body: EsqueciSenhaRequest)
+
+    @POST("usuarios/senha/redefinir")
+    suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest)
 }

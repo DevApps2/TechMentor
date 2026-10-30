@@ -69,3 +69,13 @@ data class AtualizarUsuarioRequest(
     val bio: String?,
     val areasInteresse: List<String>?
 )
+
+// Corpo do POST /usuarios/senha/esqueci: pede o código por e-mail
+data class EsqueciSenhaRequest(val email: String)
+
+// Corpo do POST /usuarios/senha/redefinir: o código recebido e a senha nova
+data class RedefinirSenhaRequest(
+    val email: String,
+    val codigo: String,
+    val novaSenha: String
+)
