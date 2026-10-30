@@ -77,6 +77,19 @@ fun LoginScreen(
         }
     }
 
+    // Quando a senha é redefinida, a tela "Nova senha" volta para cá e deixa o e-mail aqui
+    val senhaAlterada by (estadoSalvo?.getStateFlow("senhaAlterada", "") ?: MutableStateFlow("")).collectAsState()
+
+    LaunchedEffect(senhaAlterada) {
+        if (senhaAlterada.isNotEmpty()) {
+            email = senhaAlterada
+            password = ""
+            error = null
+            aviso = "Senha alterada! Entre com a nova senha."
+            estadoSalvo?.set("senhaAlterada", "")
+        }
+    }
+
     fun submit() {
         if (loading) return
 
@@ -204,7 +217,7 @@ fun LoginScreen(
                 text = "Esqueci minha senha",
                 modifier = Modifier
                     .clickable(role = Role.Button) {
-                        // Será conectado depois
+                        navController.navigate("esqueci-senha")
                     }
                     .padding(vertical = 8.dp),
                 fontSize = 11.sp,
