@@ -31,6 +31,7 @@ import com.example.techmentor.ui.auth.OutlinedAuthButton
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.techmentor.data.ApiClient
+import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.CadastroRequest
 import com.example.techmentor.data.ErroResponse
 import com.google.gson.Gson
@@ -84,10 +85,10 @@ fun RegisterScreen(
                 error = when (e.code()) {
                     409 -> "Esse e-mail já está cadastrado."
                     400 -> mensagemDaApi(e) ?: "Confira os dados informados."
-                    else -> "Erro no servidor (${e.code()})."
+                    else -> ERRO_CONEXAO
                 }
             } catch (e: IOException) {
-                error = "Sem conexão com o servidor."
+                error = ERRO_CONEXAO
             } finally {
                 loading = false
             }

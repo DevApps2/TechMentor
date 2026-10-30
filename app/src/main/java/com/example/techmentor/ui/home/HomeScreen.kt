@@ -25,8 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
@@ -34,9 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -124,13 +119,7 @@ fun HomeScreen(
                         usuario = usuario,
                         cursoEmAndamento = estado.cursoEmAndamento,
                         proximaMentoria = estado.proximaMentoria,
-                        navController = navController,
-                        onSair = {
-                            Sessao.sair()
-                            navController.navigate("login") {
-                                popUpTo("home") { inclusive = true }
-                            }
-                        }
+                        navController = navController
                     )
                 }
 
@@ -159,8 +148,7 @@ private fun HomeContent(
     usuario: UsuarioResponse,
     cursoEmAndamento: MatriculaResponse?,
     proximaMentoria: AgendamentoResponse?,
-    navController: NavController,
-    onSair: () -> Unit
+    navController: NavController
 ) {
 
     Column(
@@ -178,7 +166,7 @@ private fun HomeContent(
         WelcomeSection(
             nome = usuario.nome,
             fotoUrl = usuario.fotoUrl,
-            onSair = onSair
+            onPerfil = { irPara(navController, "profile") }
         )
 
         Spacer(modifier = Modifier.height(19.dp))
@@ -355,7 +343,7 @@ private fun HomeErro(
 fun WelcomeSection(
     nome: String,
     fotoUrl: String?,
-    onSair: () -> Unit
+    onPerfil: () -> Unit
 ) {
 
     val date = SimpleDateFormat("EEEE, d 'DE' MMMM", LocaleBr)
@@ -364,8 +352,6 @@ fun WelcomeSection(
 
     val primeiroNome = nome.trim().split(" ").firstOrNull().orEmpty().ifEmpty { "você" }
     val inicial = nome.trim().firstOrNull()?.uppercase() ?: "?"
-
-    var menuAberto by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -408,47 +394,30 @@ fun WelcomeSection(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // AVATAR: a inicial fica por baixo e a foto (se existir) cobre quando carregar
-        Box {
+        // AVATAR: a inicial fica por baixo e a foto (se existir) cobre quando carregar; toque abre o Perfil
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .clip(RoundedCornerShape(17.dp))
+                .background(Color(0xFFEDE9FE))
+                .clickable { onPerfil() },
+            contentAlignment = Alignment.Center
+        ) {
 
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(RoundedCornerShape(17.dp))
-                    .background(Color(0xFFEDE9FE))
-                    .clickable { menuAberto = true },
-                contentAlignment = Alignment.Center
-            ) {
+            Text(
+                text = inicial,
+                fontFamily = ManropeFamily,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = RoxoEscuro
+            )
 
-                Text(
-                    text = inicial,
-                    fontFamily = ManropeFamily,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = RoxoEscuro
-                )
-
-                if (!fotoUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = fotoUrl,
-                        contentDescription = "Foto de perfil de $primeiroNome",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            DropdownMenu(
-                expanded = menuAberto,
-                onDismissRequest = { menuAberto = false }
-            ) {
-
-                DropdownMenuItem(
-                    text = { Text("Sair") },
-                    onClick = {
-                        menuAberto = false
-                        onSair()
-                    }
+            if (!fotoUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = fotoUrl,
+                    contentDescription = "Foto de perfil de $primeiroNome",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
