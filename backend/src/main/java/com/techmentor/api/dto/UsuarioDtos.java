@@ -1,0 +1,131 @@
+package com.techmentor.api.dto;
+
+import com.techmentor.api.model.Usuario;
+import com.techmentor.api.service.NivelRegraService;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Contratos de entrada e saída dos endpoints de usuário. */
+public final class UsuarioDtos {
+    private UsuarioDtos() { }
+
+    @Schema(description = "Dados para cadastrar um usuário")
+    public record CreateRequest(
+            @Schema(description = "Nome completo do usuário", example = "Ana Souza")
+            @NotBlank(message = "O nome é obrigatório")
+            @Size(max = 120, message = "O nome deve ter no máximo 120 caracteres")
+            String nome,
+
+            @Schema(description = "E-mail do usuário, usado no cadastro e deve ser único", example = "ana.souza@email.com")
+            @NotBlank(message = "O e-mail é obrigatório")
+            @Email(message = "Informe um e-mail válido")
+            @Size(max = 160, message = "O e-mail deve ter no máximo 160 caracteres")
+            String email,
+
+            @Schema(description = "Senha de acesso, entre 8 e 72 caracteres", example = "senhaSegura123", minLength = 8, maxLength = 72)
+            @NotBlank(message = "A senha é obrigatória")
+            @Size(min = 8, max = 72, message = "A senha deve ter entre 8 e 72 caracteres")
+            String senha
+    ) { }
+
+    @Schema(description = "Credenciais para entrar na plataforma")
+    public record LoginRequest(
+            @Schema(description = "E-mail cadastrado", example = "ana.souza@email.com")
+            @NotBlank(message = "O e-mail é obrigatório")
+            @Email(message = "Informe um e-mail válido")
+            String email,
+
+            @Schema(description = "Senha do usuário", example = "senhaSegura123")
+            @NotBlank(message = "A senha é obrigatória")
+            String senha
+    ) { }
+
+    @Schema(description = "Dados para atualizar um usuário")
+    public record UpdateRequest(
+            @Schema(description = "Nome completo do usuário", example = "Ana Souza")
+            @NotBlank(message = "O nome é obrigatório")
+            @Size(max = 120, message = "O nome deve ter no máximo 120 caracteres")
+            String nome,
+
+            @Schema(description = "E-mail do usuário", example = "ana.souza@email.com")
+            @NotBlank(message = "O e-mail é obrigatório")
+            @Email(message = "Informe um e-mail válido")
+            @Size(max = 160, message = "O e-mail deve ter no máximo 160 caracteres")
+            String email,
+
+            @Schema(description = "URL da foto de perfil", example = "https://cdn.techmentor.com/fotos/ana.png")
+            @Size(max = 255, message = "A URL da foto deve ter no máximo 255 caracteres")
+            String fotoUrl,
+
+            @Schema(description = "Apresentação do perfil; se omitida, não é alterada", example = "Estudante de Desenvolvimento de Sistemas", nullable = true)
+            @Size(max = 500, message = "A apresentação deve ter no máximo 500 caracteres")
+            String bio,
+
+            @Schema(description = "Áreas de interesse; se omitida, não é alterada (lista vazia remove todas)", example = "[\"Desenvolvimento Web\"]", nullable = true)
+            @Size(max = 10, message = "Informe no máximo 10 áreas de interesse")
+            List<@Size(max = 80, message = "Cada área deve ter no máximo 80 caracteres") String> areasInteresse
+    ) { }
+
+    @Schema(description = "Dados públicos de um usuário")
+    public record Response(
+            @Schema(description = "ID do usuário", example = "1")
+            Long id,
+            @Schema(description = "Nome completo do usuário", example = "Ana Souza")
+            String nome,
+            @Schema(description = "E-mail do usuário", example = "ana.souza@email.com")
+            String email,
+            @Schema(description = "URL da foto de perfil", example = "https://cdn.techmentor.com/fotos/ana.png")
+            String fotoUrl,
+            @Schema(description = "Tipo do usuário", example = "ALUNA")
+            Usuario.Tipo tipo,
+            @Schema(description = "Total de XP acumulado", example = "250")
+            int xpTotal,
+            @Schema(description = "Nível atual do usuário (a cada 250 XP sobe um nível)", example = "3")
+            int nivel,
+            @Schema(description = "Título do nível atual", example = "Aprendiz Tech")
+            String tituloNivel,
+            @Schema(description = "XP total em que o próximo nível começa", example = "750")
+            int xpProximoNivel,
+            @Schema(description = "XP que falta para o próximo nível", example = "250")
+            int xpFaltante,
+            @Schema(description = "Dias consecutivos de atividade (volta a 0 se passar um dia sem atividade)", example = "5")
+            int sequenciaDias,
+            @Schema(description = "Apresentação do perfil", example = "Estudante de Desenvolvimento de Sistemas", nullable = true)
+            String bio,
+            @Schema(description = "Áreas de interesse", example = "[\"Desenvolvimento Web\"]")
+            List<String> areasInteresse
+    ) {
+        public static Response from(Usuario usuario) {
+            int nivel = NivelRegraService.nivelPara(usuario.getXpTotal());
+            int sequencia = NivelRegraService.sequenciaAtual(usuario.getSequenciaDias(),
+                    usuario.getUltimaAtividade(), LocalDate.now());
+            return new Response(usuario.getId(), usuario.getNome(), usuario.getEmail(),
+                    usuario.getFotoUrl(), usuario.getTipo(), usuario.getXpTotal(),
+                    nivel, NivelRegraService.titulo(nivel),
+                    NivelRegraService.xpProximoNivel(usuario.getXpTotal()), NivelRegraService.xpFaltante(usuario.getXpTotal()),
+                    sequencia, usuario.getBio(), new ArrayList<>(usuario.getAreasInteresse()));
+        }
+    }
+
+    @Schema(description = "Dados mínimos de um usuário, usados em buscas (sem e-mail)")
+    public record Resumo(
+            @Schema(description = "ID do usuário", example = "5")
+            Long id,
+            @Schema(description = "Nome completo do usuário", example = "Carlos Lima")
+            String nome,
+            @Schema(description = "URL da foto de perfil", example = "https://cdn.techmentor.com/fotos/carlos.png", nullable = true)
+            String fotoUrl,
+            @Schema(description = "Tipo do usuário", example = "ALUNA")
+            Usuario.Tipo tipo
+    ) {
+        public static Resumo from(Usuario usuario) {
+            return new Resumo(usuario.getId(), usuario.getNome(), usuario.getFotoUrl(), usuario.getTipo());
+        }
+    }
+}

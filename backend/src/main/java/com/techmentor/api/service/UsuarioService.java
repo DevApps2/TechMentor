@@ -1,73 +1,181 @@
 package com.techmentor.api.service;
 
-import com.techmentor.api.dto.UsuarioResponseDTO;
+import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
+import com.techmentor.api.dto.UsuarioDtos.Response;
+import com.techmentor.api.dto.UsuarioDtos.Resumo;
+import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
+import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotAuthorizedException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+
+
+
+
+
 
 @Service
+@RequiredArgsConstructor
 public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
-        this.repository = repository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    @Value("${app.pasta-fotos:fotos}")
+    private String pastaFotos;
 
-    public List<UsuarioResponseDTO> listarUsuarios(){
-        return repository.findAll().stream()
-                .map(UsuarioResponseDTO::from)
+    public List<Response> listarUsuarios() {
+        return repository.findByAtivoTrue()
+                .stream()
+                .map(Response::from)
                 .toList();
     }
 
-    public Optional<Usuario> criarUsuario(Usuario usuario) {
-        if (repository.existsByEmail(usuario.getEmail())) {
-            throw new ConflictException("Usuário já cadastrado!");
+    /** Busca usuários ativos pelo nome (para denunciar ou bloquear); no máximo 20, sem o próprio solicitante. */
+    public List<Resumo> buscarPorNome(String nome, Long solicitanteId) {
+        String termo = nome == null ? "" : nome.trim();
+        if (termo.length() < 2) {
+            throw ApiException.badRequest("Digite pelo menos 2 letras para buscar.");
         }
-        // PROVISÓRIO: por enquanto a senha chega no campo senhaHash
-        usuario.setSenhaHash(passwordEncoder.encode(usuario.getSenhaHash()));
-        return Optional.of(repository.save(usuario));
+        return repository.findTop20ByAtivoTrueAndNomeContainingIgnoreCaseOrderByNomeAsc(termo).stream()
+                .filter(u -> !u.getId().equals(solicitanteId))
+                .map(Resumo::from)
+                .toList();
     }
 
+    public Response criarUsuario(CreateRequest dto) {
 
-    public void atualizarUsuario(long id, Usuario usuario) {
+        if (repository.existsByEmail(dto.email())) {
+            throw new ConflictException("Usuário já cadastrado!");
+        }
+
+        Usuario usuario = new Usuario();
+
+        usuario.setId(null);
+        usuario.setNome(dto.nome());
+        usuario.setEmail(dto.email());
+        usuario.setSenhaHash(passwordEncoder.encode(dto.senha()));
+
+        Usuario usuarioSalvo = repository.save(usuario);
+
+        return Response.from(usuarioSalvo);
+    }
+
+    public Response buscarPorId(Long id) {
+        return Response.from(repository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!")));
+    }
+
+    @Transactional
+    public Response atualizarUsuario(Long id, UpdateRequest dto) {
+
         Usuario existente = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+                .orElseThrow(() ->
+                        new NotFoundException("Usuário não encontrado!"));
 
-        boolean mudouEmail = !existente.getEmail().equals(usuario.getEmail());
-        if (mudouEmail && repository.existsByEmail(usuario.getEmail())) {
+        boolean mudouEmail =
+                !existente.getEmail().equals(dto.email());
+
+        if (mudouEmail && repository.existsByEmail(dto.email())) {
             throw new ConflictException("E-mail já cadastrado!");
         }
 
-        existente.setNome(usuario.getNome());
-        existente.setEmail(usuario.getEmail());
-        existente.setFotoUrl(usuario.getFotoUrl());
-        repository.save(existente);
+        existente.setNome(dto.nome());
+        existente.setEmail(dto.email());
+        existente.setFotoUrl(dto.fotoUrl());
+        if (dto.bio() != null) {
+            existente.setBio(dto.bio());
+        }
+        if (dto.areasInteresse() != null) {
+            existente.getAreasInteresse().clear();
+            dto.areasInteresse().stream()
+                    .map(String::trim)
+                    .filter(area -> !area.isEmpty())
+                    .forEach(existente.getAreasInteresse()::add);
+        }
+
+        return Response.from(existente);
     }
 
     public Usuario loginUsuario(String email, String senha) {
-        Usuario usuario = (Usuario) repository.findByEmail(email)
-                .orElseThrow(() -> new NotAuthorizedException("Credenciais inválidas!"));
+
+        Usuario usuario = repository.findByEmail(email)
+                .orElseThrow(() ->
+                        new NotAuthorizedException("Credenciais inválidas!"));
 
         if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
             throw new NotAuthorizedException("Credenciais inválidas!");
         }
+
+        if (!usuario.isAtivo()) {
+            throw new NotAuthorizedException("Credenciais inválidas!");
+        }
+
         return usuario;
     }
 
-    public void deletarUsuario(long id){
-        if(!repository.existsById(id)) {
-            throw new NotFoundException("Usuário não encontrado!");
+    public void desativarUsuario(Long id) {
+
+        Usuario usuario = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+
+        if(!usuario.isAtivo()){
+            throw new ConflictException("Usuário já desativado!");
         }
-        repository.deleteById(id);
+
+        usuario.setAtivo(false);
+        repository.save(usuario);
+    }
+
+
+
+    @Transactional
+    public Response atualizarFoto(Long id, MultipartFile arquivo) {
+
+        Usuario usuario = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw ApiException.badRequest("Envie uma imagem.");
+        }
+
+        String extensao = switch (arquivo.getContentType() == null ? "" : arquivo.getContentType()) {
+            case "image/jpeg" -> "jpg";
+            case "image/png" -> "png";
+            case "image/webp" -> "webp";
+            default -> null;
+        };
+        if (extensao == null) {
+            throw ApiException.badRequest("Use uma imagem JPG, PNG ou WEBP.");
+        }
+
+        try {
+            Path pasta = Path.of(pastaFotos).toAbsolutePath();
+            Files.createDirectories(pasta);
+
+            String nome = "usuario-" + id + "-" + UUID.randomUUID() + "." + extensao;
+            arquivo.transferTo(pasta.resolve(nome));
+
+            usuario.setFotoUrl("/fotos/" + nome);
+        } catch (IOException e) {
+            throw ApiException.badRequest("Não foi possível salvar a imagem.");
+        }
+
+        return Response.from(usuario);
     }
 }

@@ -1,21 +1,35 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.Transient;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity @Table(name = "cursos")
 @Getter @Setter @NoArgsConstructor
 
-@JsonPropertyOrder({"id", "titulo", "descricao", "categoria", "iconeUrl", "ativo", "modulos"})
-
 public class Curso {
-    public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS }
+
+    @JsonPropertyOrder({"id", "titulo", "descricao", "categoria", "iconeUrl", "ativo", "modulos"})
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+
+    @Transient
+    private Long totalAulas;
+    @Schema(description = "Categoria do curso: PROGRAMACAO, DADOS, DESIGN, CARREIRA, SEGURANCA, IA, REDES ou OUTROS")
+    public enum Categoria { PROGRAMACAO, DADOS, DESIGN, CARREIRA, OUTROS, SEGURANCA, IA, REDES }
+
+    @Schema(description = "Nível da trilha: INICIANTE, INTERMEDIARIO ou AVANCADO")
+    public enum Nivel { INICIANTE, INTERMEDIARIO, AVANCADO }
+
 
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
@@ -26,6 +40,7 @@ public class Curso {
     @Column(nullable = false, length = 150) private String titulo;
     @Column(length = 1000) private String descricao;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Categoria categoria;
+    @Enumerated(EnumType.STRING) @Column(length = 20) private Nivel nivel;
     @Column(length = 255) private String iconeUrl;
     @Column(nullable = false) private boolean ativo = true;
 }

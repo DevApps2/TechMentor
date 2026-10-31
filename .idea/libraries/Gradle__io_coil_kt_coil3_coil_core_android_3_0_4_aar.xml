@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: io.coil-kt.coil3:coil-core-android:3.0.4@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/9.3.1/transforms/aa33a782f977c7b0f8b3c576d85f154a/workspace/transformed/coil-core-release/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/.gradle/caches/9.3.1/transforms/aa33a782f977c7b0f8b3c576d85f154a/workspace/transformed/coil-core-release/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/9.3.1/transforms/aa33a782f977c7b0f8b3c576d85f154a/workspace/transformed/coil-core-release/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.coil-kt.coil3/coil-core-android/3.0.4/2cf84216eb569240a299e80488cd44d0ca175056/coil-core-android-3.0.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

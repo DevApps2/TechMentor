@@ -27,3 +27,5 @@ COMBINAR COM O MATHEUS
 
 GIT
 [ ] Não subir application.properties com senha do banco.
+
+http://localhost:8080/techmentor/api/swagger-ui.html
