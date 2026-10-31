@@ -79,3 +79,39 @@ data class RedefinirSenhaRequest(
     val codigo: String,
     val novaSenha: String
 )
+
+// Área de atuação das mentoras, usada nos filtros (GET /api/areas-atuacao)
+data class AreaResponse(
+    val id: Long,
+    val nome: String
+)
+
+// Perfil de mentora (GET /api/mentoras e GET /api/mentoras/{id})
+data class MentoraResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val nome: String,
+    val fotoUrl: String?,
+    val bio: String?,
+    val cargo: String?,
+    val empresa: String?,
+    val anosExperiencia: Int,
+    val notaMedia: Double,
+    val totalAvaliacoes: Int,
+    val areas: List<String>?
+)
+
+// Horário de uma mentora (GET /api/mentoras/{id}/disponibilidades); as datas chegam como "2026-11-10T14:00:00"
+data class HorarioResponse(
+    val id: Long,
+    val mentoraId: Long,
+    val inicio: String,
+    val fim: String,
+    val reservado: Boolean
+)
+
+// Corpo do POST /api/agendamentos: o horário escolhido e, se quiser, o assunto da conversa
+data class AgendamentoRequest(
+    val horarioId: Long,
+    val assunto: String?
+)
