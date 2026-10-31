@@ -1,5 +1,6 @@
 package com.example.techmentor.ui.oportunidades
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +32,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,11 +67,48 @@ import java.util.Locale
 private val LOCALE_BR: Locale = Locale.forLanguageTag("pt-BR")
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Tela de Oportunidades. Mostra a lista; ao tocar em "Ver oportunidade" mostra os detalhes
+ * ali mesmo (sem precisar de rota nova no NavGraph).
+ */
 @Composable
 fun OportunidadesScreen(
     navController: NavController,
     viewModel: OportunidadesViewModel = viewModel()
+) {
+
+    val estado by viewModel.estado.collectAsState()
+
+    var selecionadaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val selecionada = estado.oportunidades?.firstOrNull { it.id == selecionadaId }
+
+    if (selecionada != null) {
+
+        // Botão "voltar" do celular fecha os detalhes
+        BackHandler { selecionadaId = null }
+
+        OportunidadeDetalhe(
+            oportunidade = selecionada,
+            onVoltar = { selecionadaId = null }
+        )
+
+    } else {
+
+        ListagemOportunidades(
+            navController = navController,
+            viewModel = viewModel,
+            onAbrir = { selecionadaId = it }
+        )
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ListagemOportunidades(
+    navController: NavController,
+    viewModel: OportunidadesViewModel,
+    onAbrir: (Long) -> Unit
 ) {
 
     val estado by viewModel.estado.collectAsState()
@@ -111,10 +152,7 @@ fun OportunidadesScreen(
                         oportunidades = lista,
                         filtro = estado.filtro,
                         onFiltro = { viewModel.selecionarFiltro(it) },
-                        onAbrir = { _ ->
-                            // TODO: quando existir a tela de detalhes, navegar para ela:
-                            // navController.navigate("opportunities/$id")
-                        }
+                        onAbrir = onAbrir
                     )
                 }
             }
@@ -333,9 +371,9 @@ private fun FiltrosPorTipo(
 // CARD
 // ======================================================
 
-private class EstiloTipo(val rotulo: String, val fundo: Color, val icone: Color)
+internal class EstiloTipo(val rotulo: String, val fundo: Color, val icone: Color)
 
-private fun estiloDoTipo(tipo: String): EstiloTipo = when (tipo.uppercase()) {
+internal fun estiloDoTipo(tipo: String): EstiloTipo = when (tipo.uppercase()) {
     "ESTAGIO" -> EstiloTipo("ESTÁGIO", Color(0xFFEDE9FE), Color(0xFF7C3AED))
     "BOLSA" -> EstiloTipo("BOLSA", Color(0xFFE3EEFF), Color(0xFF2563EB))
     "EMPREGO" -> EstiloTipo("EMPREGO", Color(0xFFFCE7F3), Color(0xFFDB2777))
