@@ -46,6 +46,13 @@ public class MentoriaController {
         return mentoras.listarMentoras(busca, area);
     }
 
+    @Operation(summary = "Meu perfil de mentora",
+            description = "Perfil da mentora logada. Retorna 404 se ela ainda não preencheu o perfil, e 403 se o usuário não é mentora.")
+    @GetMapping("/mentoras/minha")
+    public MentoraResponse minhaMentora(@RequestHeader("X-Usuario-Id") Long actorId) {
+        return mentoras.minhaMentora(usuarios.buscar(actorId));
+    }
+
     @Operation(summary = "Obter mentora por ID")
     @GetMapping("/mentoras/{id}")
     public MentoraResponse obterMentora(@Parameter(description = "ID da mentora") @PathVariable Long id) { return mentoras.obterMentora(id); }

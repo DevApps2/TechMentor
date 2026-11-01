@@ -13,4 +13,8 @@ public final class RegraAcesso {
     public static void exigirProprietarioOuAdmin(Usuario actor, Long ownerId) {
         if (!actor.getId().equals(ownerId) && actor.getTipo() != Usuario.Tipo.ADMIN) throw ApiException.forbidden();
     }
+
+    public static void exigirMentora(Usuario actor) {
+        if (actor.getTipo() != Usuario.Tipo.MENTORA) throw ApiException.forbidden();
+    }
 }
