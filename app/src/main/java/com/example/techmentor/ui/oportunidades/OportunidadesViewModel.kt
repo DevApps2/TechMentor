@@ -2,8 +2,15 @@ package com.example.techmentor.ui.oportunidades
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
+import com.example.techmentor.data.ErroResponse
+import com.example.techmentor.data.OportunidadeResponse
+import com.example.techmentor.data.Sessao
+import com.google.gson.Gson
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +36,17 @@ data class OportunidadesUiState(
     val erro: String? = null,
     // null = ainda não carregou
     val oportunidades: List<OportunidadeResponse>? = null,
-    val filtro: FiltroTipo = FiltroTipo.TODOS
+    val filtro: FiltroTipo = FiltroTipo.TODOS,
+    // oportunidades em que a usuária já se candidatou/inscreveu: id da oportunidade -> status (ENVIADA, EM_ANALISE...)
+    val participacoes: Map<Long, String> = emptyMap(),
+    // id da oportunidade que está sendo enviada agora
+    val enviandoId: Long? = null,
+    // falha ao candidatar/inscrever (aparece em vermelho acima do botão)
+    val erroEnvio: String? = null,
+    // preenchido quando o envio deu certo: a tela mostra a confirmação
+    val confirmadaId: Long? = null,
+    // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
+    val sessaoExpirada: Boolean = false
 )
 
 class OportunidadesViewModel : ViewModel() {
@@ -42,12 +59,13 @@ class OportunidadesViewModel : ViewModel() {
     // Cada carga ganha um número; só a mais recente pode mexer na tela
     private var numeroDaCarga = 0
 
-    /** Busca as oportunidades com o filtro que estiver escolhido no momento. */
+    /** Busca as oportunidades com o filtro escolhido e as participações da usuária. */
     fun carregar(manual: Boolean = false) {
         val minhaCarga = ++numeroDaCarga
         tarefa?.cancel()
 
         val filtro = _estado.value.filtro
+        val usuarioId = Sessao.usuarioId
 
         tarefa = viewModelScope.launch {
             _estado.update {
@@ -59,10 +77,34 @@ class OportunidadesViewModel : ViewModel() {
             }
 
             try {
-                val lista = OportunidadesApiClient.api.listar(tipo = filtro.tipoApi, area = null)
+                val api = ApiClient.api
 
-                if (minhaCarga == numeroDaCarga) {
-                    _estado.update { it.copy(oportunidades = lista) }
+                coroutineScope {
+                    // Só a lista é obrigatória: se "minhas candidaturas" falhar, a tela abre sem as marcações
+                    val listaPedido = async { api.listarOportunidades(tipo = filtro.tipoApi, area = null) }
+                    val minhasPedido = async {
+                        if (usuarioId == null) {
+                            null
+                        } else {
+                            runCatching {
+                                api.minhasCandidaturas(usuarioId) + api.minhasInscricoes(usuarioId)
+                            }.getOrNull()
+                        }
+                    }
+
+                    val lista = listaPedido.await()
+                    val minhas = minhasPedido.await()
+
+                    if (minhaCarga == numeroDaCarga) {
+                        _estado.update {
+                            it.copy(
+                                oportunidades = lista,
+                                participacoes = minhas
+                                    ?.associate { p -> p.oportunidadeId to p.status }
+                                    ?: it.participacoes
+                            )
+                        }
+                    }
                 }
             } catch (e: HttpException) {
                 if (minhaCarga == numeroDaCarga) {
@@ -86,4 +128,77 @@ class OportunidadesViewModel : ViewModel() {
         _estado.update { it.copy(filtro = filtro) }
         carregar()
     }
+
+    /** Candidatura (vagas e bolsas) ou inscrição (eventos) na oportunidade escolhida. */
+    fun participar(oportunidade: OportunidadeResponse) {
+        val atual = _estado.value
+        if (atual.enviandoId != null || atual.participacoes.containsKey(oportunidade.id)) return
+
+        val usuarioId = Sessao.usuarioId
+        if (usuarioId == null) {
+            _estado.update { it.copy(sessaoExpirada = true) }
+            return
+        }
+
+        val evento = oportunidade.tipo.equals("EVENTO", ignoreCase = true)
+
+        viewModelScope.launch {
+            _estado.update { it.copy(enviandoId = oportunidade.id, erroEnvio = null) }
+
+            try {
+                val api = ApiClient.api
+                val criada = if (evento) {
+                    api.inscreverEmEvento(usuarioId, oportunidade.id)
+                } else {
+                    api.candidatar(usuarioId, oportunidade.id)
+                }
+
+                _estado.update {
+                    it.copy(
+                        enviandoId = null,
+                        participacoes = it.participacoes + (oportunidade.id to criada.status),
+                        confirmadaId = oportunidade.id
+                    )
+                }
+            } catch (e: HttpException) {
+                val daApi = mensagemDaApi(e)
+
+                // "Usuário não encontrado." = a sessão guardada no aparelho não existe mais no banco
+                val sessaoExpirada = e.code() == 404 && daApi?.startsWith("Usuário") == true
+                // 409 "já possui inscrição": a usuária já tinha participado em outro aparelho ou sessão
+                val jaParticipava = e.code() == 409 && daApi?.contains("já possui", ignoreCase = true) == true
+
+                val mensagem = when (e.code()) {
+                    409 -> if (jaParticipava) "Você já participa desta oportunidade." else daApi ?: "Esta oportunidade está encerrada."
+                    400, 403, 404 -> daApi ?: "Não foi possível concluir. Tente novamente."
+                    else -> ERRO_CONEXAO
+                }
+
+                _estado.update {
+                    it.copy(
+                        enviandoId = null,
+                        erroEnvio = mensagem,
+                        sessaoExpirada = sessaoExpirada,
+                        participacoes = if (jaParticipava) it.participacoes + (oportunidade.id to "ENVIADA") else it.participacoes
+                    )
+                }
+            } catch (e: IOException) {
+                _estado.update { it.copy(enviandoId = null, erroEnvio = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    /** Fecha a tela de confirmação (volta aos detalhes ou à lista). */
+    fun fecharConfirmacao() {
+        _estado.update { it.copy(confirmadaId = null) }
+    }
+
+    fun limparErroEnvio() {
+        _estado.update { it.copy(erroEnvio = null) }
+    }
 }
+
+private fun mensagemDaApi(e: HttpException): String? =
+    runCatching {
+        Gson().fromJson(e.response()?.errorBody()?.string(), ErroResponse::class.java)?.erro
+    }.getOrNull()

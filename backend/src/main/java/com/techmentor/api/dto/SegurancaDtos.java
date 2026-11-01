@@ -30,6 +30,8 @@ public final class SegurancaDtos {
             Long denuncianteId,
             @Schema(description = "ID do usuário denunciado; nulo em denúncias gerais", example = "5", nullable = true)
             Long denunciadoId,
+            @Schema(description = "Nome do usuário denunciado; nulo em denúncias gerais", example = "Carlos Lima", nullable = true)
+            String denunciadoNome,
             @Schema(description = "Motivo da denúncia", example = "ASSEDIO")
             Denuncia.Motivo motivo,
             @Schema(description = "Detalhes da denúncia", example = "Mensagens ofensivas enviadas no chat")
@@ -38,6 +40,11 @@ public final class SegurancaDtos {
             Denuncia.Status status,
             @Schema(description = "Data e hora em que a denúncia foi criada", example = "2026-10-26T14:30:00")
             LocalDateTime criadaEm) { }
+
+    @Schema(description = "Nova situação de uma denúncia (só administradores)")
+    public record DenunciaStatusRequest(
+            @Schema(description = "ABERTA, EM_ANALISE ou RESOLVIDA", example = "EM_ANALISE")
+            @NotNull(message = "Informe a nova situação") Denuncia.Status status) { }
 
     @Schema(description = "Dados para bloquear um usuário")
     public record BloqueioRequest(

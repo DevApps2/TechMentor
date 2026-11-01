@@ -24,7 +24,7 @@ public class OportunidadeController {
         this.usuarios = usuarios;
     }
 
-    @Operation(summary = "Listar oportunidades", description = "Oportunidades ativas, com o prazo mais próximo primeiro. Filtros opcionais por tipo e por área.")
+    @Operation(summary = "Listar oportunidades", description = "Oportunidades ativas e com prazo de inscrição em aberto (as vencidas não aparecem), com o prazo mais próximo primeiro. Filtros opcionais por tipo e por área.")
     @GetMapping("/oportunidades")
     public List<OportunidadeResponse> listar(
             @Parameter(description = "Tipo: ESTAGIO, EMPREGO, BOLSA ou EVENTO (opcional)") @RequestParam(required = false) Oportunidade.Tipo tipo,

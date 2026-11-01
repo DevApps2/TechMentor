@@ -15,8 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
+import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
 
@@ -82,7 +84,7 @@ fun NavGraph() {
         }
 
         composable("opportunities") {
-            PlaceholderScreen("Oportunidades")
+            OportunidadesScreen(navController = navController)
         }
 
         composable("achievements") {
@@ -90,7 +92,7 @@ fun NavGraph() {
         }
 
         composable("safety") {
-            PlaceholderScreen("Segurança")
+            SegurancaScreen(navController = navController)
         }
 
         composable("profile") {

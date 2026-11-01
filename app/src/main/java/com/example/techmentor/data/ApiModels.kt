@@ -110,6 +110,80 @@ data class HorarioResponse(
     val reservado: Boolean
 )
 
+// Oportunidade (GET /api/oportunidades); prazoInscricao chega como "2026-12-15"
+data class OportunidadeResponse(
+    val id: Long,
+    val tipo: String,
+    val titulo: String,
+    val organizacao: String?,
+    val descricao: String?,
+    val requisitos: String?,
+    val localidade: String?,
+    val linkExterno: String?,
+    val prazoInscricao: String?,
+    val ativa: Boolean,
+    val beneficios: String?,
+    val area: String?,
+    val nivel: String?
+)
+
+// Orientação de segurança ou canal de ajuda (GET /api/seguranca/conteudos).
+// tipo: ORIENTACAO ou CANAL_AJUDA; contato só existe nos canais de ajuda
+data class ConteudoSegurancaResponse(
+    val id: Long,
+    val tipo: String,
+    val titulo: String,
+    val descricao: String?,
+    val contato: String?
+)
+
+// Dados mínimos de um usuário para buscas (GET /usuarios/busca)
+data class UsuarioResumoResponse(
+    val id: Long,
+    val nome: String,
+    val fotoUrl: String?,
+    val tipo: String
+)
+
+// Corpo do POST /api/denuncias. usuarioDenunciadoId é opcional (denúncia geral).
+// motivo: ASSEDIO, COMPORTAMENTO_INADEQUADO, SPAM, DISCURSO_DE_ODIO, PERFIL_FALSO ou OUTRO
+data class DenunciaRequest(
+    val usuarioDenunciadoId: Long?,
+    val motivo: String,
+    val descricao: String
+)
+
+data class DenunciaResponse(
+    val id: Long,
+    val denuncianteId: Long,
+    val denunciadoId: Long?,
+    val denunciadoNome: String?,
+    val motivo: String,
+    val descricao: String,
+    val status: String,
+    val criadaEm: String?
+)
+
+// Corpo do POST /api/bloqueios e item da lista (GET /api/bloqueios)
+data class BloqueioRequest(val usuarioId: Long)
+
+data class BloqueioResponse(
+    val usuarioId: Long,
+    val nome: String,
+    val criadoEm: String?
+)
+
+// Candidatura ou inscrição em evento (POST /api/oportunidades/{id}/candidaturas e /inscricoes).
+// status: ENVIADA, EM_ANALISE, APROVADA ou RECUSADA
+data class InscricaoResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val oportunidadeId: Long,
+    val titulo: String,
+    val status: String,
+    val criadaEm: String?
+)
+
 // Corpo do POST /api/agendamentos: o horário escolhido e, se quiser, o assunto da conversa
 data class AgendamentoRequest(
     val horarioId: Long,

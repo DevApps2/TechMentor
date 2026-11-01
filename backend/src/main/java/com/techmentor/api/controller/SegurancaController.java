@@ -59,6 +59,15 @@ public class SegurancaController {
         return denuncias.listarTodas(usuarios.buscar(actorId));
     }
 
+    @Operation(summary = "Atualizar a situação de uma denúncia",
+            description = "Só para administradores. Muda o status (ABERTA, EM_ANALISE ou RESOLVIDA) e avisa quem denunciou por notificação.")
+    @PatchMapping("/denuncias/{id}/status")
+    public DenunciaResponse atualizarStatusDaDenuncia(@RequestHeader("X-Usuario-Id") Long actorId,
+                                                      @Parameter(description = "ID da denúncia") @PathVariable Long id,
+                                                      @Valid @RequestBody DenunciaStatusRequest request) {
+        return denuncias.atualizarStatus(usuarios.buscar(actorId), id, request.status());
+    }
+
     @Operation(summary = "Obter denúncia por ID")
     @GetMapping("/denuncias/{id}")
     public DenunciaResponse obterDenuncia(@RequestHeader("X-Usuario-Id") Long actorId,
