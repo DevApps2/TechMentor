@@ -189,3 +189,12 @@ data class AgendamentoRequest(
     val horarioId: Long,
     val assunto: String?
 )
+
+// Corpo do POST /api/mentoras (criar o perfil) e do PUT /api/mentoras/{id} (editar)
+data class MentoraRequest(
+    val bio: String?,
+    val cargo: String?,
+    val empresa: String?,
+    val anosExperiencia: Int?,
+    val areasIds: List<Long>
+)

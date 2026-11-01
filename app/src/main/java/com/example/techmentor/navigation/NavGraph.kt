@@ -19,6 +19,7 @@ import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
 import com.example.techmentor.ui.mentora.MentoraHomeScreen
+import com.example.techmentor.ui.mentora.MentoraPerfilFormScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
@@ -124,6 +125,14 @@ fun NavGraph() {
 
         composable("mentora/perfil") {
             PlaceholderScreen("Perfil da mentora")
+        }
+
+        composable("mentora/completar-perfil") {
+            MentoraPerfilFormScreen(navController = navController, modoEdicao = false)
+        }
+
+        composable("mentora/perfil") {
+            MentoraPerfilFormScreen(navController = navController, modoEdicao = true)
         }
 
     }

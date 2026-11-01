@@ -28,6 +28,8 @@ data class MentoraHomeUiState(
     // mentorias que ainda vão acontecer, da mais próxima para a mais distante
     val proximas: List<AgendamentoResponse> = emptyList(),
     val realizadas: Int = 0,
+    // true quando a mentora ainda não preencheu o perfil: o app abre a tela "Complete seu perfil"
+    val semPerfil: Boolean = false,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
     val sessaoExpirada: Boolean = false
 )
@@ -63,12 +65,24 @@ class MentoraHomeViewModel : ViewModel() {
                 val api = ApiClient.api
 
                 coroutineScope {
-                    // Para uma mentora, a API devolve as mentorias em que ela é a mentora
+                    // As três chamadas saem ao mesmo tempo.
+                    // Para uma mentora, a API devolve as mentorias em que ela é a mentora.
                     val usuarioPedido = async { api.obterUsuario(usuarioId) }
                     val agendamentosPedido = async { api.listarAgendamentos(usuarioId) }
 
+                    // 404 = a mentora ainda não preencheu o perfil
+                    val semPerfilPedido = async {
+                        try {
+                            api.minhaMentora(usuarioId)
+                            false
+                        } catch (e: HttpException) {
+                            if (e.code() == 404) true else throw e
+                        }
+                    }
+
                     val usuario = usuarioPedido.await()
                     val agendamentos = agendamentosPedido.await()
+                    val semPerfil = semPerfilPedido.await()
 
                     val agora = Date()
 
@@ -85,7 +99,8 @@ class MentoraHomeViewModel : ViewModel() {
                             erro = null,
                             usuario = usuario,
                             proximas = proximas,
-                            realizadas = agendamentos.count { a -> a.status == "CONCLUIDA" }
+                            realizadas = agendamentos.count { a -> a.status == "CONCLUIDA" },
+                            semPerfil = semPerfil
                         )
                     }
                 }

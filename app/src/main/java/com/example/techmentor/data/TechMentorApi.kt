@@ -54,6 +54,23 @@ interface TechMentorApi {
         @Body body: AgendamentoRequest
     ): AgendamentoResponse
 
+    // 404 = a mentora ainda não preencheu o perfil
+    @GET("api/mentoras/minha")
+    suspend fun minhaMentora(@Header("X-Usuario-Id") usuarioId: Long): MentoraResponse
+
+    @POST("api/mentoras")
+    suspend fun criarPerfilDeMentora(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Body body: MentoraRequest
+    ): MentoraResponse
+
+    @PUT("api/mentoras/{id}")
+    suspend fun atualizarPerfilDeMentora(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") mentoraId: Long,
+        @Body body: MentoraRequest
+    ): MentoraResponse
+
     // ---- Oportunidades ----
 
     // tipo (ESTAGIO, EMPREGO, BOLSA ou EVENTO) e area são opcionais: quando nulos, o Retrofit nem manda o parâmetro
