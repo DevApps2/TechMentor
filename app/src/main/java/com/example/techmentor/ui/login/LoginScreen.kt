@@ -104,8 +104,8 @@ fun LoginScreen(
         scope.launch {
             try {
                 val usuario = ApiClient.api.login(LoginRequest(email.trim(), password))
-                Sessao.entrar(usuario.id)
-                navController.navigate("home") {
+                Sessao.entrar(usuario.id, usuario.tipo)
+                navController.navigate(Sessao.rotaInicial()) {
                     popUpTo("login") { inclusive = true }
                 }
             } catch (e: HttpException) {

@@ -29,7 +29,19 @@ class NivelRegraServiceTest {
         assertEquals("Curiosa Tech", NivelRegraService.titulo(1));
         assertEquals("Aprendiz Tech", NivelRegraService.titulo(3));
         assertEquals("Exploradora Tech", NivelRegraService.titulo(7));
-        assertEquals("Referência Tech", NivelRegraService.titulo(20));
+        assertEquals("Construtora Tech", NivelRegraService.titulo(14));
+        assertEquals("Criadora Tech", NivelRegraService.titulo(15));
+        assertEquals("Inovadora Tech", NivelRegraService.titulo(20));
+        assertEquals("Mentora Tech", NivelRegraService.titulo(55));
+        assertEquals("Referência Tech", NivelRegraService.titulo(99));
+        assertEquals("Lenda Tech", NivelRegraService.titulo(100));
+    }
+
+    @Test
+    void nivelNaoPassaDe100() {
+        assertEquals(100, NivelRegraService.nivelPara(24_750));
+        assertEquals(100, NivelRegraService.nivelPara(1_000_000));
+        assertEquals(0, NivelRegraService.xpFaltante(1_000_000));
     }
 
     @Test

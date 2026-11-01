@@ -1,12 +1,14 @@
 package com.techmentor.api.service;
 
 import com.techmentor.api.dto.GamificacaoDtos.HistoricoXpResponse;
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.HistoricoXp;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.HistoricoXpRepository;
 import com.techmentor.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +21,7 @@ public class XpService {
 
     private final HistoricoXpRepository historicoXpRepository;
     private final UsuarioRepository usuarioRepository;
-    private final NotificacaoService notificacaoService;
+    private final ApplicationEventPublisher eventos;
 
     public void registrar(Usuario usuario, int pontos, String motivo) {
         int nivelAnterior = NivelRegraService.nivelPara(usuario.getXpTotal());
@@ -37,8 +39,7 @@ public class XpService {
         historicoXpRepository.save(historico);
 
         if (nivelAtual > nivelAnterior) {
-            notificacaoService.notificar(usuario, "Você subiu de nível!",
-                    "Agora você é nível " + nivelAtual + " · " + NivelRegraService.titulo(nivelAtual));
+            eventos.publishEvent(new EventosDeNotificacao.NivelSubiu(usuario, nivelAtual));
         }
     }
 

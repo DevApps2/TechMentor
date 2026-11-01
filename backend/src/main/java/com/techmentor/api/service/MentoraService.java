@@ -65,13 +65,23 @@ public class MentoraService {
     public MentoraResponse obterMentora(Long id) { return toResponse(buscarMentora(id)); }
 
     public MentoraResponse criarMentora(Usuario actor, MentoraRequest request) {
+        RegraAcesso.exigirMentora(actor);
         validarPerfil(request);
-        if (mentoras.findAll().stream().anyMatch(m -> m.getUsuario().getId().equals(actor.getId())))
+        if (mentoras.findByUsuarioId(actor.getId()).isPresent())
             throw ApiException.conflict("Este usuário já possui perfil de mentora.");
         PerfilMentora mentora = new PerfilMentora();
         mentora.setUsuario(actor);
         aplicarDados(mentora, request);
         return toResponse(mentoras.save(mentora));
+    }
+
+    /** O perfil da mentora que está logada. Dá 404 se ela ainda não preencheu o perfil. */
+    @Transactional(readOnly = true)
+    public MentoraResponse minhaMentora(Usuario actor) {
+        RegraAcesso.exigirMentora(actor);
+        PerfilMentora mentora = mentoras.findByUsuarioId(actor.getId())
+                .orElseThrow(() -> ApiException.notFound("Você ainda não preencheu o perfil de mentora."));
+        return toResponse(mentora);
     }
 
     public MentoraResponse atualizarMentora(Usuario actor, Long id, MentoraRequest request) {

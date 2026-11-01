@@ -3,6 +3,7 @@ package com.techmentor.api.service;
 import com.techmentor.api.dto.GamificacaoDtos.ConquistaRequest;
 import com.techmentor.api.dto.GamificacaoDtos.ConquistaResponse;
 import com.techmentor.api.dto.GamificacaoDtos.UsuarioConquistaResponse;
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Conquista;
@@ -12,6 +13,7 @@ import com.techmentor.api.repository.ConquistaRepository;
 import com.techmentor.api.repository.UsuarioConquistaRepository;
 import com.techmentor.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +34,7 @@ public class ConquistaService {
     private final ConquistaRepository conquistaRepository;
     private final UsuarioConquistaRepository usuarioConquistaRepository;
     private final UsuarioRepository usuarioRepository;
-    private final NotificacaoService notificacaoService;
+    private final ApplicationEventPublisher eventos;
     private final XpService xpService;
 
     public Conquista criarConquista(Conquista conquista) {
@@ -108,7 +110,6 @@ public class ConquistaService {
         usuarioConquistaRepository.save(desbloqueio);
 
         xpService.registrar(usuario, conquista.getXpBonus(), "Conquista: " + conquista.getNome());
-        usuarioRepository.save(usuario);
-        notificacaoService.notificar(usuario, "Conquista desbloqueada!", conquista.getNome());
+        eventos.publishEvent(new EventosDeNotificacao.ConquistaDesbloqueada(usuario, conquista.getNome()));
     }
 }

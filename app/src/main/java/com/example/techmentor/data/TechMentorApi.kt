@@ -6,6 +6,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -52,6 +53,58 @@ interface TechMentorApi {
     suspend fun criarAgendamento(
         @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: AgendamentoRequest
+    ): AgendamentoResponse
+
+    // 404 = a mentora ainda não preencheu o perfil
+    @GET("api/mentoras/minha")
+    suspend fun minhaMentora(@Header("X-Usuario-Id") usuarioId: Long): MentoraResponse
+
+    @POST("api/mentoras")
+    suspend fun criarPerfilDeMentora(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Body body: MentoraRequest
+    ): MentoraResponse
+
+    @PUT("api/mentoras/{id}")
+    suspend fun atualizarPerfilDeMentora(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") mentoraId: Long,
+        @Body body: MentoraRequest
+    ): MentoraResponse
+
+    @POST("api/mentoras/{id}/disponibilidades")
+    suspend fun criarHorario(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") mentoraId: Long,
+        @Body body: HorarioRequest
+    ): HorarioResponse
+
+    @DELETE("api/disponibilidades/{id}")
+    suspend fun excluirHorario(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") horarioId: Long
+    )
+
+    // A mentora confirma: AGENDADA vira CONFIRMADA e a aluna é avisada
+    @PATCH("api/agendamentos/{id}/confirmacao")
+    suspend fun confirmarAgendamento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long
+    ): AgendamentoResponse
+
+    // Aluna ou mentora cancela: o horário volta a ficar livre e a outra pessoa é avisada
+    @PATCH("api/agendamentos/{id}/cancelamento")
+    suspend fun cancelarAgendamento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long
+    ): AgendamentoResponse
+
+    // Troca por outro horário livre da mesma mentora (será usado na próxima etapa)
+    @PATCH("api/agendamentos/{id}/reagendamento")
+    suspend fun reagendarAgendamento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long,
+        @Body body: ReagendamentoRequest
     ): AgendamentoResponse
 
     // ---- Oportunidades ----
@@ -141,4 +194,6 @@ interface TechMentorApi {
 
     @POST("usuarios/senha/redefinir")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest)
+
+
 }

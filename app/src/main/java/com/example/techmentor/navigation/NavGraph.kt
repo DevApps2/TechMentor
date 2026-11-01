@@ -18,6 +18,10 @@ import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
+import com.example.techmentor.ui.mentora.AgendaMentoraScreen
+import com.example.techmentor.ui.mentora.MentoraHomeScreen
+import com.example.techmentor.ui.mentora.MentoraPerfilFormScreen
+import com.example.techmentor.ui.mentoria.ReagendarScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
@@ -26,8 +30,8 @@ import com.example.techmentor.ui.splash.SplashScreen
 fun NavGraph() {
     val navController = rememberNavController()
 
-    // Depois da abertura, quem já entrou antes vai direto para a Home
-    val destinoAposAbertura = remember { if (Sessao.usuarioId != null) "home" else "login" }
+    // Depois da abertura, quem já entrou antes vai direto para a tela do seu tipo
+    val destinoAposAbertura = remember { if (Sessao.usuarioId != null) Sessao.rotaInicial() else "login" }
 
     NavHost(
         navController = navController,
@@ -112,6 +116,41 @@ fun NavGraph() {
                 email = entrada.arguments?.getString("email").orEmpty()
             )
         }
+
+        composable("mentora") {
+            MentoraHomeScreen(navController = navController)
+        }
+
+        composable("mentora/agenda") {
+            AgendaMentoraScreen(navController = navController)
+        }
+
+        composable("mentora/perfil") {
+            PlaceholderScreen("Perfil da mentora")
+        }
+
+        composable("mentora/completar-perfil") {
+            MentoraPerfilFormScreen(navController = navController, modoEdicao = false)
+        }
+
+        composable("mentora/perfil") {
+            MentoraPerfilFormScreen(navController = navController, modoEdicao = true)
+        }
+
+        composable(
+            route = "reagendar/{agendamentoId}/{mentoraId}",
+            arguments = listOf(
+                navArgument("agendamentoId") { type = NavType.LongType },
+                navArgument("mentoraId") { type = NavType.LongType }
+            )
+        ) { entrada ->
+            ReagendarScreen(
+                navController = navController,
+                agendamentoId = entrada.arguments?.getLong("agendamentoId") ?: 0L,
+                mentoraId = entrada.arguments?.getLong("mentoraId") ?: 0L
+            )
+        }
+
     }
 }
 

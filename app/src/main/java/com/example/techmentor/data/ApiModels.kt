@@ -189,3 +189,21 @@ data class AgendamentoRequest(
     val horarioId: Long,
     val assunto: String?
 )
+
+// Corpo do POST /api/mentoras (criar o perfil) e do PUT /api/mentoras/{id} (editar)
+data class MentoraRequest(
+    val bio: String?,
+    val cargo: String?,
+    val empresa: String?,
+    val anosExperiencia: Int?,
+    val areasIds: List<Long>
+)
+
+// Corpo do POST /api/mentoras/{id}/disponibilidades; as datas vão como "2026-11-10T14:00:00"
+data class HorarioRequest(
+    val inicio: String,
+    val fim: String
+)
+
+// Corpo do PATCH /api/agendamentos/{id}/reagendamento: o novo horário, da mesma mentora
+data class ReagendamentoRequest(val horarioId: Long)
