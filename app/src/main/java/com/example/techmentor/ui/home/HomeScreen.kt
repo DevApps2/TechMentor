@@ -60,6 +60,7 @@ import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
+import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.theme.ManropeFamily
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -103,6 +104,8 @@ fun HomeScreen(
             .background(Fundo)
             .statusBarsPadding()
     ) {
+
+        TopBarMarca()
 
         Box(
             modifier = Modifier.weight(1f)
@@ -159,7 +162,7 @@ private fun HomeContent(
             .padding(
                 start = 20.dp,
                 end = 20.dp,
-                top = 20.dp,
+                top = 18.dp,
                 bottom = 24.dp
             )
     ) {

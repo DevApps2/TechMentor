@@ -2,6 +2,7 @@ package com.example.techmentor.data
 
 import okhttp3.MultipartBody
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
@@ -52,6 +53,72 @@ interface TechMentorApi {
         @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: AgendamentoRequest
     ): AgendamentoResponse
+
+    // ---- Oportunidades ----
+
+    // tipo (ESTAGIO, EMPREGO, BOLSA ou EVENTO) e area são opcionais: quando nulos, o Retrofit nem manda o parâmetro
+    @GET("api/oportunidades")
+    suspend fun listarOportunidades(
+        @Query("tipo") tipo: String?,
+        @Query("area") area: String?
+    ): List<OportunidadeResponse>
+
+    // ---- Segurança ----
+
+    // devolve orientações e canais de ajuda juntos; a tela separa pelo tipo
+    @GET("api/seguranca/conteudos")
+    suspend fun listarConteudosSeguranca(): List<ConteudoSegurancaResponse>
+
+    // mínimo de 2 letras; o backend tira da lista quem está buscando
+    @GET("usuarios/busca")
+    suspend fun buscarUsuarios(
+        @Query("nome") nome: String,
+        @Header("X-Usuario-Id") solicitanteId: Long
+    ): List<UsuarioResumoResponse>
+
+    @POST("api/denuncias")
+    suspend fun denunciar(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Body body: DenunciaRequest
+    ): DenunciaResponse
+
+    // as denúncias que a própria pessoa fez, da mais nova para a mais antiga; status: ABERTA, EM_ANALISE ou RESOLVIDA
+    @GET("api/denuncias/minhas")
+    suspend fun minhasDenuncias(@Header("X-Usuario-Id") usuarioId: Long): List<DenunciaResponse>
+
+    @GET("api/bloqueios")
+    suspend fun listarBloqueios(@Header("X-Usuario-Id") usuarioId: Long): List<BloqueioResponse>
+
+    @POST("api/bloqueios")
+    suspend fun bloquear(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Body body: BloqueioRequest
+    ): BloqueioResponse
+
+    @DELETE("api/bloqueios/{usuarioId}")
+    suspend fun desbloquear(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("usuarioId") bloqueadoId: Long
+    )
+
+    // vagas e bolsas: candidatura; eventos: inscrição (o backend recusa o tipo errado com 400)
+    @POST("api/oportunidades/{id}/candidaturas")
+    suspend fun candidatar(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") oportunidadeId: Long
+    ): InscricaoResponse
+
+    @POST("api/oportunidades/{id}/inscricoes")
+    suspend fun inscreverEmEvento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") oportunidadeId: Long
+    ): InscricaoResponse
+
+    @GET("api/candidaturas/minhas")
+    suspend fun minhasCandidaturas(@Header("X-Usuario-Id") usuarioId: Long): List<InscricaoResponse>
+
+    @GET("api/inscricoes/minhas")
+    suspend fun minhasInscricoes(@Header("X-Usuario-Id") usuarioId: Long): List<InscricaoResponse>
 
     @GET("conquistas/usuarios/{id}")
     suspend fun listarConquistasDoUsuario(@Path("id") id: Long): List<UsuarioConquistaResponse>

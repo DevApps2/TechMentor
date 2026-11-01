@@ -53,6 +53,9 @@ import androidx.navigation.NavController
 import com.example.techmentor.data.MentoraResponse
 import com.example.techmentor.ui.auth.AuthField
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.AbaExplorar
+import com.example.techmentor.ui.components.AvisoDemo
+import com.example.techmentor.ui.components.ExplorarCabecalho
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.theme.ManropeFamily
@@ -88,30 +91,16 @@ fun MentoriaScreen(
 
         TopBarMarca()
 
+        ExplorarCabecalho(
+            navController = navController,
+            aba = AbaExplorar.MENTORIA
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, top = 18.dp)
+                .padding(start = 20.dp, end = 20.dp, top = 14.dp)
         ) {
-
-            Text(
-                text = "Mentoria",
-                fontFamily = ManropeFamily,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.5).sp,
-                color = MentoriaCores.TextoEscuro
-            )
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Text(
-                text = "Converse com quem já trilhou o caminho.",
-                fontSize = 13.sp,
-                color = Color(0xFF797486)
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
 
             AuthField(
                 label = "Buscar mentora",
@@ -161,14 +150,8 @@ fun MentoriaScreen(
             val mentoras = estado.mentoras
 
             when {
-                erro != null -> EstadoErro(
-                    mensagem = erro,
-                    onTentarDeNovo = { viewModel.carregar() }
-                )
-
-                mentoras == null -> MentoriaCarregando()
-
-                else -> PullToRefreshBox(
+                // Se uma atualização ou busca falhar, a lista que já estava na tela continua lá
+                mentoras != null -> PullToRefreshBox(
                     isRefreshing = estado.atualizando,
                     onRefresh = { viewModel.carregar(manual = true) },
                     modifier = Modifier.fillMaxSize()
@@ -184,6 +167,13 @@ fun MentoriaScreen(
                         }
                     )
                 }
+
+                erro != null -> EstadoErro(
+                    mensagem = erro,
+                    onTentarDeNovo = { viewModel.carregar() }
+                )
+
+                else -> MentoriaCarregando()
             }
         }
 
@@ -253,6 +243,10 @@ private fun ListaDeMentoras(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+
+        item {
+            AvisoDemo(texto = "Perfis fictícios para demonstração. Fotos ilustrativas.")
+        }
 
         if (mentoras.isEmpty()) {
 

@@ -27,10 +27,10 @@ public class OportunidadeService {
         this.conquistas = conquistas;
     }
 
-    /** Oportunidades ativas pelo prazo mais próximo; filtros opcionais por tipo e por área. */
+    /** Oportunidades ativas e com prazo em aberto, pelo prazo mais próximo; filtros opcionais por tipo e por área. */
     @Transactional(readOnly = true)
     public List<OportunidadeResponse> listar(Oportunidade.Tipo tipo, String area) {
-        return oportunidades.findByAtivaTrueOrderByPrazoInscricaoAsc().stream()
+        return oportunidades.listarAbertas(LocalDate.now()).stream()
                 .filter(o -> tipo == null || o.getTipo() == tipo)
                 .filter(o -> area == null || area.isBlank() || area.trim().equalsIgnoreCase(o.getArea()))
                 .map(this::toResponse).toList();
