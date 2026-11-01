@@ -46,6 +46,22 @@ import com.example.techmentor.ui.mentoria.EsqueletoBloco
 import com.example.techmentor.ui.mentoria.EstadoErro
 import com.example.techmentor.ui.mentoria.MentoriaCores
 import com.example.techmentor.ui.theme.ManropeFamily
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil3.compose.AsyncImage
+import com.example.techmentor.data.ApiClient
+import com.example.techmentor.ui.components.reduzirFoto
 
 private const val LIMITE_BIO = 2000
 
@@ -71,6 +87,15 @@ fun MentoraPerfilFormScreen(
     var areasEscolhidas by rememberSaveable { mutableStateOf(emptyList<Long>()) }
     var preenchido by rememberSaveable { mutableStateOf(false) }
     var tentou by rememberSaveable { mutableStateOf(false) }
+    val contexto = LocalContext.current
+
+    val escolherFoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            reduzirFoto(contexto, uri)?.let { viewModel.enviarFoto(it) }
+        }
+    }
 
     fun sair() {
         Sessao.sair()
@@ -179,6 +204,18 @@ fun MentoraPerfilFormScreen(
                         color = Color(0xFF797486)
                     )
                 }
+
+                FotoDePerfil(
+                    nome = estado.perfilAtual?.nome ?: "Você",
+                    fotoUrl = estado.fotoUrl,
+                    enviando = estado.enviandoFoto,
+                    erro = estado.erroFoto,
+                    onEscolher = {
+                        escolherFoto.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
 
                 AuthField(
                     label = "Cargo",
@@ -315,4 +352,72 @@ private fun MensagemDoCampo(texto: String) {
         fontSize = 11.sp,
         color = AuthColors.Error
     )
+}
+
+@Composable
+private fun FotoDePerfil(
+    nome: String,
+    fotoUrl: String?,
+    enviando: Boolean,
+    erro: String?,
+    onEscolher: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        // A inicial fica por baixo; a foto, se existir, cobre quando carregar
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xFFEDE9FE)),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Text(
+                text = nome.trim().firstOrNull()?.uppercase() ?: "?",
+                fontFamily = ManropeFamily,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MentoriaCores.RoxoEscuro
+            )
+
+            if (!fotoUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = ApiClient.urlDaFoto(fotoUrl),
+                    contentDescription = "Foto de perfil",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+
+            OutlinedAuthButton(
+                text = when {
+                    enviando -> "Enviando foto..."
+                    fotoUrl.isNullOrBlank() -> "Escolher foto da galeria"
+                    else -> "Trocar foto"
+                },
+                onClick = { if (!enviando) onEscolher() }
+            )
+
+            if (erro != null) {
+                Text(
+                    text = erro,
+                    fontSize = 11.sp,
+                    color = AuthColors.Error
+                )
+            }
+        }
+    }
 }

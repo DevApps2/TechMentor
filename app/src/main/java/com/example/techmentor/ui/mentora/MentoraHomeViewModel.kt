@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
+import com.example.techmentor.data.ErroResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.home.parseDataHora
+import com.google.gson.Gson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -30,6 +32,10 @@ data class MentoraHomeUiState(
     val realizadas: Int = 0,
     // true quando a mentora ainda não preencheu o perfil: o app abre a tela "Complete seu perfil"
     val semPerfil: Boolean = false,
+    // mentoria que está sendo confirmada ou cancelada agora
+    val acaoEmAndamentoId: Long? = null,
+    // falha ao confirmar ou cancelar (aparece em vermelho na tela)
+    val erroAcao: String? = null,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
     val sessaoExpirada: Boolean = false
 )
@@ -114,6 +120,69 @@ class MentoraHomeViewModel : ViewModel() {
                 _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
             } finally {
                 _estado.update { it.copy(atualizando = false) }
+            }
+        }
+    }
+
+    /** A mentora confirma: a mentoria passa a CONFIRMADA e a aluna é avisada pelo backend. */
+    fun confirmar(agendamentoId: Long) {
+        executar(agendamentoId) { usuarioId ->
+            ApiClient.api.confirmarAgendamento(usuarioId, agendamentoId)
+        }
+    }
+
+    /** A mentora cancela: a aluna é avisada e o horário volta a ficar livre. */
+    fun cancelar(agendamentoId: Long) {
+        executar(agendamentoId) { usuarioId ->
+            ApiClient.api.cancelarAgendamento(usuarioId, agendamentoId)
+        }
+    }
+
+    fun limparErroAcao() {
+        _estado.update { it.copy(erroAcao = null) }
+    }
+
+    /** Faz a chamada, atualiza a lista com a resposta e traduz os erros do servidor em mensagens. */
+    private fun executar(agendamentoId: Long, chamada: suspend (usuarioId: Long) -> AgendamentoResponse) {
+        if (_estado.value.acaoEmAndamentoId != null) return
+
+        val usuarioId = Sessao.usuarioId
+        if (usuarioId == null) {
+            _estado.update { it.copy(sessaoExpirada = true) }
+            return
+        }
+
+        viewModelScope.launch {
+            _estado.update { it.copy(acaoEmAndamentoId = agendamentoId, erroAcao = null) }
+
+            try {
+                val resposta = chamada(usuarioId)
+
+                _estado.update { atual ->
+                    atual.copy(
+                        acaoEmAndamentoId = null,
+                        // cancelada sai da lista; as outras só mudam de situação
+                        proximas = if (resposta.status == "CANCELADA") {
+                            atual.proximas.filter { it.id != resposta.id }
+                        } else {
+                            atual.proximas.map { if (it.id == resposta.id) resposta else it }
+                        }
+                    )
+                }
+            } catch (e: HttpException) {
+                val daApi = runCatching {
+                    Gson().fromJson(e.response()?.errorBody()?.string(), ErroResponse::class.java)?.erro
+                }.getOrNull()
+
+                val mensagem = when (e.code()) {
+                    // 409 = já confirmada, já cancelada ou já passou do horário
+                    400, 403, 404, 409 -> daApi ?: "Não foi possível concluir. Tente novamente."
+                    else -> ERRO_CONEXAO
+                }
+
+                _estado.update { it.copy(acaoEmAndamentoId = null, erroAcao = mensagem) }
+            } catch (e: IOException) {
+                _estado.update { it.copy(acaoEmAndamentoId = null, erroAcao = ERRO_CONEXAO) }
             }
         }
     }

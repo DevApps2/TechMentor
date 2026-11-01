@@ -90,6 +90,11 @@ public final class MentoriaDtos {
             @Schema(description = "Assunto que a aluna deseja tratar na mentoria", example = "Dúvidas sobre transição de carreira")
             @Size(max = 500) String assunto) { }
 
+    @Schema(description = "Novo horário para uma mentoria já marcada")
+    public record ReagendamentoRequest(
+            @Schema(description = "ID do novo horário (da mesma mentora)", example = "12")
+            @NotNull @Positive Long horarioId) { }
+
     @Schema(description = "Agendamento de mentoria entre aluna e mentora")
     public record AgendamentoResponse(
             @Schema(description = "ID do agendamento", example = "1")
@@ -114,4 +119,5 @@ public final class MentoriaDtos {
             String assunto,
             @Schema(description = "Data e hora em que o agendamento foi criado", example = "2026-10-26T14:30:00")
             LocalDateTime criadaEm) { }
+
 }

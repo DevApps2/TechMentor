@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
+import com.example.techmentor.data.ErroResponse
 import com.example.techmentor.data.MatriculaResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
+import com.google.gson.Gson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +30,9 @@ data class HomeUiState(
     val usuario: UsuarioResponse? = null,
     val cursoEmAndamento: MatriculaResponse? = null,
     val proximaMentoria: AgendamentoResponse? = null,
+    // true enquanto a próxima mentoria está sendo cancelada, e a falha, se houver
+    val cancelando: Boolean = false,
+    val erroCancelamento: String? = null,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
     val sessaoExpirada: Boolean = false
 )
@@ -95,6 +100,34 @@ class HomeViewModel : ViewModel() {
                 _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
             } finally {
                 _estado.update { it.copy(atualizando = false) }
+            }
+        }
+    }
+
+    /** A aluna cancela a próxima mentoria: a mentora é avisada e o horário volta a ficar livre. */
+    fun cancelarMentoria(agendamentoId: Long) {
+        if (_estado.value.cancelando) return
+
+        val usuarioId = Sessao.usuarioId ?: return
+
+        viewModelScope.launch {
+            _estado.update { it.copy(cancelando = true, erroCancelamento = null) }
+
+            try {
+                ApiClient.api.cancelarAgendamento(usuarioId, agendamentoId)
+
+                _estado.update { it.copy(cancelando = false) }
+                carregar()
+            } catch (e: HttpException) {
+                val daApi = runCatching {
+                    Gson().fromJson(e.response()?.errorBody()?.string(), ErroResponse::class.java)?.erro
+                }.getOrNull()
+
+                _estado.update {
+                    it.copy(cancelando = false, erroCancelamento = daApi ?: ERRO_CONEXAO)
+                }
+            } catch (e: IOException) {
+                _estado.update { it.copy(cancelando = false, erroCancelamento = ERRO_CONEXAO) }
             }
         }
     }

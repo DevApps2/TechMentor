@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -30,7 +33,11 @@ data class MentoraPerfilFormUiState(
     val erroAoSalvar: String? = null,
     val salvo: Boolean = false,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
-    val sessaoExpirada: Boolean = false
+    val sessaoExpirada: Boolean = false,
+    // foto de perfil do usuário (a mesma que as alunas veem na lista de mentoras)
+    val fotoUrl: String? = null,
+    val enviandoFoto: Boolean = false,
+    val erroFoto: String? = null,
 )
 
 class MentoraPerfilFormViewModel : ViewModel() {
@@ -53,6 +60,7 @@ class MentoraPerfilFormViewModel : ViewModel() {
 
                 coroutineScope {
                     val areasPedido = async { api.listarAreas() }
+                    val usuarioPedido = async { api.obterUsuario(usuarioId) }
 
                     // 404 não é erro aqui: só quer dizer "ainda não preencheu"
                     val perfilPedido = async {
@@ -65,9 +73,15 @@ class MentoraPerfilFormViewModel : ViewModel() {
 
                     val areas = areasPedido.await()
                     val perfil = perfilPedido.await()
+                    val usuario = usuarioPedido.await()
 
                     _estado.update {
-                        it.copy(carregando = false, areasDisponiveis = areas, perfilAtual = perfil)
+                        it.copy(
+                            carregando = false,
+                            areasDisponiveis = areas,
+                            perfilAtual = perfil,
+                            fotoUrl = usuario.fotoUrl
+                        )
                     }
                 }
             } catch (e: HttpException) {
@@ -77,6 +91,37 @@ class MentoraPerfilFormViewModel : ViewModel() {
                 }
             } catch (e: IOException) {
                 _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    /** Envia a foto escolhida na galeria (já reduzida) e atualiza o avatar. */
+    fun enviarFoto(jpeg: ByteArray) {
+        if (_estado.value.enviandoFoto) return
+
+        val usuarioId = Sessao.usuarioId
+        if (usuarioId == null) {
+            _estado.update { it.copy(sessaoExpirada = true) }
+            return
+        }
+
+        viewModelScope.launch {
+            _estado.update { it.copy(enviandoFoto = true, erroFoto = null) }
+
+            try {
+                val parte = MultipartBody.Part.createFormData(
+                    "foto",
+                    "foto.jpg",
+                    jpeg.toRequestBody("image/jpeg".toMediaType())
+                )
+
+                val atualizado = ApiClient.api.enviarFoto(usuarioId, parte)
+
+                _estado.update { it.copy(enviandoFoto = false, fotoUrl = atualizado.fotoUrl) }
+            } catch (e: HttpException) {
+                _estado.update { it.copy(enviandoFoto = false, erroFoto = mensagemDaApi(e) ?: ERRO_CONEXAO) }
+            } catch (e: IOException) {
+                _estado.update { it.copy(enviandoFoto = false, erroFoto = ERRO_CONEXAO) }
             }
         }
     }

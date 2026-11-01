@@ -123,7 +123,16 @@ fun HomeScreen(
                         usuario = usuario,
                         cursoEmAndamento = estado.cursoEmAndamento,
                         proximaMentoria = estado.proximaMentoria,
-                        navController = navController
+                        navController = navController,
+                        acoesDaMentoria = {
+                            AcoesDaProximaMentoria(
+                                proxima = estado.proximaMentoria,
+                                cancelando = estado.cancelando,
+                                erro = estado.erroCancelamento,
+                                navController = navController,
+                                onCancelar = { viewModel.cancelarMentoria(it) }
+                            )
+                        }
                     )
                 }
 
@@ -152,7 +161,8 @@ private fun HomeContent(
     usuario: UsuarioResponse,
     cursoEmAndamento: MatriculaResponse?,
     proximaMentoria: AgendamentoResponse?,
-    navController: NavController
+    navController: NavController,
+    acoesDaMentoria: @Composable () -> Unit
 ) {
 
     Column(
@@ -190,6 +200,8 @@ private fun HomeContent(
                 ?: "Explore horários e agende uma conversa.",
             onClick = { navController.navigate("mentorship") }
         )
+
+        acoesDaMentoria()
 
         SectionHeader(
             title = "Continue aprendendo",

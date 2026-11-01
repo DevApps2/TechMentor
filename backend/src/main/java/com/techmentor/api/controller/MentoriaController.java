@@ -131,4 +131,23 @@ public class MentoriaController {
                                                    @Parameter(description = "ID do agendamento") @PathVariable Long id) {
         return agendamentos.cancelar(usuarios.buscar(actorId), id);
     }
+
+    @Operation(summary = "Confirmar agendamento",
+            description = "Só a mentora da mentoria (ou admin). Passa de AGENDADA para CONFIRMADA e avisa a aluna por notificação.")
+    @PatchMapping("/agendamentos/{id}/confirmacao")
+    public AgendamentoResponse confirmarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
+                                                    @Parameter(description = "ID do agendamento") @PathVariable Long id) {
+        return agendamentos.confirmar(usuarios.buscar(actorId), id);
+    }
+
+    @Operation(summary = "Reagendar mentoria",
+            description = "A aluna ou a mentora da mentoria (ou admin) troca por outro horário livre da mesma mentora. "
+                    + "Se a aluna reagenda, volta para AGENDADA e a mentora confirma de novo; se a mentora reagenda, fica CONFIRMADA. "
+                    + "A outra pessoa recebe uma notificação.")
+    @PatchMapping("/agendamentos/{id}/reagendamento")
+    public AgendamentoResponse reagendarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
+                                                    @Parameter(description = "ID do agendamento") @PathVariable Long id,
+                                                    @Valid @RequestBody ReagendamentoRequest request) {
+        return agendamentos.reagendar(usuarios.buscar(actorId), id, request.horarioId());
+    }
 }

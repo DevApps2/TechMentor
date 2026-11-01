@@ -9,6 +9,11 @@ import com.techmentor.api.service.NivelRegraService;
 import com.techmentor.api.service.NotificacaoService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaAgendada;
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaCancelada;
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaConfirmada;
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaReagendada;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Observer das notificações: escuta os fatos do sistema e cria a notificação de cada um.
@@ -19,6 +24,8 @@ import org.springframework.stereotype.Component;
 public class NotificadorListener {
 
     private final NotificacaoService notificacoes;
+    // Ex.: "10/11 às 14:00"
+    private static final DateTimeFormatter DATA_E_HORA = DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm");
 
     public NotificadorListener(NotificacaoService notificacoes) {
         this.notificacoes = notificacoes;
@@ -57,5 +64,33 @@ public class NotificadorListener {
         };
 
         notificacoes.notificar(evento.denunciante(), "Atualização da sua denúncia", mensagem);
+    }
+
+    @EventListener
+    public void aoAgendarMentoria(MentoriaAgendada evento) {
+        notificacoes.notificar(evento.mentora(), "Nova mentoria para confirmar",
+                evento.nomeDaAluna() + " quer conversar em " + evento.inicio().format(DATA_E_HORA) + ".");
+    }
+
+    @EventListener
+    public void aoConfirmarMentoria(MentoriaConfirmada evento) {
+        notificacoes.notificar(evento.aluna(), "Mentoria confirmada!",
+                evento.nomeDaMentora() + " confirmou a mentoria de " + evento.inicio().format(DATA_E_HORA) + ".");
+    }
+
+    @EventListener
+    public void aoCancelarMentoria(MentoriaCancelada evento) {
+        notificacoes.notificar(evento.destinatario(), "Mentoria cancelada",
+                evento.quemCancelou() + " cancelou a mentoria de " + evento.inicio().format(DATA_E_HORA) + ".");
+    }
+
+    @EventListener
+    public void aoReagendarMentoria(MentoriaReagendada evento) {
+        String complemento = evento.precisaConfirmar()
+                ? " Aguarde a confirmação."
+                : " Se não puder, cancele ou escolha outro horário.";
+
+        notificacoes.notificar(evento.destinatario(), "Mentoria reagendada",
+                evento.quemReagendou() + " mudou a mentoria para " + evento.novoInicio().format(DATA_E_HORA) + "." + complemento);
     }
 }

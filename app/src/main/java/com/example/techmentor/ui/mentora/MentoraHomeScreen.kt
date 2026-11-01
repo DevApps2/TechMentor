@@ -2,6 +2,7 @@ package com.example.techmentor.ui.mentora
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,17 +17,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.OutlinedAuthButton
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.descricaoDaMentoria
@@ -60,6 +68,9 @@ fun MentoraHomeScreen(
 
     val estado by viewModel.estado.collectAsState()
 
+    // A mentoria que a mentora pediu para cancelar; enquanto não confirmar no diálogo, nada é enviado
+    var paraCancelar by remember { mutableStateOf<AgendamentoResponse?>(null) }
+
     fun sair() {
         Sessao.sair()
         navController.navigate("login") {
@@ -73,9 +84,39 @@ fun MentoraHomeScreen(
         if (estado.sessaoExpirada) sair()
     }
 
+    // Mentora sem perfil: abre o formulário de primeiro acesso
+    LaunchedEffect(estado.semPerfil) {
+        if (estado.semPerfil) {
+            navController.navigate("mentora/completar-perfil")
+        }
+    }
+
     // Carrega ao abrir e ao voltar para a tela; fora isso, só puxando para atualizar
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
+    }
+
+    // ---- Diálogo de cancelar ----
+
+    paraCancelar?.let { mentoria ->
+        AlertDialog(
+            onDismissRequest = { paraCancelar = null },
+            title = { Text("Cancelar esta mentoria?") },
+            text = {
+                Text("${mentoria.alunaNome} será avisada e o horário volta a ficar livre na sua agenda.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.cancelar(mentoria.id)
+                    paraCancelar = null
+                }) {
+                    Text("Cancelar mentoria", color = Color(0xFFDC2626))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { paraCancelar = null }) { Text("Voltar") }
+            }
+        )
     }
 
     Column(
@@ -103,6 +144,11 @@ fun MentoraHomeScreen(
                         nome = usuario.nome,
                         proximas = estado.proximas,
                         realizadas = estado.realizadas,
+                        acaoEmAndamentoId = estado.acaoEmAndamentoId,
+                        erroAcao = estado.erroAcao,
+                        onConfirmar = { viewModel.confirmar(it) },
+                        onReagendar = { navController.navigate("reagendar/${it.id}/${it.mentoraId}") },
+                        onPedirCancelamento = { paraCancelar = it },
                         onSair = { sair() }
                     )
                 }
@@ -128,6 +174,11 @@ private fun Conteudo(
     nome: String,
     proximas: List<AgendamentoResponse>,
     realizadas: Int,
+    acaoEmAndamentoId: Long?,
+    erroAcao: String?,
+    onConfirmar: (Long) -> Unit,
+    onReagendar: (AgendamentoResponse) -> Unit,
+    onPedirCancelamento: (AgendamentoResponse) -> Unit,
     onSair: () -> Unit
 ) {
 
@@ -201,6 +252,14 @@ private fun Conteudo(
             color = MentoriaCores.TextoEscuro
         )
 
+        if (erroAcao != null) {
+            Text(
+                text = erroAcao,
+                fontSize = 11.sp,
+                color = AuthColors.Error
+            )
+        }
+
         if (proximas.isEmpty()) {
 
             Text(
@@ -213,7 +272,13 @@ private fun Conteudo(
         } else {
 
             proximas.forEach { mentoria ->
-                CartaoDeMentoria(mentoria = mentoria)
+                CartaoDeMentoria(
+                    mentoria = mentoria,
+                    ocupado = acaoEmAndamentoId == mentoria.id,
+                    onConfirmar = { onConfirmar(mentoria.id) },
+                    onReagendar = { onReagendar(mentoria) },
+                    onCancelar = { onPedirCancelamento(mentoria) }
+                )
             }
         }
 
@@ -261,78 +326,166 @@ private fun Resumo(
 }
 
 @Composable
-private fun CartaoDeMentoria(mentoria: AgendamentoResponse) {
+private fun CartaoDeMentoria(
+    mentoria: AgendamentoResponse,
+    ocupado: Boolean,
+    onConfirmar: () -> Unit,
+    onReagendar: () -> Unit,
+    onCancelar: () -> Unit
+) {
 
     val forma = RoundedCornerShape(17.dp)
     val data = parseDataHora(mentoria.inicio)
     val dia = data?.let { SimpleDateFormat("d", LocaleBr).format(it) } ?: "–"
     val mes = data?.let { SimpleDateFormat("MMM", LocaleBr).format(it).uppercase().trimEnd('.') } ?: ""
+    val aguardando = mentoria.status == "AGENDADA"
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(forma)
             .background(Color.White)
             .border(1.dp, MentoriaCores.Borda, forma)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(14.dp)
     ) {
 
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF0EAFF))
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
 
-            Text(
-                text = dia,
-                fontFamily = ManropeFamily,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MentoriaCores.RoxoEscuro
-            )
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF0EAFF))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-            Text(
-                text = mes,
-                fontSize = 8.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MentoriaCores.RoxoEscuro
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-
-            Text(
-                text = mentoria.alunaNome,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF20202A),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            if (!mentoria.assunto.isNullOrBlank()) {
                 Text(
-                    text = mentoria.assunto,
-                    fontSize = 12.sp,
-                    color = MentoriaCores.TextoMudo,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    text = dia,
+                    fontFamily = ManropeFamily,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MentoriaCores.RoxoEscuro
+                )
+
+                Text(
+                    text = mes,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MentoriaCores.RoxoEscuro
                 )
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+
+                Text(
+                    text = mentoria.alunaNome,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF20202A),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (!mentoria.assunto.isNullOrBlank()) {
+                    Text(
+                        text = mentoria.assunto,
+                        fontSize = 12.sp,
+                        color = MentoriaCores.TextoMudo,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = descricaoDaMentoria(mentoria),
+                    fontSize = 10.sp,
+                    color = Color(0xFF85808C)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Situação: aguardando a confirmação da mentora ou já confirmada
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(7.dp))
+                .background(if (aguardando) Color(0xFFFEF3C7) else Color(0xFFDCFCE7))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
 
             Text(
-                text = descricaoDaMentoria(mentoria),
+                text = if (aguardando) "Aguardando sua confirmação" else "Confirmada",
                 fontSize = 10.sp,
-                color = Color(0xFF85808C)
+                fontWeight = FontWeight.SemiBold,
+                color = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
             )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            if (aguardando) {
+                BotaoPequeno(
+                    texto = if (ocupado) "Aguarde..." else "Confirmar",
+                    preenchido = true,
+                    cor = MentoriaCores.Roxo,
+                    habilitado = !ocupado,
+                    onClick = onConfirmar
+                )
+            }
+
+            BotaoPequeno(
+                texto = "Reagendar",
+                preenchido = false,
+                cor = MentoriaCores.Roxo,
+                habilitado = !ocupado,
+                onClick = onReagendar
+            )
+
+            BotaoPequeno(
+                texto = "Cancelar",
+                preenchido = false,
+                cor = Color(0xFFDC2626),
+                habilitado = !ocupado,
+                onClick = onCancelar
+            )
+        }
+    }
+}
+
+@Composable
+private fun BotaoPequeno(
+    texto: String,
+    preenchido: Boolean,
+    cor: Color,
+    habilitado: Boolean,
+    onClick: () -> Unit
+) {
+
+    val forma = RoundedCornerShape(10.dp)
+
+    Box(
+        modifier = Modifier
+            .clip(forma)
+            .background(if (preenchido) cor else Color.White)
+            .border(1.dp, cor, forma)
+            .clickable(enabled = habilitado, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = texto,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (preenchido) Color.White else cor
+        )
     }
 }
 

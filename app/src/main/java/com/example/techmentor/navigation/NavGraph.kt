@@ -18,8 +18,10 @@ import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
+import com.example.techmentor.ui.mentora.AgendaMentoraScreen
 import com.example.techmentor.ui.mentora.MentoraHomeScreen
 import com.example.techmentor.ui.mentora.MentoraPerfilFormScreen
+import com.example.techmentor.ui.mentoria.ReagendarScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
@@ -120,7 +122,7 @@ fun NavGraph() {
         }
 
         composable("mentora/agenda") {
-            PlaceholderScreen("Agenda")
+            AgendaMentoraScreen(navController = navController)
         }
 
         composable("mentora/perfil") {
@@ -133,6 +135,20 @@ fun NavGraph() {
 
         composable("mentora/perfil") {
             MentoraPerfilFormScreen(navController = navController, modoEdicao = true)
+        }
+
+        composable(
+            route = "reagendar/{agendamentoId}/{mentoraId}",
+            arguments = listOf(
+                navArgument("agendamentoId") { type = NavType.LongType },
+                navArgument("mentoraId") { type = NavType.LongType }
+            )
+        ) { entrada ->
+            ReagendarScreen(
+                navController = navController,
+                agendamentoId = entrada.arguments?.getLong("agendamentoId") ?: 0L,
+                mentoraId = entrada.arguments?.getLong("mentoraId") ?: 0L
+            )
         }
 
     }
