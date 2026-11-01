@@ -3,6 +3,7 @@ package com.techmentor.api.service;
 import com.techmentor.api.dto.GamificacaoDtos.DesafioRequest;
 import com.techmentor.api.dto.GamificacaoDtos.DesafioResponse;
 import com.techmentor.api.dto.GamificacaoDtos.UsuarioDesafioResponse;
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Desafio;
@@ -15,6 +16,7 @@ import com.techmentor.api.repository.ProgressoAulaRepository;
 import com.techmentor.api.repository.UsuarioDesafioRepository;
 import com.techmentor.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,7 @@ public class DesafioService {
     private final DesafioRepository desafioRepository;
     private final UsuarioDesafioRepository usuarioDesafioRepository;
     private final UsuarioRepository usuarioRepository;
-    private final NotificacaoService notificacaoService;
+    private final ApplicationEventPublisher eventos;
     private final XpService xpService;
     private final ProgressoAulaRepository progressoAulaRepository;
     private final ConquistaService conquistaService;
@@ -145,7 +147,7 @@ public class DesafioService {
                 usuarioDesafioRepository.save(participacao);
 
                 xpService.registrar(usuario, desafio.getXpRecompensa(), "Desafio: " + desafio.getTitulo());
-                notificacaoService.notificar(usuario, "Desafio concluído!", desafio.getTitulo());
+                eventos.publishEvent(new EventosDeNotificacao.DesafioConcluido(usuario, desafio.getTitulo()));
                 conquistaService.desbloquear(usuario, ConquistaService.PRIMEIRO_DESAFIO);
             }
         }

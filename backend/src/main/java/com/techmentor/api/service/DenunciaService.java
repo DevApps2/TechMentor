@@ -1,5 +1,6 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.model.Denuncia;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.dto.SegurancaDtos.DenunciaRequest;
@@ -24,14 +25,12 @@ public class DenunciaService {
 
     private final DenunciaRepository denuncias;
     private final UsuarioRepository usuarios;
-    private final NotificacaoService notificacoes;
     private final ApplicationEventPublisher eventos;
 
     public DenunciaService(DenunciaRepository denuncias, UsuarioRepository usuarios,
                            NotificacaoService notificacoes, ApplicationEventPublisher eventos) {
         this.denuncias = denuncias;
         this.usuarios = usuarios;
-        this.notificacoes = notificacoes;
         this.eventos = eventos;
     }
 
@@ -96,7 +95,8 @@ public class DenunciaService {
         denuncia.setStatus(novo);
 
         if (anterior != novo) {
-            notificacoes.notificar(denuncia.getDenunciante(), "Atualização da sua denúncia", mensagemDoStatus(denuncia, novo));
+            String nomeDoDenunciado = denuncia.getDenunciado() == null ? null : denuncia.getDenunciado().getNome();
+            eventos.publishEvent(new EventosDeNotificacao.StatusDaDenunciaMudou(denuncia.getDenunciante(), nomeDoDenunciado, novo));
         }
 
         return toResponse(denuncia);

@@ -4,12 +4,14 @@ import com.techmentor.api.dto.GamificacaoDtos.AulaProgressoResponse;
 import com.techmentor.api.dto.GamificacaoDtos.ProgressoAulaResponse;
 import com.techmentor.api.dto.GamificacaoDtos.ProgressoCursoResponse;
 import com.techmentor.api.dto.GamificacaoDtos.StatusAula;
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.*;
 import com.techmentor.api.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +26,7 @@ public class ProgressoAulaService {
 
     private final ProgressoAulaRepository progressoAulaRepository;
     private final MatriculaRepository matriculaRepository;
-    private final NotificacaoService notificacaoService;
+    private final ApplicationEventPublisher eventos;
     private final UsuarioRepository usuarioRepository;
     private final ConquistaService conquistaService;
     private final ModuloRepository moduloRepository;
@@ -71,7 +73,7 @@ public class ProgressoAulaService {
         if (concluidas == total) {
             matricula.setConcluidoEm(LocalDateTime.now());
             matriculaRepository.save(matricula);
-            notificacaoService.notificar(usuario, "Curso concluído!", curso.getTitulo());
+            eventos.publishEvent(new EventosDeNotificacao.CursoConcluido(usuario, curso.getTitulo()));
             conquistaService.desbloquear(usuario, ConquistaService.CURSO_CONCLUIDO);
         }
 

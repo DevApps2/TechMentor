@@ -25,7 +25,6 @@ FROM (
     UNION ALL SELECT 'Daniela Martins',  'daniela.martins@email.com',    'ALUNA', 360, 2, 5, '2026-10-25'
     UNION ALL SELECT 'Elisa Ferreira',   'elisa.ferreira@email.com',     'ALUNA',   0, 1, 0, NULL
     UNION ALL SELECT 'Perfil Suspeito',  'suspeito@email.com',           'ALUNA',   0, 1, 0, NULL
-    UNION ALL SELECT 'Davi sales de Souza',  'davisales1613@gmail.com',           'ADMIN',   4000, 23, 23, NULL
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.email = v.email);
 
