@@ -48,7 +48,9 @@ data class AgendamentoResponse(
     val fim: String,
     val status: String,
     val assunto: String?,
-    val criadaEm: String?
+    val criadaEm: String?,
+    // link da sala do Google Meet; nulo até a mentora confirmar
+    val linkSala: String? = null
 )
 
 // Conquista desbloqueada por uma usuária (GET /conquistas/usuarios/{id})
@@ -181,7 +183,7 @@ data class InscricaoResponse(
     val oportunidadeId: Long,
     val titulo: String,
     val status: String,
-    val criadaEm: String?
+    val criadaEm: String?,
 )
 
 // Corpo do POST /api/agendamentos: o horário escolhido e, se quiser, o assunto da conversa

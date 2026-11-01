@@ -10,6 +10,8 @@ import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.BloqueioUsuarioRepository;
 import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.sala.GeradorDeSala;
+import com.techmentor.api.sala.GeradorDeSala.DadosDaSala;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +30,19 @@ public class AgendamentoService {
     private final BloqueioUsuarioRepository bloqueios;
     private final ConquistaService conquistas;
     private final DesafioService desafios;
+    private final GeradorDeSala salas;
 
     private final ApplicationEventPublisher eventos;
 
     public AgendamentoService(HorarioDisponivelRepository horarios, MentoriaRepository mentorias,
                               BloqueioUsuarioRepository bloqueios, ConquistaService conquistas,
-                              DesafioService desafios, ApplicationEventPublisher eventos) {
+                              DesafioService desafios, GeradorDeSala salas, ApplicationEventPublisher eventos) {
         this.horarios = horarios;
         this.mentorias = mentorias;
         this.bloqueios = bloqueios;
         this.conquistas = conquistas;
         this.desafios = desafios;
+        this.salas = salas;
         this.eventos = eventos;
     }
     @Transactional(readOnly = true)
@@ -84,13 +88,13 @@ public class AgendamentoService {
         mentoria.setHorario(horario);
         mentoria.setAssunto(request.assunto());
         Mentoria salva = mentorias.save(mentoria);
-        mentoria.setStatus(Mentoria.Status.CANCELADA);
-        mentoria.getHorario().setReservado(false);
 
-        avisarCancelamento(actor, mentoria);
+        eventos.publishEvent(new EventosDeNotificacao.MentoriaAgendada(
+                horario.getMentora().getUsuario(), actor.getNome(), horario.getInicio()));
 
-        return toResponse(mentoria);
+        return toResponse(salva);
     }
+
     /** Avisa a outra pessoa. Se quem cancelou foi o admin, avisa as duas. */
     private void avisarCancelamento(Usuario actor, Mentoria mentoria) {
         Usuario aluna = mentoria.getAluna();
@@ -107,7 +111,7 @@ public class AgendamentoService {
         }
     }
 
-    /** Só a mentora da mentoria (ou o admin). Passa de AGENDADA para CONFIRMADA e avisa a aluna. */
+    /** Só a mentora da mentoria (ou o admin). Passa de AGENDADA para CONFIRMADA, cria a sala e avisa a aluna. */
     public AgendamentoResponse confirmar(Usuario actor, Long id) {
         Mentoria mentoria = buscar(id);
         Usuario mentora = mentoria.getHorario().getMentora().getUsuario();
@@ -120,6 +124,7 @@ public class AgendamentoService {
             throw ApiException.conflict("Esta mentoria já passou do horário.");
 
         mentoria.setStatus(Mentoria.Status.CONFIRMADA);
+        garantirSala(mentoria);
 
         eventos.publishEvent(new MentoriaConfirmada(
                 mentoria.getAluna(), mentora.getNome(), mentoria.getHorario().getInicio()));
@@ -131,6 +136,7 @@ public class AgendamentoService {
      * Troca a mentoria por outro horário livre da MESMA mentora.
      * Se quem pede é a aluna, volta para AGENDADA (a mentora confirma o novo horário);
      * se é a mentora (ou o admin), fica CONFIRMADA, porque foi ela quem escolheu.
+     * A sala do horário antigo é apagada; só existe sala com a mentoria CONFIRMADA.
      */
     public AgendamentoResponse reagendar(Usuario actor, Long id, Long novoHorarioId) {
         Mentoria mentoria = buscar(id);
@@ -164,6 +170,11 @@ public class AgendamentoService {
         mentoria.setHorario(novo);
         mentoria.setStatus(ehAluna ? Mentoria.Status.AGENDADA : Mentoria.Status.CONFIRMADA);
 
+        // A sala do horário antigo não vale mais; se já está confirmada, cria a do novo
+        apagarSala(mentoria);
+        if (mentoria.getStatus() == Mentoria.Status.CONFIRMADA) garantirSala(mentoria);
+        mentoria.setLembreteEnviadoEm(null);
+
         // Avisa a outra pessoa
         if (ehAluna) {
             eventos.publishEvent(new EventosDeNotificacao.MentoriaReagendada(mentora, actor.getNome(), novo.getInicio(), true));
@@ -186,7 +197,44 @@ public class AgendamentoService {
             throw ApiException.conflict("Agendamento concluído não pode ser cancelado.");
         mentoria.setStatus(Mentoria.Status.CANCELADA);
         mentoria.getHorario().setReservado(false);
+        apagarSala(mentoria);
+
+        avisarCancelamento(actor, mentoria);
+
         return toResponse(mentoria);
+    }
+
+    /**
+     * Cria a sala do Google Meet se a mentoria ainda não tem uma. Se o Google falhar ou não estiver configurado,
+     * a mentoria segue sem link (a confirmação não quebra) e uma nova tentativa pode ser feita depois.
+     */
+    public void garantirSala(Mentoria mentoria) {
+        if (mentoria.getLinkSala() != null) return;
+
+        HorarioDisponivel horario = mentoria.getHorario();
+        Usuario aluna = mentoria.getAluna();
+        Usuario mentora = horario.getMentora().getUsuario();
+
+        String descricao = "Mentoria marcada pelo TechMentor entre " + aluna.getNome() + " e " + mentora.getNome() + "."
+                + (mentoria.getAssunto() == null || mentoria.getAssunto().isBlank()
+                ? "" : "\nAssunto: " + mentoria.getAssunto());
+
+        salas.criar(new DadosDaSala(
+                "Mentoria TechMentor: " + aluna.getNome() + " e " + mentora.getNome(),
+                descricao,
+                horario.getInicio(),
+                horario.getFim(),
+                List.of(aluna.getEmail(), mentora.getEmail())
+        )).ifPresent(sala -> {
+            mentoria.setLinkSala(sala.link());
+            mentoria.setGoogleEventoId(sala.idDoEvento());
+        });
+    }
+
+    private void apagarSala(Mentoria mentoria) {
+        if (mentoria.getGoogleEventoId() != null) salas.apagar(mentoria.getGoogleEventoId());
+        mentoria.setLinkSala(null);
+        mentoria.setGoogleEventoId(null);
     }
 
     private boolean estaBloqueado(Long primeiroUsuarioId, Long segundoUsuarioId) {
@@ -202,6 +250,7 @@ public class AgendamentoService {
         HorarioDisponivel horario = mentoria.getHorario();
         return new AgendamentoResponse(mentoria.getId(), mentoria.getAluna().getId(), mentoria.getAluna().getNome(),
                 horario.getMentora().getId(), horario.getMentora().getUsuario().getNome(), horario.getId(),
-                horario.getInicio(), horario.getFim(), mentoria.getStatus(), mentoria.getAssunto(), mentoria.getCriadaEm());
+                horario.getInicio(), horario.getFim(), mentoria.getStatus(), mentoria.getAssunto(), mentoria.getCriadaEm(),
+                mentoria.getLinkSala());
     }
 }

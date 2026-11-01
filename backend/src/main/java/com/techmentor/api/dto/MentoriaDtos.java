@@ -118,6 +118,9 @@ public final class MentoriaDtos {
             @Schema(description = "Assunto da mentoria", example = "Dúvidas sobre transição de carreira")
             String assunto,
             @Schema(description = "Data e hora em que o agendamento foi criado", example = "2026-10-26T14:30:00")
-            LocalDateTime criadaEm) { }
+            LocalDateTime criadaEm,
+            @Schema(description = "Link da sala do Google Meet; nulo até a mentora confirmar (ou se o Google não estiver configurado)",
+                    example = "https://meet.google.com/abc-defg-hij")
+            String linkSala) { }
 
 }

@@ -46,6 +46,7 @@ import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.BotaoEntrarNaSala
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.descricaoDaMentoria
 import com.example.techmentor.ui.home.parseDataHora
@@ -425,6 +426,13 @@ private fun CartaoDeMentoria(
                 color = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
             )
         }
+
+        BotaoEntrarNaSala(
+            status = mentoria.status,
+            inicio = mentoria.inicio,
+            fim = mentoria.fim,
+            linkSala = mentoria.linkSala
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
