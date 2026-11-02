@@ -58,6 +58,7 @@ import com.example.techmentor.data.MatriculaResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.avaliacao.AvaliacoesPendentes
 import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
@@ -206,6 +207,8 @@ private fun HomeContent(
         )
 
         acoesDaMentoria()
+
+        AvaliacoesPendentes(navController = navController)
 
         SectionHeader(
             title = "Continue aprendendo",

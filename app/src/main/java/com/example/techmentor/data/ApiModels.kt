@@ -209,3 +209,57 @@ data class HorarioRequest(
 
 // Corpo do PATCH /api/agendamentos/{id}/reagendamento: o novo horário, da mesma mentora
 data class ReagendamentoRequest(val horarioId: Long)
+
+// Mentoria concluída que a pessoa ainda pode avaliar (GET /api/avaliacoes/pendentes). voce: ALUNA ou MENTORA
+data class AvaliacaoPendenteResponse(
+    val mentoriaId: Long,
+    val voce: String,
+    val outraPessoaNome: String,
+    val outraPessoaFotoUrl: String?,
+    val inicio: String,
+    val prazoFinal: String
+)
+
+// Corpo do POST /api/agendamentos/{id}/avaliacoes: de 1 a 5 estrelas e um comentário opcional
+data class AvaliacaoRequest(
+    val nota: Int,
+    val comentario: String?
+)
+
+// Avaliação registrada. autor: ALUNA ou MENTORA
+data class AvaliacaoResponse(
+    val id: Long,
+    val mentoriaId: Long,
+    val autor: String,
+    val avaliadorNome: String,
+    val nota: Int,
+    val comentario: String?,
+    val criadaEm: String?
+)
+
+// GET /api/agendamentos/{id}/avaliacoes: se a pessoa pode avaliar agora (e o motivo, se não), o que já avaliou e o que recebeu
+data class AvaliacaoDaMentoriaResponse(
+    val mentoriaId: Long,
+    val podeAvaliar: Boolean,
+    val motivoDeNaoPoder: String?,
+    val prazoFinal: String?,
+    val minhaAvaliacao: AvaliacaoResponse?,
+    val recebida: AvaliacaoResponse?
+)
+
+// Avaliação pública de uma mentora; o nome da aluna vem abreviado ("Daniela M.")
+data class AvaliacaoPublicaResponse(
+    val id: Long,
+    val avaliadora: String,
+    val nota: Int,
+    val comentario: String?,
+    val criadaEm: String?
+)
+
+// GET /api/mentoras/{id}/avaliacoes. distribuicao: "5", "4", "3", "2", "1" -> quantas avaliações de cada nota
+data class AvaliacoesDaMentoraResponse(
+    val notaMedia: Double,
+    val totalAvaliacoes: Int,
+    val distribuicao: Map<String, Long>,
+    val avaliacoes: List<AvaliacaoPublicaResponse>
+)

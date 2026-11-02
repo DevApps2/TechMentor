@@ -17,6 +17,9 @@ public class Mentoria {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
+    // Quando saiu o lembrete de "falta avaliar" (um só, para quem ainda não avaliou); evita mandar de novo
+    private LocalDateTime lembreteAvaliacaoEnviadoEm;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "aluna_id")
     private Usuario aluna;

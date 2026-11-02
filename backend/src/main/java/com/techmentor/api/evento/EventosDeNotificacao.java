@@ -48,4 +48,19 @@ public final class EventosDeNotificacao {
             LocalDateTime salaAbreEm,
             String linkSala,
             String assunto) { }
+
+    // A mentoria terminou: convida a pessoa a avaliar. prazoFinal = até quando dá. Nome e e-mail em texto simples são para o e-mail.
+    public record MentoriaConcluida(Usuario destinatario, String nomeDoDestinatario, String emailDoDestinatario,
+                                    String outraPessoa, boolean destinatarioEhMentora,
+                                    LocalDateTime inicio, LocalDateTime prazoFinal) { }
+
+    // Passaram alguns dias e a pessoa ainda não avaliou
+    public record LembreteDeAvaliacao(Usuario destinatario, String nomeDoDestinatario, String emailDoDestinatario,
+                                      String outraPessoa, boolean destinatarioEhMentora,
+                                      LocalDateTime inicio, LocalDateTime prazoFinal) { }
+
+    // Alguém avaliou esta pessoa. quemAvaliou já vem no formato certo (abreviado quando a aluna avalia a mentora).
+    // destinatarioEhMentora = quem recebeu foi a mentora (avaliação pública); senão foi a aluna (feedback privado).
+    public record AvaliacaoRecebida(Usuario destinatario, String nomeDoDestinatario, String emailDoDestinatario,
+                                    String quemAvaliou, boolean destinatarioEhMentora, int nota, String comentario) { }
 }

@@ -14,10 +14,12 @@ import com.techmentor.api.evento.EventosDeNotificacao.MentoriaAgendada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaCancelada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaConfirmada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaReagendada;
-
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaConcluida;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeMentoria;
+import com.techmentor.api.evento.EventosDeNotificacao.AvaliacaoRecebida;
+import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeAvaliacao;
 
 /**
  * Observer das notificações: escuta os fatos do sistema e cria a notificação de cada um.
@@ -30,6 +32,8 @@ public class NotificadorListener {
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final NotificacaoService notificacoes;
+
+    private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM");
     // Ex.: "10/11 às 14:00"
     private static final DateTimeFormatter DATA_E_HORA = DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm");
 
@@ -105,5 +109,24 @@ public class NotificadorListener {
         notificacoes.notificar(evento.destinatario(), "Sua mentoria começa em breve",
                 "Mentoria com " + evento.outraPessoa() + " em " + evento.inicio().format(DATA_E_HORA)
                         + ". A sala já está aberta no app.");
+    }
+
+    @EventListener
+    public void aoConcluirMentoria(MentoriaConcluida evento) {
+        notificacoes.notificar(evento.destinatario(), "Como foi sua mentoria?",
+                "Avalie sua mentoria com " + evento.outraPessoa() + " (" + evento.inicio().format(DATA_E_HORA) + ").");
+    }
+
+    @EventListener
+    public void aoLembrarDeAvaliar(LembreteDeAvaliacao evento) {
+        notificacoes.notificar(evento.destinatario(), "Falta avaliar sua mentoria",
+                "Sua opinião sobre a mentoria com " + evento.outraPessoa() + " vale até " + evento.prazoFinal().format(DIA) + ".");
+    }
+
+    @EventListener
+    public void aoReceberAvaliacao(AvaliacaoRecebida evento) {
+        notificacoes.notificar(evento.destinatario(), "Você recebeu uma avaliação",
+                evento.quemAvaliou() + " avaliou a mentoria com " + evento.nota()
+                        + (evento.nota() == 1 ? " estrela." : " estrelas."));
     }
 }

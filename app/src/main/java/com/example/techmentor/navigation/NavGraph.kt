@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.avaliacao.AvaliarScreen
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
@@ -116,6 +117,16 @@ fun NavGraph() {
             RedefinirSenhaScreen(
                 navController = navController,
                 email = entrada.arguments?.getString("email").orEmpty()
+            )
+        }
+
+        composable(
+            route = "avaliar/{agendamentoId}",
+            arguments = listOf(navArgument("agendamentoId") { type = NavType.LongType })
+        ) { entrada ->
+            AvaliarScreen(
+                navController = navController,
+                agendamentoId = entrada.arguments?.getLong("agendamentoId") ?: 0L
             )
         }
 

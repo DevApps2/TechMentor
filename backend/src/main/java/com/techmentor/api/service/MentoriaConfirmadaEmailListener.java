@@ -10,6 +10,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
@@ -22,6 +23,9 @@ public class MentoriaConfirmadaEmailListener {
     // Ex.: "segunda-feira, 02/11 às 14:00"
     private static final DateTimeFormatter QUANDO = DateTimeFormatter.ofPattern("EEEE, dd/MM 'às' HH:mm", PT_BR);
 
+    // Tem que ser igual ao MINUTOS_DE_ANTECEDENCIA do LembreteDeMentoriaService
+    private static final int MINUTOS_DO_LEMBRETE = 30;
+
     private final EmailService emailService;
 
     public MentoriaConfirmadaEmailListener(EmailService emailService) {
@@ -32,6 +36,11 @@ public class MentoriaConfirmadaEmailListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void enviar(MentoriaConfirmada evento) {
         try {
+            // Se faltam 30 minutos ou menos, o lembrete (com o link) sai em até 1 minuto: mandar os dois seria e-mail repetido
+            if (!evento.inicio().isAfter(LocalDateTime.now().plusMinutes(MINUTOS_DO_LEMBRETE))) {
+                return;
+            }
+
             String quando = evento.inicio().format(QUANDO);
             quando = quando.substring(0, 1).toUpperCase(PT_BR) + quando.substring(1);
             long minutos = Duration.between(evento.inicio(), evento.fim()).toMinutes();
