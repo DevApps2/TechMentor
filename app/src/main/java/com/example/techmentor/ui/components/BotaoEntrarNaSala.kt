@@ -28,7 +28,7 @@ import java.util.Date
 import java.util.Locale
 
 // A sala abre este tanto de minutos antes do começo da mentoria
-private const val MINUTOS_ANTES = 15L
+private const val MINUTOS_ANTES = 30L
 private const val DOZE_HORAS = 12 * 60 * 60 * 1000L
 
 /**
