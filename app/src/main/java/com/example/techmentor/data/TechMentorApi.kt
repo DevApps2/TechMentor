@@ -195,5 +195,21 @@ interface TechMentorApi {
     @POST("usuarios/senha/redefinir")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest)
 
+    // ---- Notificações ----
+
+    // lida = false traz só as não lidas; lida = null traz todas
+    @GET("notificacoes/usuarios/{id}")
+    suspend fun listarNotificacoes(
+        @Path("id") usuarioId: Long,
+        @Query("lida") lida: Boolean?
+    ): List<NotificacaoResponse>
+
+    // notificacaoId = null marca todas como lidas; a resposta é vazia (204)
+    @PATCH("notificacoes/leitura/usuarios/{id}")
+    suspend fun marcarNotificacoesComoLidas(
+        @Path("id") usuarioId: Long,
+        @Query("id") notificacaoId: Long?
+    )
+
 
 }

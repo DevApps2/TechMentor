@@ -89,7 +89,7 @@ fun MentoriaScreen(
             .statusBarsPadding()
     ) {
 
-        TopBarMarca()
+        TopBarMarca(navController = navController)
 
         ExplorarCabecalho(
             navController = navController,

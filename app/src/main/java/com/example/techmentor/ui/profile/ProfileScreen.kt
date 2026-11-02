@@ -121,7 +121,7 @@ fun ProfileScreen(
             .statusBarsPadding()
     ) {
 
-        TopBarMarca()
+        TopBarMarca(navController = navController)
 
         Box(
             modifier = Modifier.weight(1f)
