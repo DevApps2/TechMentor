@@ -209,3 +209,13 @@ data class HorarioRequest(
 
 // Corpo do PATCH /api/agendamentos/{id}/reagendamento: o novo horário, da mesma mentora
 data class ReagendamentoRequest(val horarioId: Long)
+
+// Notificação da usuária (GET /notificacoes/usuarios/{id}); criadaEm chega como "2026-10-26T14:30:00"
+data class NotificacaoResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val titulo: String,
+    val mensagem: String,
+    val lida: Boolean,
+    val criadaEm: String?
+)

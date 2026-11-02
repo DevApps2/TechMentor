@@ -167,7 +167,7 @@ fun AgendaMentoraScreen(
             .statusBarsPadding()
     ) {
 
-        TopBarMarca()
+        TopBarMarca(navController = navController)
 
         Box(modifier = Modifier.weight(1f)) {
 

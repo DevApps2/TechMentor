@@ -181,7 +181,7 @@ private fun SegurancaInicio(
             .statusBarsPadding()
     ) {
 
-        TopBarMarca()
+        TopBarMarca(navController = navController)
 
         ExplorarCabecalho(
             navController = navController,

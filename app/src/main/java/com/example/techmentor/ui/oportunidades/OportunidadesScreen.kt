@@ -157,7 +157,7 @@ private fun ListagemOportunidades(
             .statusBarsPadding()
     ) {
 
-        TopBarMarca()
+        TopBarMarca(navController = navController)
 
         ExplorarCabecalho(
             navController = navController,
