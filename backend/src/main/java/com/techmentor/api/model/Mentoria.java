@@ -29,4 +29,10 @@ public class Mentoria {
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Status status = Status.AGENDADA;
     @Column(length = 500) private String assunto;
     @Column(updatable = false) private LocalDateTime criadaEm = LocalDateTime.now();
+
+    // Sala do Google Meet; só existe com a mentoria CONFIRMADA (e se o Google estiver configurado)
+    @Column(length = 500) private String linkSala;
+    @Column(length = 200) private String googleEventoId;
+    // Quando o lembrete saiu; evita mandar o mesmo e-mail duas vezes
+    private LocalDateTime lembreteEnviadoEm;
 }

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.ui.components.BotaoEntrarNaSala
+
 
 private val RoxoDasAcoes = Color(0xFF7C3AED)
 private val VermelhoDasAcoes = Color(0xFFDC2626)
@@ -88,6 +90,17 @@ fun AcoesDaProximaMentoria(
             )
         }
 
+    }
+
+    BotaoEntrarNaSala(
+        status = proxima.status,
+        inicio = proxima.inicio,
+        fim = proxima.fim,
+        linkSala = proxima.linkSala
+    )
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
             AcaoPequena(
@@ -138,4 +151,5 @@ private fun AcaoPequena(
             color = cor
         )
     }
+
 }

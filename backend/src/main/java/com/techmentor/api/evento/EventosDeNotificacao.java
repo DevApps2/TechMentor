@@ -22,12 +22,30 @@ public final class EventosDeNotificacao {
     // A aluna pediu uma mentoria: a mentora precisa confirmar
     public record MentoriaAgendada(Usuario mentora, String nomeDaAluna, LocalDateTime inicio) { }
 
-    // A mentora confirmou: avisa a aluna
-    public record MentoriaConfirmada(Usuario aluna, String nomeDaMentora, LocalDateTime inicio) { }
+    // linkSala pode ser nulo se o Google não devolveu a sala na hora.
+    public record MentoriaConfirmada(Usuario aluna, String nomeDaMentora, LocalDateTime inicio,
+                                     LocalDateTime fim, String linkSala,
+                                     String nomeDaAluna, String emailDaAluna, String assunto) { }
 
-    // Alguém cancelou: avisa a outra pessoa (destinatario) dizendo quem cancelou
-    public record MentoriaCancelada(Usuario destinatario, String quemCancelou, LocalDateTime inicio) { }
+    // Alguém cancelou: avisa a outra pessoa (destinatario) dizendo quem cancelou.
+    // Nome e e-mail em texto simples são para o e-mail, que sai em outra thread.
+    public record MentoriaCancelada(Usuario destinatario, String quemCancelou, LocalDateTime inicio,
+                                    String nomeDoDestinatario, String emailDoDestinatario) { }
 
     // Alguém trocou o horário: avisa a outra pessoa. precisaConfirmar = a mentora ainda vai confirmar o novo horário
-    public record MentoriaReagendada(Usuario destinatario, String quemReagendou, LocalDateTime novoInicio, boolean precisaConfirmar) { }
+    public record MentoriaReagendada(Usuario destinatario, String quemReagendou, LocalDateTime novoInicio, boolean precisaConfirmar,
+                                     String nomeDoDestinatario, String emailDoDestinatario) { }
+
+    // Falta pouco para a mentoria: um evento por pessoa. linkSala pode ser nulo se o Google não devolveu a sala
+    public record LembreteDeMentoria(
+            Usuario destinatario,
+            String nomeDoDestinatario,
+            String emailDoDestinatario,
+            String outraPessoa,
+            boolean destinatarioEhMentora,
+            LocalDateTime inicio,
+            LocalDateTime fim,
+            LocalDateTime salaAbreEm,
+            String linkSala,
+            String assunto) { }
 }

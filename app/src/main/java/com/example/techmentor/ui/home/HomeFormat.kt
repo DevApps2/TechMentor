@@ -15,15 +15,27 @@ fun parseDataHora(texto: String?): Date? =
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(texto!!.take(19))
     }.getOrNull()
 
-/** A mentoria mais próxima que ainda não aconteceu e não foi cancelada. */
+/**
+ * Uma mentoria AGENDADA vale até começar (depois disso a mentora não consegue mais confirmar);
+ * uma CONFIRMADA vale até terminar, para o botão da sala continuar na tela enquanto ela acontece.
+ */
+fun mentoriaAindaVale(agendamento: AgendamentoResponse, agora: Date = Date()): Boolean {
+    val limite = when (agendamento.status) {
+        "CONFIRMADA" -> parseDataHora(agendamento.fim)
+        "AGENDADA" -> parseDataHora(agendamento.inicio)
+        else -> null
+    } ?: return false
+    return limite.after(agora)
+}
+
+/** A mentoria mais próxima que ainda vale (veja mentoriaAindaVale). */
 fun escolherProximaMentoria(lista: List<AgendamentoResponse>): AgendamentoResponse? {
     val agora = Date()
     return lista
-        .filter { it.status == "AGENDADA" || it.status == "CONFIRMADA" }
+        .filter { mentoriaAindaVale(it, agora) }
         .mapNotNull { agendamento ->
             parseDataHora(agendamento.inicio)?.let { data -> agendamento to data }
         }
-        .filter { (_, data) -> data.after(agora) }
         .minByOrNull { (_, data) -> data.time }
         ?.first
 }

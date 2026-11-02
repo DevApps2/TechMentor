@@ -8,6 +8,7 @@ import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.ErroResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
+import com.example.techmentor.ui.home.mentoriaAindaVale
 import com.example.techmentor.ui.home.parseDataHora
 import com.google.gson.Gson
 import kotlinx.coroutines.Job
@@ -93,9 +94,8 @@ class MentoraHomeViewModel : ViewModel() {
                     val agora = Date()
 
                     val proximas = agendamentos
-                        .filter { it.status == "AGENDADA" || it.status == "CONFIRMADA" }
+                        .filter { mentoriaAindaVale(it, agora) }
                         .mapNotNull { a -> parseDataHora(a.inicio)?.let { data -> a to data } }
-                        .filter { (_, data) -> data.after(agora) }
                         .sortedBy { (_, data) -> data.time }
                         .map { (a, _) -> a }
 
