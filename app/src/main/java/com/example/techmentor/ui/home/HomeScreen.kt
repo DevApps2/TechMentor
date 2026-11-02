@@ -58,6 +58,7 @@ import com.example.techmentor.data.MatriculaResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
 import com.example.techmentor.ui.components.TopBarMarca
@@ -97,6 +98,9 @@ fun HomeScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     Column(
         modifier = Modifier

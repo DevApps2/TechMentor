@@ -68,6 +68,7 @@ import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.AuthField
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.formatarNumero
@@ -113,6 +114,9 @@ fun ProfileScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     Column(
         modifier = Modifier

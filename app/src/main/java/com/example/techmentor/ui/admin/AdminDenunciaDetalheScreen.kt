@@ -31,6 +31,7 @@ import com.example.techmentor.data.AdminDenuncia
 import com.example.techmentor.data.UsuarioResponse
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.mentoria.CabecalhoVoltar
 import com.example.techmentor.ui.mentoria.EsqueletoBloco
 import com.example.techmentor.ui.mentoria.EstadoErro
@@ -52,6 +53,9 @@ fun AdminDenunciaDetalheScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar(denunciaId)
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar(denunciaId) }
 
     Column(
         modifier = Modifier

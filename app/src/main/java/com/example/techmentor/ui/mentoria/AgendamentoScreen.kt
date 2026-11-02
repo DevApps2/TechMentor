@@ -55,6 +55,7 @@ import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.AuthField
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.home.descricaoDaMentoria
 import com.example.techmentor.ui.theme.ManropeFamily
 
@@ -85,6 +86,9 @@ fun AgendamentoScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar(mentoraId)
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente(intervaloSegundos = 20) { viewModel.carregar(mentoraId) }
 
     // Esta tela não tem a barra inferior (o teclado ocuparia o lugar dela), então ela mesma respeita a barra do sistema e o teclado
     Column(

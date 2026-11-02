@@ -46,6 +46,7 @@ import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.BotaoEntrarNaSala
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.descricaoDaMentoria
@@ -96,6 +97,9 @@ fun MentoraHomeScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     // ---- Diálogo de cancelar ----
 

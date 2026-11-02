@@ -54,6 +54,7 @@ import com.example.techmentor.data.MentoraResponse
 import com.example.techmentor.ui.auth.AuthField
 import com.example.techmentor.ui.auth.OutlinedAuthButton
 import com.example.techmentor.ui.components.AbaExplorar
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.components.ExplorarCabecalho
 import com.example.techmentor.ui.components.TopBarMarca
@@ -81,6 +82,9 @@ fun MentoriaScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar(silencioso = true) }
 
     Column(
         modifier = Modifier
