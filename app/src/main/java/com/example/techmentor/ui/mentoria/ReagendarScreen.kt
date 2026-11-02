@@ -34,6 +34,7 @@ import com.example.techmentor.data.HorarioResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.parseDataHora
@@ -58,6 +59,9 @@ fun ReagendarScreen(
     LaunchedEffect(mentoraId) {
         viewModel.carregar(mentoraId)
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente(intervaloSegundos = 20) { viewModel.carregar(mentoraId) }
 
     // Deu certo: volta para a tela de quem abriu (ela recarrega sozinha ao reaparecer)
     LaunchedEffect(estado.concluido) {

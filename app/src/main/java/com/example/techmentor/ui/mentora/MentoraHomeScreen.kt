@@ -44,8 +44,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.data.Sessao.sair
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.avaliacao.AvaliacoesPendentes
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.BotaoEntrarNaSala
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.descricaoDaMentoria
@@ -96,6 +99,9 @@ fun MentoraHomeScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     // ---- Diálogo de cancelar ----
 
@@ -150,7 +156,8 @@ fun MentoraHomeScreen(
                         onConfirmar = { viewModel.confirmar(it) },
                         onReagendar = { navController.navigate("reagendar/${it.id}/${it.mentoraId}") },
                         onPedirCancelamento = { paraCancelar = it },
-                        onSair = { sair() }
+                        onSair = { sair() },
+                        avaliacoesPendentes = { AvaliacoesPendentes(navController) }
                     )
                 }
 
@@ -180,7 +187,8 @@ private fun Conteudo(
     onConfirmar: (Long) -> Unit,
     onReagendar: (AgendamentoResponse) -> Unit,
     onPedirCancelamento: (AgendamentoResponse) -> Unit,
-    onSair: () -> Unit
+    onSair: () -> Unit,
+    avaliacoesPendentes: @Composable () -> Unit
 ) {
 
     val primeiroNome = nome.trim().split(" ").firstOrNull().orEmpty().ifEmpty { "você" }
@@ -242,6 +250,8 @@ private fun Conteudo(
                 rotulo = "realizadas"
             )
         }
+
+        avaliacoesPendentes()
 
         Text(
             text = "Próximas mentorias",

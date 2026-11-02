@@ -53,6 +53,7 @@ import androidx.navigation.NavController
 import com.example.techmentor.data.OportunidadeResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.components.AbaExplorar
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.components.ExplorarCabecalho
 import com.example.techmentor.ui.components.Icone
@@ -149,6 +150,9 @@ private fun ListagemOportunidades(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     Column(
         modifier = Modifier

@@ -42,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.techmentor.data.AdminOportunidade
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.mentoria.ChipOpcao
 import com.example.techmentor.ui.mentoria.EsqueletoBloco
@@ -64,6 +65,9 @@ fun AdminOportunidadesScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     Column(
         modifier = Modifier

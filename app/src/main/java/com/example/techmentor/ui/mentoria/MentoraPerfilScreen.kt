@@ -39,6 +39,8 @@ import androidx.navigation.NavController
 import com.example.techmentor.data.HorarioResponse
 import com.example.techmentor.data.MentoraResponse
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.avaliacao.AvaliacoesDaMentora
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.theme.ManropeFamily
 
@@ -60,6 +62,9 @@ fun MentoraPerfilScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar(mentoraId)
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar(mentoraId) }
 
     Column(
         modifier = Modifier
@@ -214,6 +219,10 @@ private fun PerfilConteudo(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        AvaliacoesDaMentora(mentoraId = mentora.id)
 
         // horarios == null: não deu para consultar, então a tela não diz nada sobre disponibilidade
         if (horarios != null) {

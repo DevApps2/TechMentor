@@ -140,8 +140,8 @@ public final class ModeloDeEmail {
                         .append("font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:10px;\">")
                         .append(esc(bloco.a())).append("</a></td></tr></table>")
                         .append("<p style=\"margin:0 0 14px 0;font-size:12px;line-height:1.5;color:").append(MUDO)
-                        .append(";word-break:break-all;\">Se o botão não funcionar, copie este endereço no navegador:<br>")
-                        .append(esc(bloco.b())).append("</p>");
+                        .append(";\">Se o botão não funcionar, copie este endereço no navegador:<br>")
+                        .append("<span style=\"word-break:break-all;\">").append(esc(bloco.b())).append("</span></p>");
 
                 case NOTA -> h.append("<p style=\"margin:6px 0 14px 0;font-size:12px;line-height:1.6;color:").append(MUDO).append(";\">")
                         .append(esc(bloco.a())).append("</p>");

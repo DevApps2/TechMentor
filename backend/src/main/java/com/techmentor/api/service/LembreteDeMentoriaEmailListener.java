@@ -42,7 +42,7 @@ public class LembreteDeMentoriaEmailListener {
 
             ModeloDeEmail modelo = ModeloDeEmail.com("Sua mentoria começa em breve")
                     .saudacao("Olá, " + lembrete.nomeDoDestinatario() + "!")
-                    .paragrafo("Este é um lembrete da sua mentoria que acontece em instantes.")
+                    .paragrafo("Falta pouco! Sua mentoria começa às " + lembrete.inicio().format(HORA) + ".")
                     .detalhe("Quando", quando)
                     .detalhe(lembrete.destinatarioEhMentora() ? "Aluna" : "Mentora", lembrete.outraPessoa())
                     .detalhe("Duração", minutos + " minutos");

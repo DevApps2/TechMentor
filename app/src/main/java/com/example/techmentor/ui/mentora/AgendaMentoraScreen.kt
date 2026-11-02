@@ -52,6 +52,7 @@ import com.example.techmentor.data.HorarioResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.GradientButton
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.parseDataHora
@@ -110,6 +111,9 @@ fun AgendaMentoraScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos
+    AtualizarAutomaticamente { viewModel.carregar() }
 
     // ---- Seletores de data e hora ----
 

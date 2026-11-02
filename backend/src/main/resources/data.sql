@@ -140,12 +140,15 @@ JOIN perfis_mentora p ON p.usuario_id = um.id
 JOIN horarios_disponiveis h ON h.mentora_id = p.id AND h.inicio = v.inicio
 WHERE NOT EXISTS (SELECT 1 FROM mentorias m WHERE m.horario_id = h.id AND m.aluna_id = al.id);
 
-INSERT INTO avaliacoes_mentoria (mentoria_id, nota, comentario, criada_em)
-SELECT m.id, 5, 'A Maria foi super atenciosa e me deu um plano de estudos claro. Recomendo muito!', '2026-10-20 16:00:00'
+INSERT INTO avaliacoes (mentoria_id, avaliador_id, avaliado_id, autor, nota, comentario, oculta, criada_em)
+SELECT m.id, al.id, um.id, 'ALUNA', 5,
+       'A Maria foi super atenciosa e me deu um plano de estudos claro. Recomendo muito!', FALSE, '2026-10-20 16:00:00'
 FROM mentorias m
-JOIN usuarios al ON al.id = m.aluna_id AND al.email = 'beatriz.santos@email.com'
-JOIN horarios_disponiveis h ON h.id = m.horario_id AND h.inicio = '2026-10-20 14:00:00'
-WHERE NOT EXISTS (SELECT 1 FROM avaliacoes_mentoria a WHERE a.mentoria_id = m.id);
+         JOIN usuarios al ON al.id = m.aluna_id AND al.email = 'beatriz.santos@email.com'
+         JOIN horarios_disponiveis h ON h.id = m.horario_id AND h.inicio = '2026-10-20 14:00:00'
+         JOIN perfis_mentora p ON p.id = h.mentora_id
+         JOIN usuarios um ON um.id = p.usuario_id
+WHERE NOT EXISTS (SELECT 1 FROM avaliacoes a WHERE a.mentoria_id = m.id AND a.avaliador_id = al.id);
 
 -- ---------------------------------------------------------------------
 -- Cursos, módulos e aulas ("Java para iniciantes" reaproveita o que já existir)

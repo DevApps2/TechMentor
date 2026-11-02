@@ -195,6 +195,38 @@ interface TechMentorApi {
     @POST("usuarios/senha/redefinir")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest)
 
+    // ---- Avaliações ----
+
+    @GET("api/agendamentos/{id}")
+    suspend fun obterAgendamento(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long
+    ): AgendamentoResponse
+
+    // mentorias concluídas, dentro do prazo, que a pessoa ainda não avaliou
+    @GET("api/avaliacoes/pendentes")
+    suspend fun avaliacoesPendentes(@Header("X-Usuario-Id") usuarioId: Long): List<AvaliacaoPendenteResponse>
+
+    @GET("api/agendamentos/{id}/avaliacoes")
+    suspend fun situacaoDaAvaliacao(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long
+    ): AvaliacaoDaMentoriaResponse
+
+    // 409 = não dá para avaliar agora (não concluída, prazo vencido ou já avaliou); o motivo vem na mensagem
+    @POST("api/agendamentos/{id}/avaliacoes")
+    suspend fun avaliar(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") agendamentoId: Long,
+        @Body body: AvaliacaoRequest
+    ): AvaliacaoResponse
+
+    // mentoraId é o id do PERFIL da mentora
+    @GET("api/mentoras/{id}/avaliacoes")
+    suspend fun avaliacoesDaMentora(
+        @Path("id") mentoraId: Long,
+        @Query("limite") limite: Int
+    ): AvaliacoesDaMentoraResponse
     // ---- Notificações ----
 
     // lida = false traz só as não lidas; lida = null traz todas

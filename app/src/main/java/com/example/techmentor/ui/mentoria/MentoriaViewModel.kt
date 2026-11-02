@@ -50,8 +50,12 @@ class MentoriaViewModel : ViewModel() {
     // Cada carga ganha um número; só a mais recente pode mexer na tela (evita resposta velha sobrescrever a nova)
     private var numeroDaCarga = 0
 
-    /** Busca as mentoras com a busca e a área que estiverem escolhidas no momento. */
-    fun carregar(manual: Boolean = false) {
+    /**
+     * Busca as mentoras com a busca e a área que estiverem escolhidas no momento.
+     * silencioso = recarga automática: a lista é trocada por baixo dos panos, sem a barrinha de "buscando"
+     * e sem mensagem de erro se a rede falhar (a lista que já está na tela continua).
+     */
+    fun carregar(manual: Boolean = false, silencioso: Boolean = false) {
         val minhaCarga = ++numeroDaCarga
         tarefa?.cancel()
 
@@ -65,6 +69,7 @@ class MentoriaViewModel : ViewModel() {
                 when {
                     it.mentoras == null -> it.copy(carregando = true, erro = null)
                     manual -> it.copy(atualizando = true, erro = null)
+                    silencioso -> it
                     else -> it.copy(buscando = true, erro = null)
                 }
             }
@@ -92,11 +97,11 @@ class MentoriaViewModel : ViewModel() {
                     }
                 }
             } catch (e: HttpException) {
-                if (minhaCarga == numeroDaCarga) {
+                if (!silencioso && minhaCarga == numeroDaCarga) {
                     _estado.update { it.copy(erro = ERRO_CONEXAO) }
                 }
             } catch (e: IOException) {
-                if (minhaCarga == numeroDaCarga) {
+                if (!silencioso && minhaCarga == numeroDaCarga) {
                     _estado.update { it.copy(erro = ERRO_CONEXAO) }
                 }
             } finally {
