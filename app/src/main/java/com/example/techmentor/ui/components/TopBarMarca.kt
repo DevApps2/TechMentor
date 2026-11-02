@@ -25,10 +25,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.techmentor.ui.notificacoes.SinoDeNotificacoes
 import com.example.techmentor.ui.theme.ManropeFamily
 
 @Composable
-fun TopBarMarca() {
+fun TopBarMarca(navController: NavController? = null) {
 
     Column(
         modifier = Modifier
@@ -61,6 +63,14 @@ fun TopBarMarca() {
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF20202A)
             )
+
+            // O sino só aparece nas telas que passam o navController
+            if (navController != null) {
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                SinoDeNotificacoes(onClick = { navController.navigate("notificacoes") })
+            }
         }
 
         // linha fina embaixo do cabeçalho

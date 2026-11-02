@@ -23,6 +23,7 @@ import com.example.techmentor.ui.mentora.AgendaMentoraScreen
 import com.example.techmentor.ui.mentora.MentoraHomeScreen
 import com.example.techmentor.ui.mentora.MentoraPerfilFormScreen
 import com.example.techmentor.ui.mentoria.ReagendarScreen
+import com.example.techmentor.ui.notificacoes.NotificacoesScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.splash.SplashScreen
@@ -162,6 +163,10 @@ fun NavGraph() {
                 agendamentoId = entrada.arguments?.getLong("agendamentoId") ?: 0L,
                 mentoraId = entrada.arguments?.getLong("mentoraId") ?: 0L
             )
+        }
+
+        composable("notificacoes") {
+            NotificacoesScreen(navController = navController)
         }
 
     }
