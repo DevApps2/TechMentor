@@ -100,7 +100,8 @@ public class GoogleMeetGerador implements GeradorDeSala {
         }
     }
 
-    private boolean configurado() {
+    @Override
+    public boolean configurado() {
         return !clientId.isBlank() && !clientSecret.isBlank() && !refreshToken.isBlank();
     }
 

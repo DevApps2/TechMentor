@@ -5,6 +5,7 @@ import com.techmentor.api.evento.EventosDeNotificacao.CursoConcluido;
 import com.techmentor.api.evento.EventosDeNotificacao.DesafioConcluido;
 import com.techmentor.api.evento.EventosDeNotificacao.NivelSubiu;
 import com.techmentor.api.evento.EventosDeNotificacao.StatusDaDenunciaMudou;
+import com.techmentor.api.model.Usuario;
 import com.techmentor.api.service.NivelRegraService;
 import com.techmentor.api.service.NotificacaoService;
 import org.springframework.context.event.EventListener;
@@ -13,7 +14,10 @@ import com.techmentor.api.evento.EventosDeNotificacao.MentoriaAgendada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaCancelada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaConfirmada;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaReagendada;
+
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeMentoria;
 
 /**
  * Observer das notificações: escuta os fatos do sistema e cria a notificação de cada um.
@@ -22,6 +26,8 @@ import java.time.format.DateTimeFormatter;
  */
 @Component
 public class NotificadorListener {
+
+    private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final NotificacaoService notificacoes;
     // Ex.: "10/11 às 14:00"
@@ -87,10 +93,17 @@ public class NotificadorListener {
     @EventListener
     public void aoReagendarMentoria(MentoriaReagendada evento) {
         String complemento = evento.precisaConfirmar()
-                ? " Aguarde a confirmação."
+                ? " Abra o app para confirmar o novo horário."
                 : " Se não puder, cancele ou escolha outro horário.";
 
         notificacoes.notificar(evento.destinatario(), "Mentoria reagendada",
                 evento.quemReagendou() + " mudou a mentoria para " + evento.novoInicio().format(DATA_E_HORA) + "." + complemento);
+    }
+
+    @EventListener
+    public void aoLembrarMentoria(LembreteDeMentoria evento) {
+        notificacoes.notificar(evento.destinatario(), "Sua mentoria começa em breve",
+                "Mentoria com " + evento.outraPessoa() + " em " + evento.inicio().format(DATA_E_HORA)
+                        + ". A sala já está aberta no app.");
     }
 }

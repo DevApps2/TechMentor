@@ -102,12 +102,12 @@ public class AgendamentoService {
         LocalDateTime inicio = mentoria.getHorario().getInicio();
 
         if (actor.getId().equals(aluna.getId())) {
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaCancelada(mentora, actor.getNome(), inicio));
+            eventos.publishEvent(cancelada(mentora, actor.getNome(), inicio));
         } else if (actor.getId().equals(mentora.getId())) {
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaCancelada(aluna, actor.getNome(), inicio));
+            eventos.publishEvent(cancelada(aluna, actor.getNome(), inicio));
         } else {
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaCancelada(aluna, "A equipe do TechMentor", inicio));
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaCancelada(mentora, "A equipe do TechMentor", inicio));
+            eventos.publishEvent(cancelada(aluna, "A equipe do TechMentor", inicio));
+            eventos.publishEvent(cancelada(mentora, "A equipe do TechMentor", inicio));
         }
     }
 
@@ -127,7 +127,9 @@ public class AgendamentoService {
         garantirSala(mentoria);
 
         eventos.publishEvent(new MentoriaConfirmada(
-                mentoria.getAluna(), mentora.getNome(), mentoria.getHorario().getInicio()));
+                mentoria.getAluna(), mentora.getNome(), mentoria.getHorario().getInicio(),
+                mentoria.getHorario().getFim(), mentoria.getLinkSala(),
+                mentoria.getAluna().getNome(), mentoria.getAluna().getEmail(), mentoria.getAssunto()));
 
         return toResponse(mentoria);
     }
@@ -177,10 +179,10 @@ public class AgendamentoService {
 
         // Avisa a outra pessoa
         if (ehAluna) {
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaReagendada(mentora, actor.getNome(), novo.getInicio(), true));
+            eventos.publishEvent(reagendada(mentora, actor.getNome(), novo.getInicio(), true));
         } else {
             String quem = ehMentora ? actor.getNome() : "A equipe do TechMentor";
-            eventos.publishEvent(new EventosDeNotificacao.MentoriaReagendada(aluna, quem, novo.getInicio(), false));
+            eventos.publishEvent(reagendada(aluna, quem, novo.getInicio(), false));
         }
 
         return toResponse(mentoria);
@@ -235,6 +237,18 @@ public class AgendamentoService {
         if (mentoria.getGoogleEventoId() != null) salas.apagar(mentoria.getGoogleEventoId());
         mentoria.setLinkSala(null);
         mentoria.setGoogleEventoId(null);
+    }
+
+    /** Evento de cancelamento já com nome e e-mail em texto simples (o e-mail sai em outra thread, sem acesso ao banco). */
+    private EventosDeNotificacao.MentoriaCancelada cancelada(Usuario destinatario, String quemCancelou, LocalDateTime inicio) {
+        return new EventosDeNotificacao.MentoriaCancelada(
+                destinatario, quemCancelou, inicio, destinatario.getNome(), destinatario.getEmail());
+    }
+
+    private EventosDeNotificacao.MentoriaReagendada reagendada(Usuario destinatario, String quemReagendou,
+                                                               LocalDateTime novoInicio, boolean precisaConfirmar) {
+        return new EventosDeNotificacao.MentoriaReagendada(
+                destinatario, quemReagendou, novoInicio, precisaConfirmar, destinatario.getNome(), destinatario.getEmail());
     }
 
     private boolean estaBloqueado(Long primeiroUsuarioId, Long segundoUsuarioId) {

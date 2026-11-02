@@ -15,4 +15,7 @@ public interface GeradorDeSala {
     record DadosDaSala(String titulo, String descricao, LocalDateTime inicio, LocalDateTime fim, List<String> emails) { }
 
     record SalaCriada(String link, String idDoEvento) { }
+
+    /** Falso quando faltam as chaves do Google; evita tentar criar salas à toa. */
+    boolean configurado();
 }

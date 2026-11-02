@@ -1,5 +1,6 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.email.ModeloDeEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,25 @@ public class AvisoDeDenunciaListener {
         this.emailService = emailService;
     }
 
+    private ModeloDeEmail montarModelo(DenunciaCriadaEvent e) {
+
+        String denunciado = e.denunciadoId() == null
+                ? "Denúncia geral (nenhuma pessoa indicada)"
+                : e.denunciadoNome() + " (id " + e.denunciadoId() + ")";
+
+        return ModeloDeEmail.com("Nova denúncia #" + e.id())
+                .paragrafo("Uma nova denúncia foi registrada no TechMentor.")
+                .detalhe("Número", "#" + e.id())
+                .detalhe("Data", e.criadaEm().format(DATA))
+                .detalhe("Motivo", AvisoDeDenunciaListener.rotuloDoMotivo(e.motivo()))
+                .detalhe("Denunciante", e.denuncianteNome() + " (id " + e.denuncianteId() + ")")
+                .detalhe("Denunciado", denunciado)
+                .paragrafo("Relato:\n" + e.descricao())
+                .paragrafo("Para atualizar a situação (EM_ANALISE ou RESOLVIDA), use no Swagger: PATCH /api/denuncias/"
+                        + e.id() + "/status, com o cabeçalho X-Usuario-Id de um administrador.")
+                .nota("Este e-mail contém um relato sensível. Não encaminhe.");
+    }
+
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void avisarEquipe(DenunciaCriadaEvent evento) {
@@ -45,7 +65,7 @@ public class AvisoDeDenunciaListener {
             emailService.enviar(
                     destino,
                     "[TechMentor] Nova denúncia #" + evento.id() + " - " + rotuloDoMotivo(evento.motivo()),
-                    montarTexto(evento)
+                    montarModelo(evento)
             );
         } catch (Exception e) {
             log.warn("A denúncia #{} foi salva, mas não foi possível avisar a equipe por e-mail.", evento.id());
@@ -81,3 +101,5 @@ public class AvisoDeDenunciaListener {
         };
     }
 }
+
+

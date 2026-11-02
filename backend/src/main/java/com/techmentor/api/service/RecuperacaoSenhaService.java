@@ -1,5 +1,6 @@
 package com.techmentor.api.service;
 
+import com.techmentor.api.email.ModeloDeEmail;
 import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.model.RedefinicaoSenha;
 import com.techmentor.api.model.Usuario;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -67,10 +67,13 @@ public class RecuperacaoSenhaService {
         emailService.enviar(
                 usuario.getEmail(),
                 "Seu código de recuperação de senha - TechMentor",
-                "Olá, " + usuario.getNome() + "!\n\n"
-                        + "Seu código para redefinir a senha é: " + codigo + "\n\n"
-                        + "Ele vale por " + VALIDADE_MINUTOS + " minutos. "
-                        + "Se não foi você que pediu, ignore este e-mail."
+                ModeloDeEmail.com("Recuperação de senha")
+                        .saudacao("Olá, " + usuario.getNome() + "!")
+                        .paragrafo("Recebemos um pedido para redefinir a senha da sua conta. Use o código abaixo no aplicativo:")
+                        .destaque("Seu código", codigo)
+                        .paragrafo("Ele vale por " + VALIDADE_MINUTOS + " minutos e só pode ser usado uma vez.")
+                        .nota("Se não foi você que pediu, ignore este e-mail: sua senha continua a mesma. "
+                                + "Nunca compartilhe este código com ninguém.")
         );
     }
 
