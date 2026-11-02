@@ -9,7 +9,7 @@ object ApiClient {
 
     // Emulador: 10.0.2.2 | Celular real: o IP do seu computador (ex.: 192.168.18.241)
     // Precisa terminar com "/"
-    private const val BASE_URL = "https://moonlight-outsmart-backing.ngrok-free.dev/techmentor/api/"
+    private const val BASE_URL = "http://192.168.18.9:8080/techmentor/api/"
 
     val api: TechMentorApi by lazy {
         val client = OkHttpClient.Builder()
