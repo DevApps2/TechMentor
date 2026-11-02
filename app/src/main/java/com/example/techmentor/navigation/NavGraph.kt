@@ -47,6 +47,8 @@ fun NavGraph() {
             )
         }
 
+        adminNavGraph(navController)
+
         composable("login") {
             LoginScreen(navController = navController)
         }

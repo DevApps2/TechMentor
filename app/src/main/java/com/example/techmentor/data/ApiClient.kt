@@ -11,7 +11,8 @@ object ApiClient {
     // Precisa terminar com "/"
     private const val BASE_URL = "https://moonlight-outsmart-backing.ngrok-free.dev/techmentor/api/"
 
-    val api: TechMentorApi by lazy {
+    // Um Retrofit só, usado pela API do app e pela API do admin
+    private val retrofit: Retrofit by lazy {
         val client = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
             .build()
@@ -21,8 +22,12 @@ object ApiClient {
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(TechMentorApi::class.java)
     }
+
+    val api: TechMentorApi by lazy { retrofit.create(TechMentorApi::class.java) }
+
+    /** Telas da administradora (denúncias, oportunidades e mentoras). */
+    val adminApi: AdminApi by lazy { retrofit.create(AdminApi::class.java) }
 
     /**
      * O backend devolve a foto de duas formas:

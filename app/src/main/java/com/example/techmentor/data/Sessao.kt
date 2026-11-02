@@ -27,7 +27,9 @@ object Sessao {
     val ehMentora: Boolean get() = tipo == "MENTORA"
 
     /** A primeira tela de cada tipo de usuário. O painel do admin ainda não existe, então ele usa a Home. */
+    /** A primeira tela de cada tipo de usuário. */
     fun rotaInicial(): String = when (tipo) {
+        "ADMIN" -> "admin"
         "MENTORA" -> "mentora"
         else -> "home"
     }
