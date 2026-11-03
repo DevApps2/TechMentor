@@ -16,6 +16,12 @@ ALTER TABLE cursos
 ALTER TABLE denuncias
     MODIFY motivo ENUM('ASSEDIO','DISCURSO_DE_ODIO','OUTRO','PERFIL_FALSO','SPAM','COMPORTAMENTO_INADEQUADO') NOT NULL;
 
+-- O Hibernate cria a coluna conquistas.secreta ao iniciar a API atualizada.
+-- Marca duas medalhas de descoberta como secretas também em bancos já existentes.
+UPDATE conquistas
+SET secreta = TRUE
+WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
+
 -- Usuários criados antes da coluna "ativo" ficam com ativo = 0 no MySQL; reativa todos.
 -- (Confira antes se existe algum usuário que foi desativado de propósito.)
 -- UPDATE usuarios SET ativo = 1;

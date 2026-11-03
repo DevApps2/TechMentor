@@ -62,6 +62,40 @@ data class UsuarioConquistaResponse(
     val desbloqueadaEm: String?
 )
 
+// Medalha cadastrada pela plataforma (GET /conquistas).
+data class ConquistaResponse(
+    val id: Long,
+    val nome: String,
+    val descricao: String?,
+    val iconeUrl: String?,
+    val xpBonus: Int,
+    val secreta: Boolean = false
+)
+
+// Desafio disponível para participação (GET /desafios).
+data class DesafioResponse(
+    val id: Long,
+    val titulo: String,
+    val descricao: String?,
+    val xpRecompensa: Int,
+    val inicio: String,
+    val fim: String,
+    val metaAulas: Int,
+    val tipo: String
+)
+
+// Progresso da usuária em um desafio (GET /desafios/usuarios/{id}).
+data class UsuarioDesafioResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val desafioId: Long,
+    val tituloDesafio: String,
+    val status: String,
+    val aulasConcluidas: Long?,
+    val concluidoEm: String?,
+    val tipo: String
+)
+
 // Corpo do PUT /usuarios/{id}. Campos nulos não são enviados:
 // bio e areasInteresse omitidos = a API mantém o que já existe.
 data class AtualizarUsuarioRequest(

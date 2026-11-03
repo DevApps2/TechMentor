@@ -16,6 +16,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.avaliacao.AvaliarScreen
+import com.example.techmentor.ui.conquistas.ConquistasScreen
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
@@ -96,7 +97,7 @@ fun NavGraph() {
         }
 
         composable("achievements") {
-            PlaceholderScreen("Conquistas")
+            ConquistasScreen(navController = navController)
         }
 
         composable("safety") {

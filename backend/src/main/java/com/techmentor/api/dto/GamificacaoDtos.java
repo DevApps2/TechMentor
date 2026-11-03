@@ -31,7 +31,9 @@ public final class GamificacaoDtos {
             @Schema(description = "URL do ícone da conquista", example = "https://cdn.techmentor.com/conquistas/primeira-aula.png")
             @Size(max = 255) String iconeUrl,
             @Schema(description = "XP bônus concedido ao desbloquear a conquista", example = "50")
-            @PositiveOrZero int xpBonus
+            @PositiveOrZero int xpBonus,
+            @Schema(description = "Oculta o nome e o ícone até a conquista ser desbloqueada", example = "false")
+            boolean secreta
     ) {
         public Conquista toEntity() {
             Conquista conquista = new Conquista();
@@ -39,6 +41,7 @@ public final class GamificacaoDtos {
             conquista.setDescricao(descricao);
             conquista.setIconeUrl(iconeUrl);
             conquista.setXpBonus(xpBonus);
+            conquista.setSecreta(secreta);
             return conquista;
         }
     }
@@ -54,11 +57,13 @@ public final class GamificacaoDtos {
             @Schema(description = "URL do ícone da conquista", example = "https://cdn.techmentor.com/conquistas/primeira-aula.png")
             String iconeUrl,
             @Schema(description = "XP bônus concedido ao desbloquear a conquista", example = "50")
-            int xpBonus
+            int xpBonus,
+            @Schema(description = "Indica se a conquista é secreta", example = "false")
+            boolean secreta
     ) {
         public static ConquistaResponse from(Conquista conquista) {
             return new ConquistaResponse(conquista.getId(), conquista.getNome(), conquista.getDescricao(),
-                    conquista.getIconeUrl(), conquista.getXpBonus());
+                    conquista.getIconeUrl(), conquista.getXpBonus(), conquista.isSecreta());
         }
     }
 

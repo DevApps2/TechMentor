@@ -176,6 +176,21 @@ interface TechMentorApi {
     @GET("conquistas/usuarios/{id}")
     suspend fun listarConquistasDoUsuario(@Path("id") id: Long): List<UsuarioConquistaResponse>
 
+    @GET("conquistas")
+    suspend fun listarConquistas(): List<ConquistaResponse>
+
+    @GET("desafios")
+    suspend fun listarDesafiosAtivos(): List<DesafioResponse>
+
+    @GET("desafios/usuarios/{id}")
+    suspend fun listarDesafiosDoUsuario(@Path("id") id: Long): List<UsuarioDesafioResponse>
+
+    @POST("desafios/{titulo}/participacao/usuarios/{id}")
+    suspend fun participarDoDesafio(
+        @Path("titulo") titulo: String,
+        @Path("id") usuarioId: Long
+    ): UsuarioDesafioResponse
+
     @PUT("usuarios/{id}")
     suspend fun atualizarUsuario(
         @Path("id") id: Long,
