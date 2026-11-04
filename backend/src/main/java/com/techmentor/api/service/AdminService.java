@@ -40,7 +40,7 @@ public class AdminService {
         RegraAcesso.exigirAdmin(actor);
         if (request == null) throw ApiException.badRequest("Dados da mentora são obrigatórios.");
 
-        String email = request.email().trim();
+        String email = Emails.normalizar(request.email());
         if (usuarios.existsByEmail(email)) throw ApiException.conflict("E-mail já cadastrado.");
 
         Usuario conta = new Usuario();
