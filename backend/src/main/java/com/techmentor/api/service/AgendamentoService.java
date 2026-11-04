@@ -89,6 +89,10 @@ public class AgendamentoService {
         mentoria.setAssunto(request.assunto());
         Mentoria salva = mentorias.save(mentoria);
 
+        // A primeira reserva desbloqueia a conquista; desafios de mentoria também são verificados aqui.
+        conquistas.desbloquear(actor, ConquistaService.PRIMEIRA_MENTORIA);
+        desafios.verificarDesafios(actor);
+
         eventos.publishEvent(new EventosDeNotificacao.MentoriaAgendada(
                 horario.getMentora().getUsuario(), actor.getNome(), horario.getInicio()));
 

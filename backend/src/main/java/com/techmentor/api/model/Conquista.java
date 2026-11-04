@@ -8,7 +8,7 @@ import lombok.Setter;
 import java.time.*;
 import java.util.*;
 
-@JsonPropertyOrder({"id", "nome", "descricao", "iconeUrl", "xpBonus"})
+@JsonPropertyOrder({"id", "nome", "descricao", "iconeUrl", "xpBonus", "secreta"})
 
 /** Medalha que pode ser desbloqueada. */
 @Entity @Table(name = "conquistas")
@@ -19,4 +19,6 @@ public class Conquista {
     @Column(length = 500) private String descricao;
     private String iconeUrl;
     private int xpBonus = 0;
+    @Column(nullable = false)
+    private boolean secreta = false;
 }

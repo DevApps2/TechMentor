@@ -265,8 +265,9 @@ WHERE NOT EXISTS (SELECT 1 FROM progresso_aulas p WHERE p.usuario_id = u.id AND 
 -- ---------------------------------------------------------------------
 -- Gamificação: conquistas, desafios, participações, histórico de XP
 -- ---------------------------------------------------------------------
-INSERT INTO conquistas (nome, descricao, icone_url, xp_bonus)
-SELECT v.nome, v.descricao, v.icone_url, v.xp_bonus
+INSERT INTO conquistas (nome, descricao, icone_url, xp_bonus, secreta)
+SELECT v.nome, v.descricao, v.icone_url, v.xp_bonus,
+       CASE WHEN v.nome IN ('Primeiro desafio', 'Explorando oportunidades') THEN TRUE ELSE FALSE END
 FROM (
     SELECT 'Primeira aula' AS nome, 'Concluiu a primeira aula na plataforma.' AS descricao,
            'https://cdn.techmentor.com/conquistas/primeira-aula.png' AS icone_url, 50 AS xp_bonus
@@ -282,6 +283,9 @@ FROM (
            'https://cdn.techmentor.com/conquistas/oportunidade.png', 20
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM conquistas c WHERE c.nome = v.nome);
+
+UPDATE conquistas SET secreta = TRUE
+WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
 
 INSERT INTO usuario_conquistas (usuario_id, conquista_id, desbloqueada_em)
 SELECT u.id, c.id, v.desbloqueada_em
