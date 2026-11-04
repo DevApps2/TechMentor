@@ -38,7 +38,7 @@ public class RecuperacaoSenhaService {
     @Transactional
     public void solicitarCodigo(String email) {
 
-        Optional<Usuario> achado = usuarioRepository.findByEmail(email.trim());
+        Optional<Usuario> achado = usuarioRepository.findByEmail(Emails.normalizar(email));
         if (achado.isEmpty() || !achado.get().isAtivo()) {
             return;
         }
@@ -84,7 +84,7 @@ public class RecuperacaoSenhaService {
     @Transactional(noRollbackFor = ApiException.class)
     public void redefinirSenha(String email, String codigo, String novaSenha) {
 
-        Usuario usuario = usuarioRepository.findByEmail(email.trim())
+        Usuario usuario = usuarioRepository.findByEmail(Emails.normalizar(email))
                 .filter(Usuario::isAtivo)
                 .orElseThrow(() -> ApiException.badRequest(CODIGO_INVALIDO));
 

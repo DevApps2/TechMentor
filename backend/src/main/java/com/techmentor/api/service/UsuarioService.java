@@ -35,6 +35,7 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final LimiteDeTentativasDeLogin limiteDeLogin;
 
     @Value("${app.pasta-fotos:fotos}")
     private String pastaFotos;
@@ -60,7 +61,9 @@ public class UsuarioService {
 
     public Response criarUsuario(CreateRequest dto) {
 
-        if (repository.existsByEmail(dto.email())) {
+        String email = Emails.normalizar(dto.email());
+
+        if (repository.existsByEmail(email)) {
             throw new ConflictException("Usuário já cadastrado!");
         }
 
@@ -68,7 +71,7 @@ public class UsuarioService {
 
         usuario.setId(null);
         usuario.setNome(dto.nome());
-        usuario.setEmail(dto.email());
+        usuario.setEmail(email);
         usuario.setSenhaHash(passwordEncoder.encode(dto.senha()));
 
         Usuario usuarioSalvo = repository.save(usuario);
@@ -88,15 +91,18 @@ public class UsuarioService {
                 .orElseThrow(() ->
                         new NotFoundException("Usuário não encontrado!"));
 
-        boolean mudouEmail =
-                !existente.getEmail().equals(dto.email());
+        String email = Emails.normalizar(dto.email());
 
-        if (mudouEmail && repository.existsByEmail(dto.email())) {
+        // equalsIgnoreCase: conta antiga com maiúsculas no e-mail não conta como "mudou" se só a caixa é diferente
+        boolean mudouEmail =
+                !existente.getEmail().equalsIgnoreCase(email);
+
+        if (mudouEmail && repository.existsByEmail(email)) {
             throw new ConflictException("E-mail já cadastrado!");
         }
 
         existente.setNome(dto.nome());
-        existente.setEmail(dto.email());
+        existente.setEmail(email);
         existente.setFotoUrl(dto.fotoUrl());
         if (dto.bio() != null) {
             existente.setBio(dto.bio());
@@ -114,19 +120,25 @@ public class UsuarioService {
 
     public Usuario loginUsuario(String email, String senha) {
 
-        Usuario usuario = repository.findByEmail(email)
-                .orElseThrow(() ->
-                        new NotAuthorizedException("Credenciais inválidas!"));
+        String emailNormalizado = Emails.normalizar(email);
 
-        if (!passwordEncoder.matches(senha, usuario.getSenhaHash())) {
+        // Muitas senhas erradas seguidas: responde 429 antes de conferir qualquer coisa (vale até com a senha certa)
+        limiteDeLogin.exigirLivre(emailNormalizado);
+
+        Optional<Usuario> achado = repository.findByEmail(emailNormalizado);
+
+        // A mesma resposta para e-mail que não existe, senha errada e conta desativada: ninguém descobre quem tem conta
+        boolean entrou = achado.isPresent()
+                && passwordEncoder.matches(senha, achado.get().getSenhaHash())
+                && achado.get().isAtivo();
+
+        if (!entrou) {
+            limiteDeLogin.registrarFalha(emailNormalizado);
             throw new NotAuthorizedException("Credenciais inválidas!");
         }
 
-        if (!usuario.isAtivo()) {
-            throw new NotAuthorizedException("Credenciais inválidas!");
-        }
-
-        return usuario;
+        limiteDeLogin.limpar(emailNormalizado);
+        return achado.get();
     }
 
     public void desativarUsuario(Long id) {
