@@ -42,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.techmentor.data.NotificacaoResponse
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
 import com.example.techmentor.ui.home.parseDataHora
@@ -78,6 +79,9 @@ fun NotificacoesScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.carregar()
     }
+
+    // Com a tela aberta, atualiza sozinha de tempos em tempos (mais rápido aqui, é onde a pessoa espera algo chegar)
+    AtualizarAutomaticamente(intervaloSegundos = 15) { viewModel.carregar() }
 
     Column(
         modifier = Modifier
@@ -269,6 +273,7 @@ private fun iconeDaNotificacao(titulo: String): Icone {
     val t = titulo.lowercase(LocaleBr)
     return when {
         "mentoria" in t -> Icone.USUARIOS
+        "avalia" in t -> Icone.TROFEU
         "denúncia" in t -> Icone.ESCUDO
         "curso" in t -> Icone.LIVRO
         "conquista" in t || "nível" in t || "desafio" in t -> Icone.TROFEU

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
 
@@ -39,6 +40,8 @@ fun SinoDeNotificacoes(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.atualizar()
     }
+
+    AtualizarAutomaticamente { viewModel.atualizar() }
 
     Box(
         modifier = Modifier

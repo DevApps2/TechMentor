@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -166,12 +167,32 @@ internal fun CartaoConteudo(titulo: String, texto: String?, destaque: String? = 
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = destaque,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = MentoriaCores.Roxo
-            )
+            if (!destaque.isNullOrBlank()) {
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // "Ligue 180" -> 180: se o destaque tem um número de telefone, tocar abre o discador
+                val abrir = LocalUriHandler.current
+                val numero = destaque.filter { it.isDigit() }.takeIf { it.length in 3..11 }
+
+                Text(
+                    text = if (numero != null) "$destaque ›" else destaque,
+                    modifier = if (numero != null) {
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(role = Role.Button) {
+                                // abre o discador já com o número; sem app de telefone, só não faz nada
+                                runCatching { abrir.openUri("tel:$numero") }
+                            }
+                            .padding(vertical = 6.dp)
+                    } else {
+                        Modifier
+                    },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MentoriaCores.Roxo
+                )
+            }
         }
     }
 }

@@ -248,10 +248,6 @@ private fun ListaDeMentoras(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        item {
-            AvisoDemo(texto = "Perfis fictícios para demonstração. Fotos ilustrativas.")
-        }
-
         if (mentoras.isEmpty()) {
 
             item {

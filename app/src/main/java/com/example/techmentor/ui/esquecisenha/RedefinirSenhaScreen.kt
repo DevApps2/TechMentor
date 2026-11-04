@@ -38,6 +38,7 @@ import com.example.techmentor.ui.auth.AuthScaffold
 import com.example.techmentor.ui.auth.BrandHeader
 import com.example.techmentor.ui.auth.GradientButton
 import com.example.techmentor.ui.auth.OutlinedAuthButton
+import com.example.techmentor.ui.mentoria.mensagemDaApi
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -51,8 +52,8 @@ fun RedefinirSenhaScreen(
 ) {
 
     var codigo by rememberSaveable { mutableStateOf("") }
-    var senha by rememberSaveable { mutableStateOf("") }
-    var confirmacao by rememberSaveable { mutableStateOf("") }
+    var senha by remember { mutableStateOf("") }
+    var confirmacao by remember { mutableStateOf("") }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var aviso by rememberSaveable { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -86,14 +87,14 @@ fun RedefinirSenhaScreen(
             try {
                 ApiClient.api.redefinirSenha(RedefinirSenhaRequest(email, codigo, senha))
 
-                // Avisa a tela de login e volta para ela
-                navController.getBackStackEntry("login").savedStateHandle["senhaAlterada"] = email
+                // Avisa a tela de login e volta para ela (se o login não estiver na pilha, só volta)
+                runCatching { navController.getBackStackEntry("login").savedStateHandle["senhaAlterada"] = email }
                 navController.popBackStack("login", inclusive = false)
             } catch (e: HttpException) {
-                error = if (e.code() == 400) {
-                    mensagemDaApi(e) ?: "Confira os dados informados."
-                } else {
-                    ERRO_CONEXAO
+                error = when (e.code()) {
+                    400 -> mensagemDaApi(e) ?: "Confira os dados informados."
+                    in 500..599 -> "O servidor está indisponível no momento. Tente de novo em instantes."
+                    else -> ERRO_CONEXAO
                 }
             } catch (e: IOException) {
                 error = ERRO_CONEXAO
@@ -114,8 +115,12 @@ fun RedefinirSenhaScreen(
                 aviso = "Código reenviado! Confira seu e-mail."
                 segundos = 60
             } catch (e: HttpException) {
-                error = ERRO_CONEXAO
-            } catch (e: IOException) {
+                error = if (e.code() in 500..599) {
+                    "Falha de conexão. Tente de novo em instantes."
+                } else {
+                    ERRO_CONEXAO
+                }
+            }catch (e: IOException) {
                 error = ERRO_CONEXAO
             } finally {
                 loading = false

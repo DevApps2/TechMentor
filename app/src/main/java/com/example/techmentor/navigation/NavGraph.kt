@@ -27,6 +27,7 @@ import com.example.techmentor.ui.mentoria.ReagendarScreen
 import com.example.techmentor.ui.notificacoes.NotificacoesScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
+import com.example.techmentor.ui.profile.TrocarSenhaScreen
 import com.example.techmentor.ui.splash.SplashScreen
 
 @Composable
@@ -139,11 +140,6 @@ fun NavGraph() {
         composable("mentora/agenda") {
             AgendaMentoraScreen(navController = navController)
         }
-
-        composable("mentora/perfil") {
-            PlaceholderScreen("Perfil da mentora")
-        }
-
         composable("mentora/completar-perfil") {
             MentoraPerfilFormScreen(navController = navController, modoEdicao = false)
         }
@@ -168,6 +164,10 @@ fun NavGraph() {
 
         composable("notificacoes") {
             NotificacoesScreen(navController = navController)
+        }
+
+        composable("trocar-senha") {
+            TrocarSenhaScreen(navController = navController)
         }
 
     }

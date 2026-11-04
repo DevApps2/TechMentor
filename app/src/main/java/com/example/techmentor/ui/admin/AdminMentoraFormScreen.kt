@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -69,12 +71,14 @@ fun AdminMentoraFormScreen(
     // Os textos ficam aqui (e não no ViewModel) para a digitação não "pular"; rememberSaveable guarda ao girar a tela
     var nome by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
-    var senha by rememberSaveable { mutableStateOf("") }
+    var senha by remember { mutableStateOf("") }
     var cargo by rememberSaveable { mutableStateOf("") }
     var empresa by rememberSaveable { mutableStateOf("") }
     var anos by rememberSaveable { mutableStateOf("") }
     var bio by rememberSaveable { mutableStateOf("") }
     var novaArea by rememberSaveable { mutableStateOf("") }
+
+    var senhaGerada by remember { mutableStateOf<String?>(null) }
 
     // No cadastro o formulário já nasce "preenchido" (vazio); na edição espera a mentora chegar da API
     var preenchido by rememberSaveable { mutableStateOf(!editando) }
@@ -224,6 +228,27 @@ fun AdminMentoraFormScreen(
                             senha = true,
                             maiusculaNoInicio = false
                         )
+
+                        OutlinedAuthButton(
+                            text = "Gerar senha",
+                            onClick = {
+                                val nova = gerarSenhaProvisoria()
+                                senha = nova
+                                senhaGerada = nova
+                            }
+                        )
+
+                        // Só mostra enquanto o campo ainda tem a senha gerada (se o admin digitar outra, some)
+                        senhaGerada?.takeIf { it == senha }?.let { gerada ->
+                            SelectionContainer {
+                                Text(
+                                    text = "Senha gerada: $gerada\nAnote ou copie (segure o dedo no texto) e entregue à mentora: depois de salvar, ela não aparece de novo.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                    color = Color(0xFF514C58)
+                                )
+                            }
+                        }
                     }
 
                     CampoDeTexto(
@@ -370,4 +395,11 @@ fun AdminMentoraFormScreen(
             onCancelar = { pedindoConfirmacao = false }
         )
     }
+}
+
+private fun gerarSenhaProvisoria(): String {
+    // sem letras parecidas (0/O, 1/l/I) para quem for ler e digitar
+    val letras = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+    val aleatorio = java.security.SecureRandom()
+    return (1..12).map { letras[aleatorio.nextInt(letras.length)] }.joinToString("")
 }

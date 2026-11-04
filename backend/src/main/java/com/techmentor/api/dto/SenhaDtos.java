@@ -34,5 +34,19 @@ public final class SenhaDtos {
             @NotBlank(message = "A senha é obrigatória")
             @Size(min = 8, max = 72, message = "A senha deve ter entre 8 e 72 caracteres")
             String novaSenha
+
+
+    ) { }
+
+    @Schema(description = "Troca de senha de quem já está logado: a senha atual e a nova")
+    public record TrocarSenhaRequest(
+            @Schema(description = "Senha atual", example = "senhaSegura123")
+            @NotBlank(message = "Informe a senha atual")
+            String senhaAtual,
+
+            @Schema(description = "Nova senha, entre 8 e 72 caracteres", example = "novaSenha123")
+            @NotBlank(message = "A nova senha é obrigatória")
+            @Size(min = 8, max = 72, message = "A nova senha deve ter entre 8 e 72 caracteres")
+            String novaSenha
     ) { }
 }

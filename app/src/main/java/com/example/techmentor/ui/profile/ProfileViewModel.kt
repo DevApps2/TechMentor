@@ -147,7 +147,7 @@ class ProfileViewModel : ViewModel() {
                 val atualizado = ApiClient.api.atualizarUsuario(
                     usuarioId,
                     AtualizarUsuarioRequest(
-                        nome = nome.trim(),
+                        nome = nome.trim().replace(Regex("\\s+"), " "),
                         email = atual.email,
                         fotoUrl = fotoUrl.trim().ifEmpty { null },
                         bio = bio.trim(),

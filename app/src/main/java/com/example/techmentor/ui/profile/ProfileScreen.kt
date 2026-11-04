@@ -79,6 +79,10 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import android.graphics.Matrix
 import android.media.ExifInterface
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalUriHandler
 
 private val Fundo = Color(0xFFF8F8FB)
 private val Roxo = Color(0xFF7C3AED)
@@ -88,7 +92,13 @@ private val TextoEscuro = Color(0xFF17151F)
 private val TextoMudo = Color(0xFF6F6A76)
 private val Borda = Color(0xFFEBE8EF)
 
+private const val LIMITE_NOME = 120
+
 private const val LIMITE_BIO = 500
+
+// Política de Privacidade publicada no Google Sites (a mesma do cadastro)
+private const val URL_POLITICA_DE_PRIVACIDADE =
+    "https://sites.google.com/view/techmentor-app/pol%C3%ADtica-de-privacidade"
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,6 +198,7 @@ private fun ProfileContent(
 ) {
 
     var editando by remember { mutableStateOf(false) }
+    var confirmandoSaida by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -265,11 +276,41 @@ private fun ProfileContent(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        HistoricoDeMentorias(lista = estado.historicoMentorias)
+        HistoricoDeMentorias(
+            lista = estado.historicoMentorias,
+            onAbrirAvaliacao = { navController.navigate("avaliar/${it.id}") }
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val abrirLink = LocalUriHandler.current
+
+        ContaEPrivacidade(
+            onTrocarSenha = { navController.navigate("trocar-senha") },
+            // Sem navegador instalado o toque só não faz nada, em vez de derrubar o app
+            onPolitica = { runCatching { abrirLink.openUri(URL_POLITICA_DE_PRIVACIDADE) } }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        BotaoSair(onClick = onSair)
+        BotaoSair(onClick = { confirmandoSaida = true })
+
+        if (confirmandoSaida) {
+            AlertDialog(
+                onDismissRequest = { confirmandoSaida = false },
+                title = { Text("Sair da conta?") },
+                text = { Text("Você vai precisar entrar de novo com seu e-mail e senha.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmandoSaida = false
+                        onSair()
+                    }) { Text("Sair", color = Color(0xFFDC2626)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmandoSaida = false }) { Text("Cancelar") }
+                }
+            )
+        }
     }
 }
 
@@ -399,9 +440,12 @@ private fun CardDeEdicao(
         AuthField(
             label = "Nome",
             value = nome,
-            onValueChange = { nome = it },
+            onValueChange = { if (it.length <= LIMITE_NOME) nome = it },
             placeholder = "Seu nome",
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Next
+            ),
             keyboardActions = KeyboardActions.Default
         )
 
@@ -803,7 +847,10 @@ private fun DivisorHorizontal() {
 }
 
 @Composable
-private fun HistoricoDeMentorias(lista: List<AgendamentoResponse>) {
+private fun HistoricoDeMentorias(
+    lista: List<AgendamentoResponse>,
+    onAbrirAvaliacao: (AgendamentoResponse) -> Unit
+) {
 
     SecaoBranca(titulo = "Histórico de mentorias") {
 
@@ -823,20 +870,28 @@ private fun HistoricoDeMentorias(lista: List<AgendamentoResponse>) {
                     DivisorHorizontal()
                 }
 
-                LinhaDeMentoria(agendamento = agendamento)
+                LinhaDeMentoria(
+                    agendamento = agendamento,
+                    // só as concluídas abrem a tela de avaliação (avaliar ou ver o que já foi avaliado)
+                    onClick = if (agendamento.status == "CONCLUIDA") ({ onAbrirAvaliacao(agendamento) }) else null
+                )
             }
         }
     }
 }
 
 @Composable
-private fun LinhaDeMentoria(agendamento: AgendamentoResponse) {
+private fun LinhaDeMentoria(
+    agendamento: AgendamentoResponse,
+    onClick: (() -> Unit)?
+) {
 
     val estilo = estiloDoStatus(agendamento.status)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button) { onClick() } else Modifier)
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -862,7 +917,6 @@ private fun LinhaDeMentoria(agendamento: AgendamentoResponse) {
         Column(
             modifier = Modifier.weight(1f)
         ) {
-
             Text(
                 text = agendamento.mentoraNome,
                 fontSize = 12.sp,
@@ -887,6 +941,21 @@ private fun LinhaDeMentoria(agendamento: AgendamentoResponse) {
                 fontSize = 10.sp,
                 color = Color(0xFFA19CA5)
             )
+
+            Text(
+                text = formatarDataLonga(agendamento.inicio),
+                fontSize = 10.sp,
+                color = Color(0xFFA19CA5)
+            )
+
+            if (onClick != null) {
+                Text(
+                    text = "Avaliar ou ver avaliação ›",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = RoxoEscuro
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -905,8 +974,10 @@ private fun LinhaDeMentoria(agendamento: AgendamentoResponse) {
                 color = estilo.texto
             )
         }
+
     }
 }
+
 
 private data class EstiloDoStatus(
     val rotulo: String,
@@ -1010,6 +1081,52 @@ private fun ProfileErro(
         GradientButton(
             text = "Tentar novamente",
             onClick = onTentarDeNovo
+        )
+    }
+}
+
+@Composable
+private fun ContaEPrivacidade(
+    onTrocarSenha: () -> Unit,
+    onPolitica: () -> Unit
+) {
+
+    SecaoBranca(titulo = "Conta e privacidade") {
+
+        LinhaDeConta(titulo = "Trocar senha", onClick = onTrocarSenha)
+
+        DivisorHorizontal()
+
+        LinhaDeConta(titulo = "Política de Privacidade", onClick = onPolitica)
+    }
+}
+
+@Composable
+private fun LinhaDeConta(
+    titulo: String,
+    onClick: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button) { onClick() }
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = titulo,
+            modifier = Modifier.weight(1f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextoEscuro
+        )
+
+        Text(
+            text = "›",
+            fontSize = 22.sp,
+            color = TextoEscuro
         )
     }
 }

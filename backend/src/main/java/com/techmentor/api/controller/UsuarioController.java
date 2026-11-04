@@ -1,5 +1,6 @@
 package com.techmentor.api.controller;
 
+import com.techmentor.api.dto.SenhaDtos;
 import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
 import com.techmentor.api.dto.UsuarioDtos.LoginRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
@@ -87,5 +88,15 @@ public class UsuarioController {
         service.desativarUsuario(id);
 
         return ResponseEntity.status(200).build();
+    }
+
+    @Operation(summary = "Trocar a senha",
+            description = "Para quem já está logado: exige a senha atual. Retorna 400 se a senha atual estiver errada "
+                    + "e 429 se houver muitas tentativas erradas seguidas.")
+    @PatchMapping("/{id}/senha")
+    public ResponseEntity<Void> trocarSenha(@Parameter(description = "ID do usuário") @PathVariable Long id,
+                                            @Valid @RequestBody SenhaDtos.TrocarSenhaRequest dto) {
+        service.trocarSenha(id, dto.senhaAtual(), dto.novaSenha());
+        return ResponseEntity.noContent().build();
     }
 }
