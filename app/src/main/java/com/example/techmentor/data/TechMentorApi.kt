@@ -258,5 +258,9 @@ interface TechMentorApi {
         @Query("id") notificacaoId: Long?
     )
 
+    // 400 = senha atual errada (a mensagem vem da API); 429 = muitas tentativas
+    @PATCH("usuarios/{id}/senha")
+    suspend fun trocarSenha(@Path("id") usuarioId: Long, @Body body: TrocarSenhaRequest)
+
 
 }

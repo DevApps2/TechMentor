@@ -50,7 +50,10 @@ fun EsqueciSenhaScreen(
     fun enviar() {
         if (loading) return
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+        // sempre em minúsculas e sem espaços, como o backend espera
+        val emailLimpo = email.trim().lowercase()
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(emailLimpo).matches()) {
             error = "Informe um e-mail válido."
             return
         }
@@ -58,12 +61,16 @@ fun EsqueciSenhaScreen(
         loading = true
         scope.launch {
             try {
-                ApiClient.api.esqueciSenha(EsqueciSenhaRequest(email.trim()))
+                ApiClient.api.esqueciSenha(EsqueciSenhaRequest(emailLimpo))
 
                 // O backend responde igual exista ou não a conta; seguimos para a tela do código
-                navController.navigate("redefinir-senha/${Uri.encode(email.trim())}")
+                navController.navigate("redefinir-senha/${Uri.encode(emailLimpo)}")
             } catch (e: HttpException) {
-                error = ERRO_CONEXAO
+                error = when (e.code()) {
+                    400 -> "Informe um e-mail válido."
+                    in 500..599 -> "Falha de conexão. Tente de novo em instantes."
+                    else -> ERRO_CONEXAO
+                }
             } catch (e: IOException) {
                 error = ERRO_CONEXAO
             } finally {

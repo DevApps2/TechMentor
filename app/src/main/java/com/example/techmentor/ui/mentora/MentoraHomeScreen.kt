@@ -72,8 +72,10 @@ fun MentoraHomeScreen(
 
     val estado by viewModel.estado.collectAsState()
 
-    // A mentoria que a mentora pediu para cancelar; enquanto não confirmar no diálogo, nada é enviado
+
     var paraCancelar by remember { mutableStateOf<AgendamentoResponse?>(null) }
+
+    var confirmandoSaida by remember { mutableStateOf(false) }
 
     fun sair() {
         Sessao.sair()
@@ -156,7 +158,7 @@ fun MentoraHomeScreen(
                         onConfirmar = { viewModel.confirmar(it) },
                         onReagendar = { navController.navigate("reagendar/${it.id}/${it.mentoraId}") },
                         onPedirCancelamento = { paraCancelar = it },
-                        onSair = { sair() },
+                        onSair = { confirmandoSaida = true },
                         avaliacoesPendentes = { AvaliacoesPendentes(navController) }
                     )
                 }
@@ -193,6 +195,7 @@ private fun Conteudo(
 
     val primeiroNome = nome.trim().split(" ").firstOrNull().orEmpty().ifEmpty { "você" }
     val data = SimpleDateFormat("EEEE, d 'DE' MMMM", LocaleBr).format(Date()).uppercase()
+    var confirmandoSaida by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -295,10 +298,22 @@ private fun Conteudo(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedAuthButton(
-            text = "Sair da conta",
-            onClick = onSair
-        )
+        if (confirmandoSaida) {
+            AlertDialog(
+                onDismissRequest = { confirmandoSaida = false },
+                title = { Text("Sair da conta?") },
+                text = { Text("Você vai precisar entrar de novo com seu e-mail e senha.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmandoSaida = false
+                        sair()
+                    }) { Text("Sair", color = Color(0xFFDC2626)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmandoSaida = false }) { Text("Cancelar") }
+                }
+            )
+        }
     }
 }
 

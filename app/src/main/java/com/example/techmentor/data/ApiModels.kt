@@ -307,3 +307,9 @@ data class AvaliacoesDaMentoraResponse(
     val distribuicao: Map<String, Long>,
     val avaliacoes: List<AvaliacaoPublicaResponse>
 )
+
+// Corpo do PATCH /usuarios/{id}/senha: a senha atual e a nova
+data class TrocarSenhaRequest(
+    val senhaAtual: String,
+    val novaSenha: String
+)

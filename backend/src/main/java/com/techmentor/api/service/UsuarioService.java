@@ -190,4 +190,30 @@ public class UsuarioService {
 
         return Response.from(usuario);
     }
+
+    /**
+     * Troca a senha de quem está logado. Exige a senha atual: como o projeto não usa token, é ela que prova que quem
+     * pede é a dona da conta. Errar a senha atual conta no mesmo limite de tentativas do login.
+     */
+    @Transactional
+    public void trocarSenha(Long id, String senhaAtual, String novaSenha) {
+
+        Usuario usuario = repository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
+
+        String chave = Emails.normalizar(usuario.getEmail());
+        limiteDeLogin.exigirLivre(chave);
+
+        if (!passwordEncoder.matches(senhaAtual, usuario.getSenhaHash())) {
+            limiteDeLogin.registrarFalha(chave);
+            throw ApiException.badRequest("A senha atual está incorreta.");
+        }
+
+        if (passwordEncoder.matches(novaSenha, usuario.getSenhaHash())) {
+            throw ApiException.badRequest("A nova senha deve ser diferente da atual.");
+        }
+
+        limiteDeLogin.limpar(chave);
+        usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+    }
 }
