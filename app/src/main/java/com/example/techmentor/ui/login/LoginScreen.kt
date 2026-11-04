@@ -42,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.LoginRequest
+import com.example.techmentor.ui.mentoria.mensagemDaApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -53,7 +54,8 @@ fun LoginScreen(
 ) {
 
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    // 3) a senha não vai para o estado salvo do sistema (só e-mail e mensagens continuam com rememberSaveable)
+    var password by remember { mutableStateOf("") }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
@@ -93,8 +95,11 @@ fun LoginScreen(
     fun submit() {
         if (loading) return
 
+        // 1) e-mail sempre em minúsculas e sem espaços
+        val emailLimpo = email.trim().lowercase()
+
         error = when {
-            !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> "Informe um e-mail válido."
+            !Patterns.EMAIL_ADDRESS.matcher(emailLimpo).matches() -> "Informe um e-mail válido."
             password.isEmpty() -> "Informe sua senha."
             else -> null
         }
@@ -103,13 +108,21 @@ fun LoginScreen(
         loading = true
         scope.launch {
             try {
-                val usuario = ApiClient.api.login(LoginRequest(email.trim(), password))
+                val usuario = ApiClient.api.login(LoginRequest(emailLimpo, password))
                 Sessao.entrar(usuario.id, usuario.tipo)
                 navController.navigate(Sessao.rotaInicial()) {
                     popUpTo("login") { inclusive = true }
                 }
             } catch (e: HttpException) {
-                error = if (e.code() == 401) "E-mail ou senha incorretos." else ERRO_CONEXAO
+                // 2) cada situação com a sua mensagem
+                error = when (e.code()) {
+                    401 -> "E-mail ou senha incorretos."
+                    400 -> "Confira o e-mail e a senha informados."
+                    // muitas senhas erradas: o backend diz quanto tempo falta
+                    429 -> mensagemDaApi(e) ?: "Muitas tentativas. Tente de novo em alguns minutos."
+                    in 500..599 -> "Falha ao carregar. Tente de novo em instantes."
+                    else -> ERRO_CONEXAO
+                }
             } catch (e: IOException) {
                 error = ERRO_CONEXAO
             } finally {
