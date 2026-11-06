@@ -2,6 +2,8 @@ package com.example.techmentor.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 /** Guarda no aparelho quem está logado, de que tipo é e o token de acesso, para o app abrir direto na tela certa. */
 object Sessao {
@@ -48,5 +50,20 @@ object Sessao {
 
     fun sair() {
         prefs?.edit()?.clear()?.apply()
+    }
+
+    private val _sessaoExpirada = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Emite quando o servidor recusou o token (vencido ou inválido): o app deve voltar ao login. */
+    val sessaoExpirada: SharedFlow<Unit> = _sessaoExpirada
+
+    /**
+     * Chamado quando uma chamada COM token volta 401. Várias telas podem carregar ao mesmo tempo e receber 401
+     * juntas; por isso só o primeiro aviso vale (depois dele já não há token guardado).
+     */
+    fun expirar(tokenUsado: String) {
+        if (token != tokenUsado) return
+        sair()
+        _sessaoExpirada.tryEmit(Unit)
     }
 }

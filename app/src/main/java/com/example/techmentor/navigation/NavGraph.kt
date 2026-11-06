@@ -1,7 +1,9 @@
 package com.example.techmentor.navigation
 
+import android.widget.Toast
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,6 +14,7 @@ import com.example.techmentor.ui.mentoria.MentoraPerfilScreen
 import com.example.techmentor.ui.mentoria.MentoriaScreen
 import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.techmentor.data.Sessao
@@ -36,6 +39,18 @@ fun NavGraph() {
 
     // Depois da abertura, quem já entrou antes vai direto para a tela do seu tipo
     val destinoAposAbertura = remember { if (Sessao.usuarioId != null) Sessao.rotaInicial() else "login" }
+
+    val context = LocalContext.current
+
+    // Token vencido ou recusado: avisa e volta ao login, apagando o histórico de telas
+    LaunchedEffect(Unit) {
+        Sessao.sessaoExpirada.collect {
+            Toast.makeText(context, "Sua sessão expirou. Entre novamente.", Toast.LENGTH_LONG).show()
+            navController.navigate("login") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,

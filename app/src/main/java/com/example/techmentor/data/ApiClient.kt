@@ -24,7 +24,12 @@ object ApiClient {
                 } else {
                     chain.request()
                 }
-                chain.proceed(pedido)
+                val resposta = chain.proceed(pedido)
+                // Mandou token e o servidor não aceitou: a sessão acabou
+                if (resposta.code == 401 && token != null) {
+                    Sessao.expirar(token)
+                }
+                resposta
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
