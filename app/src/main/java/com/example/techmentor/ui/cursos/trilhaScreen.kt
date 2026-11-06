@@ -1,4 +1,4 @@
-package com.example.techmentor.ui.trilhas
+package com.example.techmentor.ui.cursos
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
