@@ -1,4 +1,4 @@
-package com.example.techmentor.ui.trilhas
+package com.example.techmentor.ui.cursos
 
 data class TrilhaModulo(
     val id: Int,
