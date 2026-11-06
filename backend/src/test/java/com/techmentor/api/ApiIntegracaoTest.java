@@ -3,7 +3,6 @@ package com.techmentor.api;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -13,9 +12,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import com.techmentor.api.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.techmentor.api.model.Usuario;
+import com.techmentor.api.repository.UsuarioRepository;
 
 /** Sobe a API de verdade (Tomcat em porta aleatória, banco H2 em memória) e chama os endpoints por HTTP. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -24,14 +26,23 @@ class ApiIntegracaoTest {
     @Value("${local.server.port}")
     private int porta;
 
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     private final HttpClient http = HttpClient.newHttpClient();
 
     private record Resp(int status, String corpo) { }
 
+    private String logadoId;
+
     private Resp chamar(String metodo, String caminho, String json, String usuarioId) throws Exception {
         HttpRequest.Builder req = HttpRequest.newBuilder(URI.create("http://localhost:" + porta + caminho))
                 .header("Content-Type", "application/json");
-        if (usuarioId != null) req.header("X-Usuario-Id", usuarioId);
+        String quem = usuarioId != null ? usuarioId : logadoId;
+        if (quem != null) req.header("Authorization", "Bearer " + jwtService.gerarToken(quem));
         req.method(metodo, json == null
                 ? HttpRequest.BodyPublishers.noBody()
                 : HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
@@ -57,7 +68,9 @@ class ApiIntegracaoTest {
         String email = "u" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com";
         Resp r = post("/usuarios", "{\"nome\":\"" + nome + "\",\"email\":\"" + email + "\",\"senha\":\"senhaSegura123\"}");
         assertEquals(201, r.status(), r.corpo());
-        return campo(r.corpo(), "id");
+        String id = campo(r.corpo(), "id");
+        logadoId = id;
+        return id;
     }
 
     @Test
@@ -78,6 +91,12 @@ class ApiIntegracaoTest {
         Resp login = post("/usuarios/login", "{\"email\":\"" + email + "\",\"senha\":\"senhaSegura123\"}");
         assertEquals(200, login.status(), login.corpo());
 
+        String token = campo(login.corpo(), "accessToken");
+
+        assertTrue(token.length() > 20, "JWT não foi gerado corretamente");
+        assertEquals("Bearer", campo(login.corpo(), "tokenType"));
+        assertEquals("900", campo(login.corpo(), "expiresIn"));
+
         Resp senhaErrada = post("/usuarios/login", "{\"email\":\"" + email + "\",\"senha\":\"errada\"}");
         assertEquals(401, senhaErrada.status());
         assertTrue(senhaErrada.corpo().contains("Credenciais inválidas"), senhaErrada.corpo());
@@ -88,9 +107,20 @@ class ApiIntegracaoTest {
     }
 
     @Test
+    void cabecalhoAntigoNaoIdentificaMais() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder(URI.create("http://localhost:" + porta + "/api/agendamentos"))
+                .header("X-Usuario-Id", "1")
+                .GET()
+                .build();
+        HttpResponse<String> r = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        assertEquals(401, r.statusCode());
+    }
+
+    @Test
     void perfilBuscaEAtualizacao() throws Exception {
         String sufixo = UUID.randomUUID().toString().substring(0, 6);
         String id = criarUsuario("Zuleica Busca" + sufixo);
+        criarUsuario("Outra Pessoa " + sufixo);   // logada = outra pessoa: quem busca nunca aparece no próprio resultado
 
         Resp busca = get("/usuarios/busca?nome=" + enc("Zuleica Busca" + sufixo));
         assertEquals(200, busca.status());
@@ -98,6 +128,8 @@ class ApiIntegracaoTest {
         assertTrue(!busca.corpo().contains("@"), "a busca não pode expor e-mail: " + busca.corpo());
 
         assertEquals(400, get("/usuarios/busca?nome=a").status());
+
+        logadoId = id;   // agora volta a ser a Zuleica: só a dona (ou admin) vê e edita o próprio perfil
 
         Resp atual = get("/usuarios/" + id);
         String email = campo(atual.corpo(), "email");
@@ -120,16 +152,19 @@ class ApiIntegracaoTest {
         String titulo = "UX/UI na prática " + UUID.randomUUID().toString().substring(0, 6);
         String t = enc(titulo);
 
-        // conquista automática da primeira aula (ignora 409 se outro teste já criou)
-        post("/conquistas", "{\"nome\":\"Primeira aula\",\"descricao\":\"d\",\"iconeUrl\":null,\"xpBonus\":0}");
+        Resp conquistaCriada = post("/conquistas",
+                "{\"nome\":\"Primeira aula\",\"descricao\":\"d\",\"iconeUrl\":null,\"xpBonus\":0,\"secreta\":false}");
+        // 201 = criada agora; 409 = outro teste já criou. Qualquer outra coisa é erro de verdade
+        assertTrue(conquistaCriada.status() == 201 || conquistaCriada.status() == 409, conquistaCriada.corpo());
 
-        Resp curso = post("/cursos", "{\"titulo\":\"" + titulo + "\",\"descricao\":\"x\","
-                + "\"categoria\":\"SEGURANCA\",\"nivel\":\"INTERMEDIARIO\"}");
+        Resp curso = chamar("POST", "/cursos", "{\"titulo\":\"" + titulo + "\",\"descricao\":\"x\","
+                + "\"categoria\":\"SEGURANCA\",\"nivel\":\"INTERMEDIARIO\"}", criarAdmin());
         assertEquals(201, curso.status(), curso.corpo());
         assertEquals("INTERMEDIARIO", campo(curso.corpo(), "nivel"));
 
         // %2F no caminho: precisa chegar ao controller como "/" no título
-        assertEquals(201, post("/modulos/" + t, "{\"titulo\":\"Intro\",\"ordem\":1}").status());
+        Resp modulo = post("/modulos/" + t, "{\"titulo\":\"Intro\",\"ordem\":1}");
+        assertEquals(201, modulo.status(), modulo.corpo());
         assertEquals(201, post("/aulas/" + t + "/1",
                 "{\"titulo\":\"Aula 1\",\"ordem\":1,\"duracaoMinutos\":10,\"xpRecompensa\":300,\"conteudoUrl\":null}").status());
         assertEquals(201, post("/aulas/" + t + "/1",
@@ -191,5 +226,61 @@ class ApiIntegracaoTest {
         assertEquals(200, get("/api/oportunidades?tipo=ESTAGIO&area=Programa%C3%A7%C3%A3o").status());
         assertEquals(200, get("/api/mentoras?busca=java&area=Dados").status());
         assertEquals(200, get("/desafios").status());
+    }
+
+    @Test
+    void acessoProtegidoComJwt() throws Exception {
+        String email = "jwt" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com";
+
+        Resp cadastro = post(
+                "/usuarios",
+                "{\"nome\":\"Teste JWT\",\"email\":\"" + email + "\",\"senha\":\"senhaSegura123\"}"
+        );
+
+        assertEquals(201, cadastro.status(), cadastro.corpo());
+
+        Resp login = post(
+                "/usuarios/login",
+                "{\"email\":\"" + email + "\",\"senha\":\"senhaSegura123\"}"
+        );
+
+        assertEquals(200, login.status(), login.corpo());
+
+        String token = campo(login.corpo(), "accessToken");
+
+        Resp semToken = get("/usuarios");
+        assertEquals(401, semToken.status(), semToken.corpo());
+
+        Resp comToken = getComToken("/usuarios", token);
+        assertEquals(200, comToken.status(), comToken.corpo());
+
+        Resp tokenInvalido = getComToken("/usuarios", "token_invalido");
+        assertEquals(401, tokenInvalido.status(), tokenInvalido.corpo());
+    }
+
+    private Resp getComToken(String caminho, String token) throws Exception {
+        HttpRequest req = HttpRequest.newBuilder(
+                        URI.create("http://localhost:" + porta + caminho)
+                )
+                .header("Authorization", "Bearer " + token)
+                .GET()
+                .build();
+
+        HttpResponse<String> r = http.send(
+                req,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+        );
+
+        return new Resp(r.statusCode(), r.body());
+    }
+
+    /** Cria um administrador direto no banco (não existe rota pública para isso). */
+    private String criarAdmin() {
+        Usuario admin = new Usuario();
+        admin.setNome("Admin Teste");
+        admin.setEmail("admin" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com");
+        admin.setSenhaHash("nao-usada-nos-testes");
+        admin.setTipo(Usuario.Tipo.ADMIN);
+        return usuarioRepository.save(admin).getId().toString();
     }
 }

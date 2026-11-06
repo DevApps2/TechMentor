@@ -128,4 +128,19 @@ public final class UsuarioDtos {
             return new Resumo(usuario.getId(), usuario.getNome(), usuario.getFotoUrl(), usuario.getTipo());
         }
     }
+
+    @Schema(description = "Resposta da autenticação")
+    public record LoginResponse(
+            @Schema(description = "Dados públicos do usuário")
+            Response usuario,
+
+            @Schema(description = "Token JWT de autenticação")
+            String accessToken,
+
+            @Schema(description = "Tipo de autenticação")
+            String tokenType,
+
+            @Schema(description = "Tempo de validade do token em segundos")
+            long expiresIn
+    ) { }
 }
