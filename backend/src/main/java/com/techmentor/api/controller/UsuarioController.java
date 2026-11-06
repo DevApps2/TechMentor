@@ -18,6 +18,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import com.techmentor.api.security.JwtService;
+import com.techmentor.api.dto.UsuarioDtos.LoginResponse;
+import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.service.RegraAcesso;
+import com.techmentor.api.service.UsuarioAtualService;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +31,9 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService service;
+    private final JwtService jwtService;
     private final EmailService emailService;
+    private final UsuarioAtualService usuarios;
 
     @Operation(summary = "Listar usuários")
     @GetMapping
@@ -38,10 +45,8 @@ public class UsuarioController {
             description = "Usado para escolher quem denunciar ou bloquear. Retorna até 20 usuários ativos (sem e-mail); mínimo de 2 letras.")
     @GetMapping("/busca")
     public ResponseEntity<List<Resumo>> buscarPorNome(
-            @Parameter(description = "Parte do nome") @RequestParam String nome,
-            @Parameter(description = "ID de quem busca, para ele não aparecer no resultado")
-            @RequestHeader(value = "X-Usuario-Id", required = false) Long solicitanteId) {
-        return ResponseEntity.ok(service.buscarPorNome(nome, solicitanteId));
+            @Parameter(description = "Parte do nome") @RequestParam String nome) {
+        return ResponseEntity.ok(service.buscarPorNome(nome, usuarios.buscarAtual().getId()));
     }
 
     @Operation(summary = "Cadastrar usuário", description = "Cria a conta de uma nova usuária. Retorna 409 se o e-mail já estiver cadastrado.")
@@ -50,10 +55,28 @@ public class UsuarioController {
         return ResponseEntity.status(201).body(service.criarUsuario(dto));
     }
 
-    @Operation(summary = "Entrar na plataforma", description = "Valida e-mail e senha e devolve os dados do usuário. Retorna 401 se as credenciais forem inválidas.")
+    @Operation(
+            summary = "Entrar na plataforma",
+            description = "Valida e-mail e senha e devolve os dados do usuário e o token JWT."
+    )
     @PostMapping("/login")
-    public ResponseEntity<Response> login(@Valid @RequestBody LoginRequest dto) {
-        return ResponseEntity.ok(Response.from(service.loginUsuario(dto.email(), dto.senha())));
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest dto
+    ) {
+        var usuario = service.loginUsuario(dto.email(), dto.senha());
+
+        String token = jwtService.gerarToken(
+                usuario.getId().toString()
+        );
+
+        LoginResponse resposta = new LoginResponse(
+                Response.from(usuario),
+                token,
+                "Bearer",
+                jwtService.getExpirationSeconds()
+        );
+
+        return ResponseEntity.ok(resposta);
     }
 
     @Operation(summary = "Obter usuário por ID", description = "Dados do perfil, XP, nível e sequência. Retorna 404 se não existir ou estiver desativado.")
@@ -68,6 +91,7 @@ public class UsuarioController {
             @Parameter(description = "ID do usuário") @PathVariable Long id,
             @Valid @RequestBody UpdateRequest dto) {
 
+        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
         return ResponseEntity.ok(service.atualizarUsuario(id, dto));
     }
 
@@ -78,6 +102,7 @@ public class UsuarioController {
             @Parameter(description = "ID do usuário") @PathVariable Long id,
             @RequestParam("foto") MultipartFile foto) {
 
+        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
         return ResponseEntity.ok(service.atualizarFoto(id, foto));
     }
 
@@ -87,6 +112,8 @@ public class UsuarioController {
 
         service.desativarUsuario(id);
 
+        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
+        service.desativarUsuario(id);
         return ResponseEntity.status(200).build();
     }
 
@@ -96,7 +123,17 @@ public class UsuarioController {
     @PatchMapping("/{id}/senha")
     public ResponseEntity<Void> trocarSenha(@Parameter(description = "ID do usuário") @PathVariable Long id,
                                             @Valid @RequestBody SenhaDtos.TrocarSenhaRequest dto) {
+        exigirDono(id);
         service.trocarSenha(id, dto.senhaAtual(), dto.novaSenha());
         return ResponseEntity.noContent().build();
     }
+
+    /** Só a própria pessoa pode mexer nisto (nem o admin). */
+    private void exigirDono(Long id) {
+        if (!usuarios.buscarAtual().getId().equals(id)) {
+            throw ApiException.forbidden();
+        }
+    }
 }
+
+

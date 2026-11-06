@@ -4,15 +4,18 @@ import com.techmentor.api.dto.CursoDtos.CursoRequest;
 import com.techmentor.api.dto.CursoDtos.CursoResponse;
 import com.techmentor.api.model.Curso;
 import com.techmentor.api.service.CursoService;
+import com.techmentor.api.service.UsuarioAtualService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.techmentor.api.service.RegraAcesso;
 
 import java.util.List;
-
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/cursos")
 @Tag(name = "Curso", description = "Cadastrar, listar, buscar, atualizar e deletar cursos")
@@ -20,9 +23,7 @@ public class CursoController {
 
     private final CursoService cursoService;
 
-    public CursoController(CursoService cursoService) {
-        this.cursoService = cursoService;
-    }
+    private final UsuarioAtualService usuarios;
 
     @Operation(summary = "Listar cursos", description = "Lista os cursos ativos, com filtro opcional por categoria.")
     @GetMapping
@@ -46,7 +47,12 @@ public class CursoController {
     @Operation(summary = "Cadastrar curso")
     @PostMapping
     public ResponseEntity<CursoResponse> cadastrarCurso(@Valid @RequestBody CursoRequest request) {
-        return ResponseEntity.status(201).body(cursoService.criarCurso(request));
+        var actor = usuarios.buscarAtual();
+
+        RegraAcesso.exigirAdmin(actor);
+
+        return ResponseEntity.status(201)
+                .body(cursoService.criarCurso(request));
     }
 
     @Operation(summary = "Atualizar curso")

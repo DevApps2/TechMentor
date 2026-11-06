@@ -39,59 +39,53 @@ public class OportunidadeController {
     @Operation(summary = "Criar oportunidade")
     @PostMapping("/oportunidades")
     @ResponseStatus(HttpStatus.CREATED)
-    public OportunidadeResponse criar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                      @Valid @RequestBody OportunidadeRequest request) {
-        return oportunidades.criar(usuarios.buscar(actorId), request);
+    public OportunidadeResponse criar(@Valid @RequestBody OportunidadeRequest request) {
+        return oportunidades.criar(usuarios.buscarAtual(), request);
     }
 
     @Operation(summary = "Atualizar oportunidade")
     @PutMapping("/oportunidades/{id}")
-    public OportunidadeResponse atualizar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                          @Parameter(description = "ID da oportunidade") @PathVariable Long id,
+    public OportunidadeResponse atualizar(@Parameter(description = "ID da oportunidade") @PathVariable Long id,
                                           @Valid @RequestBody OportunidadeRequest request) {
-        return oportunidades.atualizar(usuarios.buscar(actorId), id, request);
+        return oportunidades.atualizar(usuarios.buscarAtual(), id, request);
     }
 
     @Operation(summary = "Excluir oportunidade")
     @DeleteMapping("/oportunidades/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluir(@RequestHeader("X-Usuario-Id") Long actorId,
-                        @Parameter(description = "ID da oportunidade") @PathVariable Long id) {
-        oportunidades.excluir(usuarios.buscar(actorId), id);
+    public void excluir(@Parameter(description = "ID da oportunidade") @PathVariable Long id) {
+        oportunidades.excluir(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Candidatar-se a uma oportunidade")
     @PostMapping("/oportunidades/{id}/candidaturas")
     @ResponseStatus(HttpStatus.CREATED)
-    public InscricaoResponse candidatar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                        @Parameter(description = "ID da oportunidade") @PathVariable Long id) {
-        return oportunidades.candidatar(usuarios.buscar(actorId), id);
+    public InscricaoResponse candidatar(@Parameter(description = "ID da oportunidade") @PathVariable Long id) {
+        return oportunidades.candidatar(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Inscrever-se em um evento")
     @PostMapping("/oportunidades/{id}/inscricoes")
     @ResponseStatus(HttpStatus.CREATED)
-    public InscricaoResponse inscrever(@RequestHeader("X-Usuario-Id") Long actorId,
-                                       @Parameter(description = "ID da oportunidade (evento)") @PathVariable Long id) {
-        return oportunidades.inscreverEmEvento(usuarios.buscar(actorId), id);
+    public InscricaoResponse inscrever(@Parameter(description = "ID da oportunidade (evento)") @PathVariable Long id) {
+        return oportunidades.inscreverEmEvento(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Listar minhas candidaturas")
     @GetMapping("/candidaturas/minhas")
-    public List<InscricaoResponse> minhasCandidaturas(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return oportunidades.minhasInscricoes(usuarios.buscar(actorId), false);
+    public List<InscricaoResponse> minhasCandidaturas() {
+        return oportunidades.minhasInscricoes(usuarios.buscarAtual(), false);
     }
 
     @Operation(summary = "Listar minhas inscrições em eventos")
     @GetMapping("/inscricoes/minhas")
-    public List<InscricaoResponse> minhasInscricoes(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return oportunidades.minhasInscricoes(usuarios.buscar(actorId), true);
+    public List<InscricaoResponse> minhasInscricoes() {
+        return oportunidades.minhasInscricoes(usuarios.buscarAtual(), true);
     }
 
     @Operation(summary = "Obter candidatura por ID")
     @GetMapping("/candidaturas/{id}")
-    public InscricaoResponse obterCandidatura(@RequestHeader("X-Usuario-Id") Long actorId,
-                                              @Parameter(description = "ID da candidatura") @PathVariable Long id) {
-        return oportunidades.obterCandidatura(usuarios.buscar(actorId), id);
+    public InscricaoResponse obterCandidatura(@Parameter(description = "ID da candidatura") @PathVariable Long id) {
+        return oportunidades.obterCandidatura(usuarios.buscarAtual(), id);
     }
 }

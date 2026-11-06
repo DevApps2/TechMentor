@@ -33,33 +33,31 @@ public class AvaliacaoController {
                     + "Retorna 409 se não puder avaliar (o motivo vem na mensagem) e 403 se não participou.")
     @PostMapping("/agendamentos/{id}/avaliacoes")
     @ResponseStatus(HttpStatus.CREATED)
-    public AvaliacaoResponse avaliar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                     @Parameter(description = "ID do agendamento") @PathVariable Long id,
+    public AvaliacaoResponse avaliar(@Parameter(description = "ID do agendamento") @PathVariable Long id,
                                      @Valid @RequestBody AvaliacaoRequest request) {
-        return avaliacoes.avaliar(usuarios.buscar(actorId), id, request);
+        return avaliacoes.avaliar(usuarios.buscarAtual(), id, request);
     }
 
     @Operation(summary = "Situação da avaliação de uma mentoria",
             description = "Diz se a pessoa pode avaliar agora (e o motivo, se não), o prazo, o que ela já avaliou "
                     + "e o que a outra pessoa escreveu sobre ela.")
     @GetMapping("/agendamentos/{id}/avaliacoes")
-    public AvaliacaoDaMentoriaResponse situacao(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                @Parameter(description = "ID do agendamento") @PathVariable Long id) {
-        return avaliacoes.situacao(usuarios.buscar(actorId), id);
+    public AvaliacaoDaMentoriaResponse situacao(@Parameter(description = "ID do agendamento") @PathVariable Long id) {
+        return avaliacoes.situacao(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Minhas avaliações pendentes",
             description = "Mentorias concluídas, dentro do prazo, que a pessoa ainda não avaliou.")
     @GetMapping("/avaliacoes/pendentes")
-    public List<AvaliacaoPendenteResponse> pendentes(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return avaliacoes.pendentes(usuarios.buscar(actorId));
+    public List<AvaliacaoPendenteResponse> pendentes() {
+        return avaliacoes.pendentes(usuarios.buscarAtual());
     }
 
     @Operation(summary = "O que escreveram sobre mim",
             description = "As avaliações que a pessoa recebeu (sem as ocultadas pela moderação), da mais nova para a mais antiga.")
     @GetMapping("/avaliacoes/recebidas")
-    public List<AvaliacaoResponse> recebidas(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return avaliacoes.recebidas(usuarios.buscar(actorId));
+    public List<AvaliacaoResponse> recebidas() {
+        return avaliacoes.recebidas(usuarios.buscarAtual());
     }
 
     @Operation(summary = "Avaliações públicas de uma mentora",

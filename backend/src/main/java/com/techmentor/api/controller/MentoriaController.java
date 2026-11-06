@@ -33,9 +33,8 @@ public class MentoriaController {
     @Operation(summary = "Criar área de atuação")
     @PostMapping("/areas-atuacao")
     @ResponseStatus(HttpStatus.CREATED)
-    public AreaResponse criarArea(@RequestHeader("X-Usuario-Id") Long actorId,
-                                  @Valid @RequestBody AreaRequest request) {
-        return mentoras.criarArea(usuarios.buscar(actorId), request == null ? null : request.nome());
+    public AreaResponse criarArea(@Valid @RequestBody AreaRequest request) {
+        return mentoras.criarArea(usuarios.buscarAtual(), request == null ? null : request.nome());
     }
 
     @Operation(summary = "Listar mentoras", description = "Busca opcional por nome, cargo ou área, e filtro por uma área (nome exato).")
@@ -49,10 +48,9 @@ public class MentoriaController {
     @Operation(summary = "Meu perfil de mentora",
             description = "Perfil da mentora logada. Retorna 404 se ela ainda não preencheu o perfil, e 403 se o usuário não é mentora.")
     @GetMapping("/mentoras/minha")
-    public MentoraResponse minhaMentora(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return mentoras.minhaMentora(usuarios.buscar(actorId));
+    public MentoraResponse minhaMentora() {
+        return mentoras.minhaMentora(usuarios.buscarAtual());
     }
-
     @Operation(summary = "Obter mentora por ID")
     @GetMapping("/mentoras/{id}")
     public MentoraResponse obterMentora(@Parameter(description = "ID da mentora") @PathVariable Long id) { return mentoras.obterMentora(id); }
@@ -60,25 +58,22 @@ public class MentoriaController {
     @Operation(summary = "Criar perfil de mentora")
     @PostMapping("/mentoras")
     @ResponseStatus(HttpStatus.CREATED)
-    public MentoraResponse criarMentora(@RequestHeader("X-Usuario-Id") Long actorId,
-                                        @Valid @RequestBody MentoraRequest request) {
-        return mentoras.criarMentora(usuarios.buscar(actorId), request);
+    public MentoraResponse criarMentora(@Valid @RequestBody MentoraRequest request) {
+        return mentoras.criarMentora(usuarios.buscarAtual(), request);
     }
 
     @Operation(summary = "Atualizar perfil de mentora")
     @PutMapping("/mentoras/{id}")
-    public MentoraResponse atualizarMentora(@RequestHeader("X-Usuario-Id") Long actorId,
-                                            @Parameter(description = "ID da mentora") @PathVariable Long id,
+    public MentoraResponse atualizarMentora(@Parameter(description = "ID da mentora") @PathVariable Long id,
                                             @Valid @RequestBody MentoraRequest request) {
-        return mentoras.atualizarMentora(usuarios.buscar(actorId), id, request);
+        return mentoras.atualizarMentora(usuarios.buscarAtual(), id, request);
     }
 
     @Operation(summary = "Excluir perfil de mentora")
     @DeleteMapping("/mentoras/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluirMentora(@RequestHeader("X-Usuario-Id") Long actorId,
-                               @Parameter(description = "ID da mentora") @PathVariable Long id) {
-        mentoras.excluirMentora(usuarios.buscar(actorId), id);
+    public void excluirMentora(@Parameter(description = "ID da mentora") @PathVariable Long id) {
+        mentoras.excluirMentora(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Listar disponibilidades de uma mentora")
@@ -90,54 +85,48 @@ public class MentoriaController {
     @Operation(summary = "Criar disponibilidade de uma mentora")
     @PostMapping("/mentoras/{id}/disponibilidades")
     @ResponseStatus(HttpStatus.CREATED)
-    public HorarioResponse criarHorario(@RequestHeader("X-Usuario-Id") Long actorId,
-                                        @Parameter(description = "ID da mentora") @PathVariable Long id,
+    public HorarioResponse criarHorario(@Parameter(description = "ID da mentora") @PathVariable Long id,
                                         @Valid @RequestBody HorarioRequest request) {
-        return mentoras.criarHorario(usuarios.buscar(actorId), id, request);
+        return mentoras.criarHorario(usuarios.buscarAtual(), id, request);
     }
 
     @Operation(summary = "Excluir disponibilidade")
     @DeleteMapping("/disponibilidades/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluirHorario(@RequestHeader("X-Usuario-Id") Long actorId,
-                               @Parameter(description = "ID da disponibilidade") @PathVariable Long id) {
-        mentoras.excluirHorario(usuarios.buscar(actorId), id);
+    public void excluirHorario(@Parameter(description = "ID da disponibilidade") @PathVariable Long id) {
+        mentoras.excluirHorario(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Listar agendamentos do usuário")
     @GetMapping("/agendamentos")
-    public List<AgendamentoResponse> listarAgendamentos(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return agendamentos.listar(usuarios.buscar(actorId));
+    public List<AgendamentoResponse> listarAgendamentos() {
+        return agendamentos.listar(usuarios.buscarAtual());
     }
 
     @Operation(summary = "Obter agendamento por ID")
     @GetMapping("/agendamentos/{id}")
-    public AgendamentoResponse obterAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                @Parameter(description = "ID do agendamento") @PathVariable Long id) {
-        return agendamentos.obter(usuarios.buscar(actorId), id);
+    public AgendamentoResponse obterAgendamento(@Parameter(description = "ID do agendamento") @PathVariable Long id) {
+        return agendamentos.obter(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Criar agendamento de mentoria")
     @PostMapping("/agendamentos")
     @ResponseStatus(HttpStatus.CREATED)
-    public AgendamentoResponse criarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                               @Valid @RequestBody AgendamentoRequest request) {
-        return agendamentos.criar(usuarios.buscar(actorId), request);
+    public AgendamentoResponse criarAgendamento(@Valid @RequestBody AgendamentoRequest request) {
+        return agendamentos.criar(usuarios.buscarAtual(), request);
     }
 
     @Operation(summary = "Cancelar agendamento")
     @PatchMapping("/agendamentos/{id}/cancelamento")
-    public AgendamentoResponse cancelarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                   @Parameter(description = "ID do agendamento") @PathVariable Long id) {
-        return agendamentos.cancelar(usuarios.buscar(actorId), id);
+    public AgendamentoResponse cancelarAgendamento(@Parameter(description = "ID do agendamento") @PathVariable Long id) {
+        return agendamentos.cancelar(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Confirmar agendamento",
             description = "Só a mentora da mentoria (ou admin). Passa de AGENDADA para CONFIRMADA e avisa a aluna por notificação.")
     @PatchMapping("/agendamentos/{id}/confirmacao")
-    public AgendamentoResponse confirmarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                    @Parameter(description = "ID do agendamento") @PathVariable Long id) {
-        return agendamentos.confirmar(usuarios.buscar(actorId), id);
+    public AgendamentoResponse confirmarAgendamento(@Parameter(description = "ID do agendamento") @PathVariable Long id) {
+        return agendamentos.confirmar(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Reagendar mentoria",
@@ -145,9 +134,8 @@ public class MentoriaController {
                     + "Se a aluna reagenda, volta para AGENDADA e a mentora confirma de novo; se a mentora reagenda, fica CONFIRMADA. "
                     + "A outra pessoa recebe uma notificação.")
     @PatchMapping("/agendamentos/{id}/reagendamento")
-    public AgendamentoResponse reagendarAgendamento(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                    @Parameter(description = "ID do agendamento") @PathVariable Long id,
+    public AgendamentoResponse reagendarAgendamento(@Parameter(description = "ID do agendamento") @PathVariable Long id,
                                                     @Valid @RequestBody ReagendamentoRequest request) {
-        return agendamentos.reagendar(usuarios.buscar(actorId), id, request.horarioId());
+        return agendamentos.reagendar(usuarios.buscarAtual(), id, request.horarioId());
     }
 }

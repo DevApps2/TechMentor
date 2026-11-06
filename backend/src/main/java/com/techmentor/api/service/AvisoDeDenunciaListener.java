@@ -49,7 +49,7 @@ public class AvisoDeDenunciaListener {
                 .detalhe("Denunciado", denunciado)
                 .paragrafo("Relato:\n" + e.descricao())
                 .paragrafo("Para atualizar a situação (EM_ANALISE ou RESOLVIDA), use no Swagger: PATCH /api/denuncias/"
-                        + e.id() + "/status, com o cabeçalho X-Usuario-Id de um administrador.")
+                        + e.id() + "/status, autenticado como administrador (botão Authorize, com o token do login).")
                 .nota("Este e-mail contém um relato sensível. Não encaminhe.");
     }
 
@@ -86,7 +86,7 @@ public class AvisoDeDenunciaListener {
                 + "Quem foi denunciado: " + denunciado + "\n\n"
                 + "Relato:\n" + e.descricao() + "\n\n"
                 + "Para atualizar a situação (EM_ANALISE ou RESOLVIDA), use no Swagger:\n"
-                + "PATCH /api/denuncias/" + e.id() + "/status, com o cabeçalho X-Usuario-Id de um administrador.\n\n"
+                + "PATCH /api/denuncias/" + e.id() + "/status, autenticado como administrador (botão Authorize, com o token do login).\n\n"
                 + "Este e-mail contém um relato sensível. Não encaminhe.";
     }
 

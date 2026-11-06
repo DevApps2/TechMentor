@@ -42,58 +42,53 @@ public class SegurancaController {
     @Operation(summary = "Registrar denúncia")
     @PostMapping("/denuncias")
     @ResponseStatus(HttpStatus.CREATED)
-    public DenunciaResponse denunciar(@RequestHeader("X-Usuario-Id") Long actorId,
-                                      @Valid @RequestBody DenunciaRequest request) {
-        return denuncias.criar(usuarios.buscar(actorId), request);
+    public DenunciaResponse denunciar(@Valid @RequestBody DenunciaRequest request) {
+        return denuncias.criar(usuarios.buscarAtual(), request);
     }
 
     @Operation(summary = "Listar minhas denúncias")
     @GetMapping("/denuncias/minhas")
-    public List<DenunciaResponse> minhasDenuncias(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return denuncias.minhas(usuarios.buscar(actorId));
+    public List<DenunciaResponse> minhasDenuncias() {
+        return denuncias.minhas(usuarios.buscarAtual());
     }
 
     @Operation(summary = "Listar todas as denúncias")
     @GetMapping("/denuncias")
-    public List<DenunciaResponse> listarDenuncias(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return denuncias.listarTodas(usuarios.buscar(actorId));
+    public List<DenunciaResponse> listarDenuncias() {
+        return denuncias.listarTodas(usuarios.buscarAtual());
     }
 
     @Operation(summary = "Atualizar a situação de uma denúncia",
             description = "Só para administradores. Muda o status (ABERTA, EM_ANALISE ou RESOLVIDA) e avisa quem denunciou por notificação.")
     @PatchMapping("/denuncias/{id}/status")
-    public DenunciaResponse atualizarStatusDaDenuncia(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                      @Parameter(description = "ID da denúncia") @PathVariable Long id,
+    public DenunciaResponse atualizarStatusDaDenuncia(@Parameter(description = "ID da denúncia") @PathVariable Long id,
                                                       @Valid @RequestBody DenunciaStatusRequest request) {
-        return denuncias.atualizarStatus(usuarios.buscar(actorId), id, request.status());
+        return denuncias.atualizarStatus(usuarios.buscarAtual(), id, request.status());
     }
 
     @Operation(summary = "Obter denúncia por ID")
     @GetMapping("/denuncias/{id}")
-    public DenunciaResponse obterDenuncia(@RequestHeader("X-Usuario-Id") Long actorId,
-                                          @Parameter(description = "ID da denúncia") @PathVariable Long id) {
-        return denuncias.obter(usuarios.buscar(actorId), id);
+    public DenunciaResponse obterDenuncia(@Parameter(description = "ID da denúncia") @PathVariable Long id) {
+        return denuncias.obter(usuarios.buscarAtual(), id);
     }
 
     @Operation(summary = "Listar usuários bloqueados")
     @GetMapping("/bloqueios")
-    public List<BloqueioResponse> listarBloqueios(@RequestHeader("X-Usuario-Id") Long actorId) {
-        return bloqueios.listar(usuarios.buscar(actorId));
+    public List<BloqueioResponse> listarBloqueios() {
+        return bloqueios.listar(usuarios.buscarAtual());
     }
 
     @Operation(summary = "Bloquear usuário")
     @PostMapping("/bloqueios")
     @ResponseStatus(HttpStatus.CREATED)
-    public BloqueioResponse bloquear(@RequestHeader("X-Usuario-Id") Long actorId,
-                                     @Valid @RequestBody BloqueioRequest request) {
-        return bloqueios.bloquear(usuarios.buscar(actorId), request == null ? null : request.usuarioId());
+    public BloqueioResponse bloquear(@Valid @RequestBody BloqueioRequest request) {
+        return bloqueios.bloquear(usuarios.buscarAtual(), request == null ? null : request.usuarioId());
     }
 
     @Operation(summary = "Desbloquear usuário")
     @DeleteMapping("/bloqueios/{usuarioId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void desbloquear(@RequestHeader("X-Usuario-Id") Long actorId,
-                            @Parameter(description = "ID do usuário a desbloquear") @PathVariable Long usuarioId) {
-        bloqueios.desbloquear(usuarios.buscar(actorId), usuarioId);
+    public void desbloquear(@Parameter(description = "ID do usuário a desbloquear") @PathVariable Long usuarioId) {
+        bloqueios.desbloquear(usuarios.buscarAtual(), usuarioId);
     }
 }
