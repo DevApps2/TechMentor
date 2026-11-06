@@ -14,7 +14,22 @@ object ApiClient {
     // Um Retrofit só, usado pela API do app e pela API do admin
     private val retrofit: Retrofit by lazy {
         val client = OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            // Toda chamada passa por aqui: se há login, vai com o token
+            .addInterceptor { chain ->
+                val token = Sessao.token
+                val pedido = if (token != null) {
+                    chain.request().newBuilder()
+                        .header("Authorization", "Bearer $token")
+                        .build()
+                } else {
+                    chain.request()
+                }
+                chain.proceed(pedido)
+            }
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+                redactHeader("Authorization") // não deixa o token aparecer no Logcat
+            })
             .build()
 
         Retrofit.Builder()

@@ -18,6 +18,14 @@ data class UsuarioResponse(
     val areasInteresse: List<String>?
 )
 
+/** Resposta do login: os dados da pessoa e o token que prova quem ela é nas próximas chamadas. */
+data class LoginResponse(
+    val usuario: UsuarioResponse,
+    val accessToken: String,
+    val tokenType: String,
+    val expiresIn: Long
+)
+
 data class CadastroRequest(val nome: String, val email: String, val senha: String)
 
 data class ErroResponse(val erro: String?)
