@@ -14,7 +14,9 @@ import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.techmentor.data.CursosRepository
 import com.example.techmentor.data.Sessao
+import com.example.techmentor.ui.cursos.CursoScreen
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
@@ -60,7 +62,9 @@ fun NavGraph() {
         }
 
         composable("learning") {
-            PlaceholderScreen("Aprendizado")
+            CursoScreen(
+                curso = CursosRepository.cursoPython
+            )
         }
 
         composable("mentorship") {
