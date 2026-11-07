@@ -51,7 +51,7 @@ object CursosRepository {
     val cursoPython = Curso(
         id = 1,
         titulo = "Curso de Python",
-        descricao = "Um curso sobre a linguagem de programação Python. Considerada uma linguagem simples, ela precisa de menos expressões para criar um código, com seus programas sendo menores que os de outras linguagens.",
+        descricao = "Um curso sobre a linguagem de programação Python. Considerada uma linguagem mais simples que as demais",
         modulos = mutableListOf(modulo1, modulo2)
     )
 }
