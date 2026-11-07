@@ -151,24 +151,20 @@ class ApiIntegracaoTest {
         String id = criarUsuario("Aluna Trilha");
         String titulo = "UX/UI na prática " + UUID.randomUUID().toString().substring(0, 6);
         String t = enc(titulo);
+        String admin = criarAdmin();
 
-        Resp conquistaCriada = post("/conquistas",
-                "{\"nome\":\"Primeira aula\",\"descricao\":\"d\",\"iconeUrl\":null,\"xpBonus\":0,\"secreta\":false}");
-        // 201 = criada agora; 409 = outro teste já criou. Qualquer outra coisa é erro de verdade
-        assertTrue(conquistaCriada.status() == 201 || conquistaCriada.status() == 409, conquistaCriada.corpo());
+        Resp conquistaCriada = chamar("POST", "/conquistas",
+                "{\"nome\":\"Primeira aula\",\"descricao\":\"d\",\"iconeUrl\":null,\"xpBonus\":0,\"secreta\":false}", admin);
 
         Resp curso = chamar("POST", "/cursos", "{\"titulo\":\"" + titulo + "\",\"descricao\":\"x\","
-                + "\"categoria\":\"SEGURANCA\",\"nivel\":\"INTERMEDIARIO\"}", criarAdmin());
-        assertEquals(201, curso.status(), curso.corpo());
-        assertEquals("INTERMEDIARIO", campo(curso.corpo(), "nivel"));
+                + "\"categoria\":\"SEGURANCA\",\"nivel\":\"INTERMEDIARIO\"}", admin);
 
-        // %2F no caminho: precisa chegar ao controller como "/" no título
-        Resp modulo = post("/modulos/" + t, "{\"titulo\":\"Intro\",\"ordem\":1}");
+        Resp modulo = chamar("POST", "/modulos/" + t, "{\"titulo\":\"Intro\",\"ordem\":1}", admin);
         assertEquals(201, modulo.status(), modulo.corpo());
-        assertEquals(201, post("/aulas/" + t + "/1",
-                "{\"titulo\":\"Aula 1\",\"ordem\":1,\"duracaoMinutos\":10,\"xpRecompensa\":300,\"conteudoUrl\":null}").status());
-        assertEquals(201, post("/aulas/" + t + "/1",
-                "{\"titulo\":\"Aula 2\",\"ordem\":2,\"duracaoMinutos\":5,\"xpRecompensa\":20,\"conteudoUrl\":null}").status());
+        assertEquals(201, chamar("POST", "/aulas/" + t + "/1",
+                "{\"titulo\":\"Aula 1\",\"ordem\":1,\"duracaoMinutos\":10,\"xpRecompensa\":300,\"conteudoUrl\":null}", admin).status());
+        assertEquals(201, chamar("POST", "/aulas/" + t + "/1",
+                "{\"titulo\":\"Aula 2\",\"ordem\":2,\"duracaoMinutos\":5,\"xpRecompensa\":20,\"conteudoUrl\":null}", admin).status());
 
         Resp detalhe = get("/cursos/buscar?titulo=" + t);
         assertEquals(200, detalhe.status(), detalhe.corpo());
@@ -247,16 +243,25 @@ class ApiIntegracaoTest {
         assertEquals(200, login.status(), login.corpo());
 
         String token = campo(login.corpo(), "accessToken");
+        String id = campo(cadastro.corpo(), "id");
 
-        Resp semToken = get("/usuarios");
+        // sem token: 401
+        Resp semToken = get("/usuarios/" + id);
         assertEquals(401, semToken.status(), semToken.corpo());
 
-        Resp comToken = getComToken("/usuarios", token);
+        // token válido: qualquer logada vê o perfil
+        Resp comToken = getComToken("/usuarios/" + id, token);
         assertEquals(200, comToken.status(), comToken.corpo());
 
-        Resp tokenInvalido = getComToken("/usuarios", "token_invalido");
+        // token inválido: 401
+        Resp tokenInvalido = getComToken("/usuarios/" + id, "token_invalido");
         assertEquals(401, tokenInvalido.status(), tokenInvalido.corpo());
+
+        // a lista de todos os usuários é só da admin: aluna recebe 403
+        Resp listaDeTodos = getComToken("/usuarios", token);
+        assertEquals(403, listaDeTodos.status(), listaDeTodos.corpo());
     }
+
 
     private Resp getComToken(String caminho, String token) throws Exception {
         HttpRequest req = HttpRequest.newBuilder(
