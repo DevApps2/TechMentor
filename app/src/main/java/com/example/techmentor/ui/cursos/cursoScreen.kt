@@ -6,42 +6,64 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun CursoScreen(curso: Curso) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8FB))
-            .statusBarsPadding()
-            .padding(16.dp)
-    ) {
-        Card(
+    ){
+        Text(
+            text = "Aprenda tecnologia",
+            fontWeight =FontWeight.Bold,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(start = 20.dp, top = 40.dp, end = 20.dp)
+        )
+        Text(
+            text = "Trilhas práticas para transformar seu futuro.",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.Gray,
+            fontSize = 15.sp,
             modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = curso.titulo,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = curso.descricao
-                )
-                curso.modulos.forEach { modulo ->
-                    Text(
-                        text = modulo.titulo
-                    )
-                }
-
-            }
-        }
+            .padding(start = 20.dp, bottom = 20.dp, end = 20.dp, top = 0.dp)
+        )
     }
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Color(0xFFF8F8FB))
+//            .statusBarsPadding()
+//            .padding(16.dp)
+//    ) {
+//        Card(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//        ) {
+//            Column(
+//                modifier = Modifier
+//                    .padding(16.dp)
+//            ) {
+//                Text(
+//                    text = curso.titulo,
+//                    style = MaterialTheme.typography.headlineMedium
+//                )
+//
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                Text(
+//                    text = curso.descricao
+//                )
+//                curso.modulos.forEach { modulo ->
+//                    Text(
+//                        text = modulo.titulo
+//                    )
+//                }
+//
+//            }
+//        }
+//    }
 }
