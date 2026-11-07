@@ -16,6 +16,11 @@ import org.springframework.security.web.firewall.StrictHttpFirewall;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import com.techmentor.api.model.Usuario;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 
 @Configuration
 public class SecurityConfig {
@@ -46,22 +51,42 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        // Quem ainda não tem token: cadastrar, entrar e recuperar a senha
+                        // 1. Públicas: quem ainda não tem token, fotos (o app carrega por URL), documentação e página de erro
                         .requestMatchers(HttpMethod.POST,
-                                "/usuarios",
-                                "/usuarios/login",
-                                "/usuarios/senha/esqueci",
-                                "/usuarios/senha/redefinir"
+                                "/usuarios", "/usuarios/login", "/usuarios/senha/esqueci", "/usuarios/senha/redefinir"
                         ).permitAll()
-                        // Fotos de perfil: o app carrega por URL (Coil), sem como mandar o cabeçalho
                         .requestMatchers(HttpMethod.GET, "/fotos/**").permitAll()
-                        // Documentação
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
+
+                        // 2. Só administradoras (módulos e aulas só têm rotas de gestão: vale para qualquer método)
+                        .requestMatchers("/api/admin/**", "/modulos/**", "/aulas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/cursos", "/conquistas", "/desafios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/cursos/**", "/conquistas/**", "/desafios/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/cursos/**", "/conquistas/**", "/desafios/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/usuarios", "/cursos/desativados").hasRole("ADMIN")
+
+                        // 3. Dados pessoais: só a própria usuária (nem a admin)
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .requestMatchers("/error").permitAll()
+                                "/notificacoes/usuarios/{usuarioId}",
+                                "/notificacoes/leitura/usuarios/{usuarioId}",
+                                "/matriculas/usuarios/{usuarioId}",
+                                "/matriculas/{curso}/usuarios/{usuarioId}",
+                                "/progresso/{titulo}/usuarios/{usuarioId}",
+                                "/progresso/{titulo}/usuarios/{usuarioId}/aulas",
+                                "/progresso/{titulo}/{ordemModulo}/{ordemAula}/usuarios/{usuarioId}",
+                                "/historico-xp/usuarios/{usuarioId}",
+                                "/conquistas/usuarios/{usuarioId}",
+                                "/desafios/usuarios/{usuarioId}",
+                                "/desafios/{titulo}/participacao/usuarios/{usuarioId}"
+                        ).access(proprioUsuario("usuarioId", false))
+
+                        // 4. Conta: trocar a senha é só da dona; editar, mandar foto e desativar, a dona ou a admin
+                        .requestMatchers(HttpMethod.PATCH, "/usuarios/{id}/senha").access(proprioUsuario("id", false))
+                        .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").access(proprioUsuario("id", true))
+                        .requestMatchers(HttpMethod.POST, "/usuarios/{id}/foto").access(proprioUsuario("id", true))
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/{id}").access(proprioUsuario("id", true))
+
+                        // Todo o resto: basta estar logada
                         .anyRequest().authenticated()
                 )
 
@@ -80,6 +105,21 @@ public class SecurityConfig {
         firewall.setAllowUrlEncodedSlash(true);
         firewall.setAllowUrlEncodedPercent(true);   // com o Tomcat em "passthrough", o %2F chega com o "%" no caminho
         return web -> web.httpFirewall(firewall);
+    }
+
+    /**
+     * Libera só se o id que está no caminho da URL (por exemplo {usuarioId}) for o da pessoa logada.
+     * Com adminTambem = true, a administradora também passa.
+     */
+    private static AuthorizationManager<RequestAuthorizationContext> proprioUsuario(String variavel, boolean adminTambem) {
+        return (autenticacao, contexto) -> {
+            Authentication auth = autenticacao.get();
+            boolean permitido = auth != null
+                    && auth.getPrincipal() instanceof Usuario usuario
+                    && (String.valueOf(usuario.getId()).equals(contexto.getVariables().get(variavel))
+                    || (adminTambem && usuario.getTipo() == Usuario.Tipo.ADMIN));
+            return new AuthorizationDecision(permitido);
+        };
     }
 
     private static void escreverErro(HttpServletResponse response, HttpStatus status, String mensagem) throws IOException {

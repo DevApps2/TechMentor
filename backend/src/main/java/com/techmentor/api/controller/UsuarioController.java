@@ -20,8 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import com.techmentor.api.security.JwtService;
 import com.techmentor.api.dto.UsuarioDtos.LoginResponse;
-import com.techmentor.api.exceptions.ApiException;
-import com.techmentor.api.service.RegraAcesso;
 import com.techmentor.api.service.UsuarioAtualService;
 
 @RestController
@@ -91,7 +89,6 @@ public class UsuarioController {
             @Parameter(description = "ID do usuário") @PathVariable Long id,
             @Valid @RequestBody UpdateRequest dto) {
 
-        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
         return ResponseEntity.ok(service.atualizarUsuario(id, dto));
     }
 
@@ -102,17 +99,12 @@ public class UsuarioController {
             @Parameter(description = "ID do usuário") @PathVariable Long id,
             @RequestParam("foto") MultipartFile foto) {
 
-        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
         return ResponseEntity.ok(service.atualizarFoto(id, foto));
     }
 
     @Operation(summary = "Deletar usuário")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@Parameter(description = "ID do usuário") @PathVariable Long id) {
-
-        service.desativarUsuario(id);
-
-        RegraAcesso.exigirProprietarioOuAdmin(usuarios.buscarAtual(), id);
         service.desativarUsuario(id);
         return ResponseEntity.status(200).build();
     }
@@ -123,16 +115,8 @@ public class UsuarioController {
     @PatchMapping("/{id}/senha")
     public ResponseEntity<Void> trocarSenha(@Parameter(description = "ID do usuário") @PathVariable Long id,
                                             @Valid @RequestBody SenhaDtos.TrocarSenhaRequest dto) {
-        exigirDono(id);
         service.trocarSenha(id, dto.senhaAtual(), dto.novaSenha());
         return ResponseEntity.noContent().build();
-    }
-
-    /** Só a própria pessoa pode mexer nisto (nem o admin). */
-    private void exigirDono(Long id) {
-        if (!usuarios.buscarAtual().getId().equals(id)) {
-            throw ApiException.forbidden();
-        }
     }
 }
 
