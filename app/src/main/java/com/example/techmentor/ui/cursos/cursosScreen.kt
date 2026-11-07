@@ -6,8 +6,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -64,6 +62,7 @@ fun CursoScreen(curso: Curso) {
             modifier = Modifier
             .padding(start = 20.dp, bottom = 20.dp, end = 20.dp, top = 0.dp)
         )
+    }
 
 
 //    Column(
