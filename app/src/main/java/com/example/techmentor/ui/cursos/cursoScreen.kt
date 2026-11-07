@@ -1,15 +1,21 @@
 package com.example.techmentor.ui.cursos
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.techmentor.R
 
 @Composable
 fun CursoScreen(curso: Curso) {
@@ -17,6 +23,33 @@ fun CursoScreen(curso: Curso) {
         modifier = Modifier
             .fillMaxSize()
     ){
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 35.dp, start = 20.dp, bottom = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Box(
+            modifier = Modifier.size(60.dp),
+            contentAlignment = Alignment.Center
+        ){
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_background),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp).clip(shape = RoundedCornerShape(size = 12.dp))
+            )
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().padding(5.dp)
+            )
+        }
+            Text(
+                text = "Techmentor",
+                style = MaterialTheme.typography.headlineMedium,
+                fontSize = 25.sp
+            )
+    }
         Text(
             text = "Aprenda tecnologia",
             fontWeight =FontWeight.Bold,
@@ -31,7 +64,8 @@ fun CursoScreen(curso: Curso) {
             modifier = Modifier
             .padding(start = 20.dp, bottom = 20.dp, end = 20.dp, top = 0.dp)
         )
-    }
+
+
 //    Column(
 //        modifier = Modifier
 //            .fillMaxSize()
