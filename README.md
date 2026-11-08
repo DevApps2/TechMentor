@@ -1,605 +1,176 @@
-# 📱 Projeto Etec leste
+# TechMentor
 
-Projeto desenvolvido em **Kotlin** com o objetivo de criar um sistema acadêmico para cadastro e gerenciamento de alunos.
+Aplicativo Android com uma API própria para **conectar mulheres que estão entrando em tecnologia a mentoras, cursos e oportunidades**. A usuária estuda, ganha XP e conquistas, marca mentorias por videochamada, se candidata a vagas e eventos, e conta com ferramentas de segurança (denúncia e bloqueio). Uma administradora modera o conteúdo e acompanha tudo por um painel dentro do próprio app.
+
+> Este repositório tem duas partes: o **aplicativo** (`app/`) e a **API** (`backend/`).
 
 ---
 
-# 📋 Regras do Projeto
+## O que o TechMentor faz
 
-## 🌳 1. Branches
-
-A `main` representa a **versão estável** do projeto.
-
-Cada integrante deve trabalhar em uma branch própria.
-
-### 📌 Padrão
-
-| Tipo | Padrão |
+| Área | O que a usuária consegue fazer |
 |---|---|
-| 🆕 Funcionalidade | `feature/nome-da-tarefa` |
-| 🐛 Correção | `fix/nome-da-correcao` |
-| 🎨 Visual | `style/nome-da-alteracao` |
+| **Aprendizado** | Cursos com módulos e aulas, progresso por aula, XP, níveis, sequência de dias, conquistas e desafios |
+| **Mentoria** | Ver mentoras por área, agendar horário, confirmar, reagendar e cancelar; sala do **Google Meet** que abre 30 minutos antes; lembretes e e-mails; pedidos não confirmados expiram sozinhos |
+| **Avaliações** | Aluna e mentora se avaliam de 1 a 5 estrelas em até 14 dias; nota média pública da mentora; comentários podem ser denunciados |
+| **Oportunidades** | Estágios, empregos, bolsas e eventos; busca e filtros; candidatura ou inscrição, retirada da candidatura e acompanhamento da situação (enviada, em análise, aprovada, recusada) |
+| **Segurança** | Denúncia de usuárias e de comentários, bloqueio, orientações e canais de ajuda |
+| **Conta** | Cadastro, login, recuperação de senha por código no e-mail, troca de senha, foto e perfil |
+| **Notificações** | Sininho dentro do app e e-mails padronizados |
+| **Administração** | Painel para denúncias (inclusive esconder comentários), mentoras, oportunidades e candidaturas |
 
-### Exemplos
+---
+
+## Tecnologias
+
+**Aplicativo**
+- Kotlin e Jetpack Compose (Material 3), Navigation Compose
+- Retrofit, OkHttp e Gson; Coil para imagens
+- Android 7.0 ou superior (minSdk 24)
+
+**API**
+- Java 17 (roda também no 21) e Spring Boot 4.1
+- Spring Web, Spring Data JPA, Bean Validation
+- MySQL 8 (padrão) ou H2 em memória (desenvolvimento e testes)
+- Spring Security com **JWT** (JJWT)
+- Spring Mail, Google Calendar API (sala do Meet), SpringDoc/Swagger
+- Maven (use o `mvnw` que já vem no projeto)
+
+---
+
+## Estrutura do repositório
 
 ```text
-feature/cadastro-aluno
-feature/tela-login
-feature/validacao-email
-fix/erro-cadastro
-style/ajuste-layout
+TechMentor/
+├── app/        # aplicativo Android (Kotlin + Compose)
+│   └── src/main/java/com/example/techmentor/
+│       ├── data/        # chamadas à API (Retrofit), modelos e sessão
+│       ├── navigation/  # rotas do app
+│       └── ui/          # telas por área (home, mentoria, oportunidades, admin...)
+└── backend/    # API (Spring Boot)
+    ├── src/main/java/com/techmentor/api/
+    │   ├── controller/  # endpoints
+    │   ├── service/     # regras de negócio
+    │   ├── repository/  # acesso ao banco
+    │   ├── model/       # entidades
+    │   ├── dto/         # contratos de entrada e saída
+    │   ├── security/    # JWT
+    │   ├── evento/      # eventos e notificações
+    │   ├── email/       # modelo dos e-mails
+    │   └── sala/        # criação da sala do Meet
+    ├── src/main/resources/   # configurações e data.sql (dados de teste)
+    └── db/                   # scripts para atualizar um MySQL existente
 ```
 
-> 🚫 **Não fazer alterações diretamente na `main`.**
+Mais detalhes da organização do backend em [`backend/README-arquitetura.md`](backend/README-arquitetura.md).
 
 ---
 
-## 🔄 2. Antes de começar uma tarefa
+## Como rodar
 
-Sempre atualize a `main`:
+### 1) A API
+
+Pré-requisito: **Java 17 ou superior**. Os comandos abaixo são para a pasta `backend/` (no Windows use `mvnw.cmd`; no Linux e no macOS, `./mvnw`).
+
+**Variável obrigatória.** A API não sobe sem a chave que assina o login:
 
 ```bash
-git checkout main
-git pull origin main
+# Gere uma chave (Base64, 32 bytes ou mais) e guarde-a só na sua máquina
+# PowerShell:
+$b = New-Object byte[] 48; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 ```
 
-Depois crie sua branch:
+Defina o resultado em `JWT_SECRET` (variável de ambiente ou configuração de execução do IntelliJ).
+
+**Modo mais simples: banco em memória (H2).** Não precisa instalar nada. A cada subida o banco nasce novo, já com dados de teste (`data.sql`):
 
 ```bash
-git checkout -b feature/nome-da-tarefa
+./mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=h2
 ```
 
----
+**Com MySQL.** Crie o banco `techmentor`, ajuste `application-mysql.properties` (usuário e senha) e rode sem perfil (o padrão é `mysql`). As tabelas são criadas sozinhas; para carregar os dados de teste, execute o `data.sql` uma vez.
 
-## 💻 3. Desenvolvimento
+A API fica em `http://localhost:8080/techmentor/api` e a documentação interativa (Swagger) em `http://localhost:8080/techmentor/api/swagger-ui.html`.
 
-Cada integrante deve trabalhar na **tarefa atribuída**.
+**Outras variáveis (opcionais):**
 
-### Regras
-
-- Evitar alterar arquivos desnecessários;
-- Não modificar partes do projeto sem necessidade;
-- Comunicar alterações que possam afetar outro integrante;
-- Manter o código organizado.
-
-> 🎯 **Quanto menor e mais específica a alteração, mais fácil será revisar.**
-
----
-
-## 💾 4. Commits
-
-Os commits devem explicar claramente o que foi alterado.
-
-### Padrão
-
-```text
-tipo: descrição
-```
-
-### Tipos
-
-| Tipo | Utilização |
+| Variável | Para quê |
 |---|---|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de erro |
-| `style` | Alteração visual/formatação |
-| `refactor` | Alteração na estrutura do código |
-| `docs` | Documentação |
-| `test` | Testes |
-| `chore` | Configurações/manutenção |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_SENHA`, `MAIL_REMETENTE` | Envio de e-mails (recuperação de senha, lembretes, avisos). Sem elas, o envio falha, mas o app funciona |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | Sala do Google Meet nas mentorias. Sem elas, a mentoria funciona, só que sem link |
+| `GOOGLE_CONVIDAR` | `false` para o Google não mandar convites por e-mail (útil com usuárias de teste) |
+| `MODERACAO_EMAIL` | Para onde vai o aviso de nova denúncia |
+| `SQL_VISIVEL` | `true` mostra o SQL no console |
+| `CADASTRO_MAX_POR_HORA` | Limite de cadastros por hora por endereço (padrão 10) |
+| `PROXY_CONFIAVEL` | `true` quando a API está atrás de um proxy (ngrok, nginx); `false` se estiver exposta direto |
 
-### ✅ Bons exemplos
+> **Nunca coloque senhas, tokens ou chaves no código nem no GitHub.** Tudo isso vem de variáveis de ambiente.
 
-```bash
-git commit -m "feat: adiciona cadastro de aluno"
-```
+### 2) O aplicativo
 
-```bash
-git commit -m "fix: corrige validação de idade"
-```
+1. Abra a **pasta raiz** do projeto no Android Studio e espere o Gradle sincronizar.
+2. Em `app/src/main/java/com/example/techmentor/data/ApiClient.kt`, ajuste o `BASE_URL` (precisa terminar com `/`):
 
-```bash
-git commit -m "style: ajusta layout da tela inicial"
-```
-
-### ❌ Evitar
-
-```text
-coisas
-teste
-mudanças
-aaaa
-funcionou
-final
-final2
-```
-
----
-
-## 📦 5. Enviando alterações
-
-Depois de terminar uma alteração:
-
-```bash
-git status
-```
-
-```bash
-git add .
-```
-
-```bash
-git commit -m "feat: descrição"
-```
-
-```bash
-git push origin nome-da-branch
-```
-
----
-
-## 🔀 6. Pull Request
-
-Nenhuma alteração deve entrar na `main` sem passar por um **Pull Request (PR)**.
-
-### Fluxo
-
-```text
-🌱 Branch
-   ↓
-💻 Desenvolvimento
-   ↓
-🧪 Testes
-   ↓
-💾 Commit
-   ↓
-☁️ Push
-   ↓
-🔀 Pull Request
-   ↓
-👀 Revisão
-   ↓
-✅ Aprovação
-   ↓
-🔗 Merge
-   ↓
-🌳 main
-```
-
-### O Pull Request deve informar:
-
-- O que foi desenvolvido;
-- Quais arquivos foram alterados;
-- Alterações importantes;
-- Se a funcionalidade foi testada.
-
----
-
-## 👀 7. Revisão de código
-
-Antes do merge, outro integrante deve revisar o código.
-
-### Verificar:
-
-- [ ] O código funciona;
-- [ ] A tarefa foi concluída;
-- [ ] Não existem erros evidentes;
-- [ ] O código está organizado;
-- [ ] Não existem alterações desnecessárias;
-- [ ] Outras funcionalidades continuam funcionando.
-
----
-
-## 🧪 8. Testes
-
-Antes de abrir um Pull Request:
-
-- [ ] O aplicativo inicia normalmente;
-- [ ] A funcionalidade funciona;
-- [ ] Os campos funcionam corretamente;
-- [ ] As validações funcionam;
-- [ ] Não existem erros no Logcat;
-- [ ] Outras funcionalidades continuam funcionando.
-
----
-
-## ⚠️ 9. Conflitos
-
-Conflitos acontecem quando duas pessoas alteram a mesma parte de um arquivo.
-
-```text
-⚠️ CONFLICT
-```
-
-### Ao encontrar um conflito:
-
-1. Identificar o conflito;
-2. Analisar os dois códigos;
-3. Combinar as alterações corretas;
-4. Testar o projeto;
-5. Fazer um novo commit.
-
-Depois:
-
-```bash
-git add .
-```
-
-```bash
-git commit -m "fix: resolve conflito"
-```
-
-> 🚫 Nunca apagar alterações de outro integrante sem verificar primeiro.
-
----
-
-## 🔄 10. Atualização da branch
-
-Se a `main` recebeu novas alterações enquanto você trabalha:
-
-```bash
-git checkout main
-git pull origin main
-```
-
-Depois volte para sua branch:
-
-```bash
-git checkout nome-da-sua-branch
-```
-
-Mantenha sua branch atualizada para reduzir conflitos.
-
----
-
-## 🗂️ 11. Organização dos arquivos
-
-### Regras
-
-- Manter a estrutura do projeto;
-- Não criar arquivos desnecessários;
-- Não duplicar arquivos sem necessidade;
-- Remover arquivos de teste que não serão utilizados;
-- Manter imagens e recursos organizados.
-
----
-
-## 📝 12. Nomes de arquivos
-
-Os nomes devem ser claros e seguir um padrão.
-
-### ✅ Exemplos
-
-```text
-MainActivity.kt
-Aluno.kt
-AlunoRepository.kt
-CadastroActivity.kt
-```
-
-### ❌ Evitar
-
-```text
-teste.kt
-teste2.kt
-coisa.kt
-arquivoNovo.kt
-final2.kt
-```
-
----
-
-## 🧹 13. Código
-
-O código deve ser:
-
-- ✅ Organizado;
-- ✅ Legível;
-- ✅ Simples;
-- ✅ Fácil de entender;
-- ✅ Comentado quando necessário.
-
-### Evitar:
-
-- Código morto;
-- Variáveis desnecessárias;
-- Código duplicado;
-- Trechos antigos comentados.
-
-### ❌ Exemplo
-
-```kotlin
-// código antigo
-// val aluno = ...
-// teste
-```
-
-### ✅ Preferir
-
-Código limpo e funcional.
-
----
-
-## 🔐 14. Informações sensíveis
-
-Nunca enviar para o GitHub:
-
-- 🔑 Senhas;
-- 🎫 Tokens;
-- 🔐 Chaves de API;
-- 👤 Dados pessoais;
-- 🔒 Credenciais.
-
-Utilizar `.gitignore` quando necessário.
-
----
-
-## ⚙️ 15. Configurações do projeto
-
-Não alterar configurações importantes sem comunicar a equipe.
-
-Isso inclui:
-
-- Gradle;
-- SDK;
-- Dependências;
-- Plugins;
-- Configurações do projeto.
-
-### Para adicionar uma biblioteca:
-
-1. Informar a equipe;
-2. Explicar a necessidade;
-3. Verificar se já existe uma solução no projeto;
-4. Testar o projeto após a alteração.
-
----
-
-## 📱 16. Testar antes do Merge
-
-Antes de solicitar o merge:
-
-```text
-✅ Projeto compila
-✅ Aplicativo inicia
-✅ Funcionalidade funciona
-✅ Não apresenta erros
-✅ Outras funcionalidades continuam funcionando
-```
-
----
-
-## 🚨 17. Force Push
-
-Evitar:
-
-```bash
-git push --force
-```
-
-> ⚠️ O `force push` pode sobrescrever o histórico da branch e causar perda de alterações.
-
----
-
-Adiciona esta seção depois de Pull Request:
-
----
-
-## 📝 18. Issues
-
-As **Issues** do GitHub serão utilizadas para organizar e acompanhar as tarefas e problemas do projeto.
-
-### 🎯 Para que usar
-
-- 🆕 Criar tarefas;
-- 🐛 Registrar problemas e bugs;
-- 💡 Registrar melhorias ou ideias;
-- 📌 Acompanhar o andamento das atividades.
-
-### 📋 Padrão da Issue
-
-Cada Issue deve conter:
-
-- **Título:** descrição curta e objetiva;
-- **Descrição:** explicar o que precisa ser feito;
-- **Responsável:** integrante responsável pela tarefa;
-- **Labels:** categoria da tarefa;
-- **Status:** acompanhar o andamento.
-
-### 🏷️ Labels
-
-| Label | Utilização |
+| Onde o app roda | `BASE_URL` |
 |---|---|
-| `feature` | Nova funcionalidade |
-| `bug` | Correção de erro |
-| `style` | Alteração visual |
-| `documentation` | Documentação |
-| `enhancement` | Melhoria |
-| `task` | Tarefa geral |
+| Emulador | `http://10.0.2.2:8080/techmentor/api/` |
+| Celular na mesma rede Wi-Fi | `http://IP-DO-SEU-COMPUTADOR:8080/techmentor/api/` |
+| Celular fora da sua rede | um túnel como o **ngrok** (`ngrok http 8080`) e a URL `https://...ngrok-free.dev/techmentor/api/` |
 
-### 🔄 Fluxo
-
-```text
-📝 Issue criada
-      ↓
-👤 Responsável definido
-      ↓
-🌱 Branch criada
-      ↓
-💻 Desenvolvimento
-      ↓
-🧪 Testes
-      ↓
-🔀 Pull Request
-      ↓
-✅ Merge
-      ↓
-✔️ Issue fechada
-```
-
-### 🔗 Issue + Branch + Pull Request
-
-Sempre que possível, relacionar a branch e o Pull Request à Issue correspondente.
-
-Exemplo:
-
-```text
-Issue #12
-"Implementar cadastro de aluno"
-
-        ↓
-
-feature/cadastro-aluno
-
-        ↓
-
-Pull Request #18
-
-        ↓
-
-Merge na main
-
-        ↓
-
-Issue #12 fechada
-```
-
-> 📌 **Toda tarefa relevante deve possuir uma Issue antes de começar o desenvolvimento.**
-
-## 🧑‍💻 19. Responsabilidade de cada integrante
-
-Cada integrante é responsável por:
-
-- Desenvolver sua tarefa;
-- Manter sua branch atualizada;
-- Fazer commits organizados;
-- Testar suas alterações;
-- Criar o Pull Request;
-- Corrigir problemas encontrados na revisão;
-- Comunicar conflitos e problemas à equipe.
+3. Rode o app (**Run**). Com o ngrok, o computador precisa ficar ligado, com a API e o túnel abertos.
 
 ---
 
-## 🤝 10. Comunicação
+## Contas de teste
 
-Antes de alterar algo que possa afetar o trabalho de outro integrante, comunicar a equipe.
+Com o perfil `h2` (ou depois de carregar o `data.sql`), todas usam a senha **`Techmentor@123`**:
 
-Principalmente:
+| Papel | E-mail |
+|---|---|
+| Administradora | `admin@techmentor.com` |
+| Mentoras | `maria.silva@techmentor.com`, `juliana.costa@techmentor.com`, `fernanda.alves@techmentor.com` |
+| Alunas | `beatriz.santos@email.com`, `camila.rocha@email.com`, `daniela.martins@email.com`, `elisa.ferreira@email.com` |
 
-```text
-MainActivity
-Banco de dados
-Dependências
-Configurações
-Classes compartilhadas
-Estrutura de pastas
-```
+O final do `data.sql` monta um **cenário de teste com datas relativas a "agora"**: pedidos de mentoria aguardando confirmação (um já vencido, que expira sozinho em instantes), mentorias confirmadas (uma começando em 20 minutos), concluídas, avaliações, denúncias, notificações e candidaturas em todas as situações. Os dados desse cenário começam com `[TESTE]` e são recriados a cada execução.
 
----
-
-## 🏁 21. Finalização de uma tarefa
-
-Uma tarefa é considerada concluída quando:
-
-```text
-☑ Desenvolvimento concluído
-☑ Código testado
-☑ Commit realizado
-☑ Branch enviada
-☑ Pull Request criado
-☑ Código revisado
-☑ Correções realizadas
-☑ Pull Request aprovado
-☑ Merge realizado
-```
+> Os e-mails dessas contas **não existem de verdade**. Para testar o envio de e-mail, cadastre uma conta com um endereço real seu.
 
 ---
 
-# 🔥 Fluxo Oficial
+## Segurança
 
-```text
-🌳 Atualizar main
-       ↓
-🌱 Criar branch
-       ↓
-💻 Desenvolver
-       ↓
-🧪 Testar
-       ↓
-💾 Commit
-       ↓
-☁️ Push
-       ↓
-🔀 Pull Request
-       ↓
-👀 Revisão
-       ↓
-🔧 Correções
-       ↓
-✅ Aprovação
-       ↓
-🔗 Merge
-       ↓
-🌳 Atualizar main
-```
+- **Login com JWT.** O servidor identifica a pessoa só pelo token (`Authorization: Bearer ...`); nenhuma rota confia em um id enviado pelo app.
+- **Papéis** `ALUNA`, `MENTORA` e `ADMIN`. As regras por rota ficam em `SecurityConfig`: gestão de conteúdo só para a administradora; notificações, progresso, matrículas e outros dados pessoais só da própria dona; regras que dependem do dado (por exemplo, "esse agendamento é seu?") ficam nos serviços.
+- **Senhas** com BCrypt. Trocar ou redefinir a senha **derruba os tokens antigos**.
+- **Limites** contra abuso: tentativas de login e de código de recuperação, cadastros por endereço e denúncias.
+- **Fotos de perfil** validadas pelo conteúdo do arquivo (JPG, PNG ou WEBP de verdade).
+- **Erros** sempre no formato `{"erro": "mensagem"}`, sem detalhes internos.
 
 ---
 
-# 📌 Comandos principais
+## Testes
 
-### 🔍 Ver alterações
-
-```bash
-git status
-```
-
-### 🌳 Ver branches
+Na pasta `backend/`:
 
 ```bash
-git branch
+./mvnw.cmd test
 ```
 
-### 🔄 Atualizar a main
-
-```bash
-git checkout main
-git pull origin main
-```
-
-### 🌱 Criar branch
-
-```bash
-git checkout -b feature/nome-da-tarefa
-```
-
-### ➕ Adicionar alterações
-
-```bash
-git add .
-```
-
-### 💾 Criar commit
-
-```bash
-git commit -m "feat: descrição"
-```
-
-### ☁️ Enviar branch
-
-```bash
-git push origin feature/nome-da-tarefa
-```
+A suíte (cerca de 70 testes) roda com um banco H2 em memória, sem precisar de MySQL, e cobre login e recuperação de senha, regras de acesso, agendamento e expiração, avaliações e prazo, denúncias e moderação, oportunidades e candidaturas, e o carregamento do `data.sql`.
 
 ---
 
-# 🧠 Regra de Ouro
+## Publicando a API
 
-> 🌳 **`main` = versão estável**
->
-> 🌱 **`feature/...` = desenvolvimento**
->
-> 🔀 **Pull Request = revisão**
->
-> 🔗 **Merge = entrada na `main`**
->
-> 🧪 **Testar antes de fazer o merge**
+O perfil `prod` (`application-prod.properties`) desliga o Swagger, só confere o banco (sem alterá-lo) e esconde detalhes de erro. Ative com `SPRING_PROFILES_ACTIVE=mysql,prod`. Antes de publicar:
+
+- defina uma `JWT_SECRET` **própria do servidor** (diferente da de desenvolvimento);
+- coloque a API atrás de **HTTPS** (por exemplo, um proxy reverso com certificado);
+- deixe `MAIL_REDIRECIONAR_PARA` vazia e use as credenciais reais de e-mail;
+- se o banco já existir, rode o que estiver comentado no fim de `backend/db/atualizar-mysql.sql`.
+
+---
+
+## Documentação da API
+
+Com a API rodando, o Swagger lista todas as rotas, os campos de cada uma e permite testá-las. Para chamar uma rota protegida, faça `POST /usuarios/login`, copie o `accessToken` e informe-o no botão **Authorize**.
