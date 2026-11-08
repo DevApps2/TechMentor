@@ -20,7 +20,8 @@ public final class EventosDeNotificacao {
     public record StatusDaDenunciaMudou(Usuario denunciante, String nomeDoDenunciado, Denuncia.Status novoStatus) { }
 
     // A aluna pediu uma mentoria: a mentora precisa confirmar
-    public record MentoriaAgendada(Usuario mentora, String nomeDaAluna, LocalDateTime inicio) { }
+    public record MentoriaAgendada(Usuario mentora, String nomeDaAluna, LocalDateTime inicio,
+                                   String nomeDaMentora, String emailDaMentora, String assunto) { }
 
     // linkSala pode ser nulo se o Google não devolveu a sala na hora.
     public record MentoriaConfirmada(Usuario aluna, String nomeDaMentora, LocalDateTime inicio,
