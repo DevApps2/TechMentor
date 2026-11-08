@@ -50,6 +50,9 @@ import com.example.techmentor.ui.mentoria.EstadoErro
 import com.example.techmentor.ui.mentoria.MentoriaCores
 import com.example.techmentor.ui.mentoria.SecaoCartao
 import com.example.techmentor.ui.theme.ManropeFamily
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 /**
  * Tela de avaliar uma mentoria concluída, para a aluna (avalia a mentora) e para a mentora (avalia a aluna).
@@ -101,10 +104,14 @@ fun AvaliarScreen(
                     onConcluir = { navController.popBackStack() }
                 )
 
-                // não dá para avaliar (já avaliou, prazo vencido...): mostra o motivo e o que já existe
                 situacao != null && !situacao.podeAvaliar -> SemAvaliar(
                     situacao = situacao,
                     outraPessoa = estado.outraPessoa,
+                    enviandoDenuncia = estado.enviandoDenuncia,
+                    denunciaEnviada = estado.denunciaEnviada,
+                    erroDaDenuncia = estado.erroDaDenuncia,
+                    onDenunciar = { motivo, detalhe -> viewModel.denunciarComentario(motivo, detalhe) },
+                    onFecharDenuncia = { viewModel.limparErroDaDenuncia() },
                     onVoltar = { navController.popBackStack() }
                 )
 
@@ -332,8 +339,20 @@ private fun Agradecimento(
 private fun SemAvaliar(
     situacao: AvaliacaoDaMentoriaResponse,
     outraPessoa: String,
+    enviandoDenuncia: Boolean,
+    denunciaEnviada: Boolean,
+    erroDaDenuncia: String?,
+    onDenunciar: (motivo: String, detalhe: String) -> Unit,
+    onFecharDenuncia: () -> Unit,
     onVoltar: () -> Unit
 ) {
+
+    var denunciando by remember { mutableStateOf(false) }
+
+    // a denúncia foi enviada: fecha a janelinha
+    LaunchedEffect(denunciaEnviada) {
+        if (denunciaEnviada) denunciando = false
+    }
 
     Column(
         modifier = Modifier
@@ -364,9 +383,34 @@ private fun SemAvaliar(
             CartaoDeAvaliacao(titulo = "Sua avaliação", avaliacao = it)
         }
 
-        situacao.recebida?.let {
+        situacao.recebida?.let { recebida ->
             Spacer(modifier = Modifier.height(12.dp))
-            CartaoDeAvaliacao(titulo = "O que $outraPessoa escreveu sobre você", avaliacao = it)
+            CartaoDeAvaliacao(titulo = "O que $outraPessoa escreveu sobre você", avaliacao = recebida)
+
+            // só dá para denunciar o que tem texto: a nota nunca é escondida
+            if (!recebida.comentario.isNullOrBlank()) {
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (denunciaEnviada) {
+                    Text(
+                        text = "Denúncia enviada. Nossa equipe vai analisar este comentário.",
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = MentoriaCores.TextoMudo
+                    )
+                } else {
+                    Text(
+                        text = "Denunciar este comentário",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AuthColors.Error,
+                        modifier = Modifier
+                            .clickable { denunciando = true }
+                            .padding(vertical = 8.dp)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -374,6 +418,18 @@ private fun SemAvaliar(
         GradientButton(
             text = "Voltar",
             onClick = onVoltar
+        )
+    }
+
+    if (denunciando) {
+        DialogoDeDenunciaDeComentario(
+            enviando = enviandoDenuncia,
+            erro = erroDaDenuncia,
+            onEnviar = onDenunciar,
+            onCancelar = {
+                denunciando = false
+                onFecharDenuncia()
+            }
         )
     }
 }

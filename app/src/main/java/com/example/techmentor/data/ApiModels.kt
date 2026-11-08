@@ -189,14 +189,15 @@ data class UsuarioResumoResponse(
     val tipo: String
 )
 
-// Corpo do POST /api/denuncias. usuarioDenunciadoId é opcional (denúncia geral).
+/// Corpo do POST /api/denuncias. usuarioDenunciadoId é opcional (denúncia geral).
 // motivo: ASSEDIO, COMPORTAMENTO_INADEQUADO, SPAM, DISCURSO_DE_ODIO, PERFIL_FALSO ou OUTRO
+// avaliacaoId: quando a denúncia é sobre o comentário de uma avaliação (o servidor descobre quem escreveu)
 data class DenunciaRequest(
     val usuarioDenunciadoId: Long?,
     val motivo: String,
-    val descricao: String
+    val descricao: String,
+    val avaliacaoId: Long? = null
 )
-
 data class DenunciaResponse(
     val id: Long,
     val denuncianteId: Long,
@@ -321,3 +322,5 @@ data class TrocarSenhaRequest(
     val senhaAtual: String,
     val novaSenha: String
 )
+
+

@@ -18,9 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -83,6 +87,9 @@ fun AdminDenunciaDetalheScreen(
                     alterando = estado.alterando,
                     erroAoAlterar = estado.erroAoAlterar,
                     avisoDeSucesso = estado.avisoDeSucesso,
+                    ocultando = estado.ocultando,
+                    erroAoOcultar = estado.erroAoOcultar,
+                    onDefinirOcultacao = { oculta -> viewModel.definirOcultacao(oculta) },
                     onAlterarStatus = { novo -> viewModel.alterarStatus(denunciaId, novo) }
                 )
 
@@ -111,8 +118,13 @@ private fun DetalheConteudo(
     alterando: Boolean,
     erroAoAlterar: String?,
     avisoDeSucesso: String?,
+    ocultando: Boolean,
+    erroAoOcultar: String?,
+    onDefinirOcultacao: (Boolean) -> Unit,
     onAlterarStatus: (String) -> Unit
 ) {
+
+    var confirmandoOcultar by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -170,6 +182,64 @@ private fun DetalheConteudo(
             )
         }
 
+        // Só aparece quando a denúncia é sobre o comentário de uma avaliação
+        if (denuncia.avaliacaoId != null) {
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val oculta = denuncia.avaliacaoOculta == true
+
+            SecaoCartao(titulo = "Comentário denunciado") {
+
+                Text(
+                    text = "Nota: ${denuncia.avaliacaoNota ?: "-"} de 5",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MentoriaCores.TextoEscuro
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = denuncia.avaliacaoComentario?.takeIf { it.isNotBlank() } ?: "Sem comentário.",
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = Color(0xFF514C58)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = if (oculta) {
+                        "Este comentário está escondido do público."
+                    } else {
+                        "Este comentário está visível para todo mundo."
+                    },
+                    fontSize = 12.sp,
+                    color = Color(0xFF8A8691)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (oculta) {
+                    OutlinedAuthButton(
+                        text = if (ocultando) "Atualizando..." else "Mostrar comentário de novo",
+                        onClick = { onDefinirOcultacao(false) }
+                    )
+                } else {
+                    GradientButton(
+                        text = if (ocultando) "Atualizando..." else "Esconder comentário",
+                        onClick = { confirmandoOcultar = true }
+                    )
+                }
+
+                if (erroAoOcultar != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    MensagemDeErro(texto = erroAoOcultar)
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         SecaoCartao(titulo = "Atualizar situação") {
@@ -207,6 +277,20 @@ private fun DetalheConteudo(
                 MensagemDeErro(texto = erroAoAlterar)
             }
         }
+    }
+
+    if (confirmandoOcultar) {
+        DialogoDeConfirmacao(
+            titulo = "Esconder comentário?",
+            texto = "O comentário deixa de aparecer para todo mundo. A nota continua valendo na média. "
+                    + "Você pode mostrar de novo depois.",
+            textoDoBotao = "Esconder",
+            onConfirmar = {
+                confirmandoOcultar = false
+                onDefinirOcultacao(true)
+            },
+            onCancelar = { confirmandoOcultar = false }
+        )
     }
 }
 

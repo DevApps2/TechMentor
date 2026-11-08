@@ -20,6 +20,14 @@ interface AdminApi {
 
     // ---- Denúncias ----
 
+    // Esconde (oculta = true) ou mostra de novo o comentário de uma avaliação. A nota continua valendo na média.
+    @PATCH("api/admin/avaliacoes/{id}/ocultacao")
+    suspend fun ocultarAvaliacao(
+        @Header("X-Usuario-Id") adminId: Long,
+        @Path("id") avaliacaoId: Long,
+        @Body body: AdminOcultacaoRequest
+    )
+
     @GET("api/denuncias")
     suspend fun listarDenuncias(@Header("X-Usuario-Id") adminId: Long): List<AdminDenuncia>
 
