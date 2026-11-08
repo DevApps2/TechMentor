@@ -81,6 +81,8 @@ public class SecurityConfig {
                         ).access(proprioUsuario("usuarioId", false))
 
                         // 4. Conta: trocar a senha é só da dona; editar, mandar foto e desativar, a dona ou a admin
+                        .requestMatchers(HttpMethod.GET, "/usuarios/busca").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/usuarios/{id}").access(proprioUsuario("id", true))
                         .requestMatchers(HttpMethod.PATCH, "/usuarios/{id}/senha").access(proprioUsuario("id", false))
                         .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").access(proprioUsuario("id", true))
                         .requestMatchers(HttpMethod.POST, "/usuarios/{id}/foto").access(proprioUsuario("id", true))

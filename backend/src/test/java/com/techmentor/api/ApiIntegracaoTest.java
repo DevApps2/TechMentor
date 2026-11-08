@@ -117,6 +117,23 @@ class ApiIntegracaoTest {
     }
 
     @Test
+    void dadosPessoaisSoDaPropriaDona() throws Exception {
+        String ana = criarUsuario("Ana Dona");
+        String maria = criarUsuario("Maria Intrusa");
+
+        // a dona acessa os próprios dados
+        assertEquals(200, chamar("GET", "/notificacoes/usuarios/" + ana, null, ana).status());
+        assertEquals(200, chamar("GET", "/usuarios/" + ana, null, ana).status());
+
+        // outra pessoa logada não acessa os dados da Ana
+        assertEquals(403, chamar("GET", "/notificacoes/usuarios/" + ana, null, maria).status());
+        assertEquals(403, chamar("GET", "/historico-xp/usuarios/" + ana, null, maria).status());
+        assertEquals(403, chamar("GET", "/usuarios/" + ana, null, maria).status());
+        assertEquals(403, chamar("PATCH", "/usuarios/" + ana + "/senha",
+                "{\"senhaAtual\":\"senhaSegura123\",\"novaSenha\":\"outraSenha456\"}", maria).status());
+    }
+
+    @Test
     void perfilBuscaEAtualizacao() throws Exception {
         String sufixo = UUID.randomUUID().toString().substring(0, 6);
         String id = criarUsuario("Zuleica Busca" + sufixo);
@@ -165,6 +182,7 @@ class ApiIntegracaoTest {
                 "{\"titulo\":\"Aula 1\",\"ordem\":1,\"duracaoMinutos\":10,\"xpRecompensa\":300,\"conteudoUrl\":null}", admin).status());
         assertEquals(201, chamar("POST", "/aulas/" + t + "/1",
                 "{\"titulo\":\"Aula 2\",\"ordem\":2,\"duracaoMinutos\":5,\"xpRecompensa\":20,\"conteudoUrl\":null}", admin).status());
+
 
         Resp detalhe = get("/cursos/buscar?titulo=" + t);
         assertEquals(200, detalhe.status(), detalhe.corpo());
