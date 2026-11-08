@@ -211,6 +211,24 @@ public class AgendamentoService {
     }
 
     /**
+     * Chamado pelo relógio (não é rota): a mentoria ficou AGENDADA e o horário começou sem a mentora confirmar.
+     * Cancela e avisa as duas pessoas. O horário continua reservado de propósito: ele já passou,
+     * e liberar faria um horário antigo aparecer como disponível no perfil da mentora.
+     */
+    public void expirar(Mentoria mentoria) {
+        if (mentoria.getStatus() != Mentoria.Status.AGENDADA) return;
+
+        mentoria.setStatus(Mentoria.Status.CANCELADA);
+
+        Usuario aluna = mentoria.getAluna();
+        Usuario mentora = mentoria.getHorario().getMentora().getUsuario();
+        LocalDateTime inicio = mentoria.getHorario().getInicio();
+
+        eventos.publishEvent(new EventosDeNotificacao.MentoriaExpirada(aluna, mentora.getNome(), inicio, false));
+        eventos.publishEvent(new EventosDeNotificacao.MentoriaExpirada(mentora, aluna.getNome(), inicio, true));
+    }
+
+    /**
      * Cria a sala do Google Meet se a mentoria ainda não tem uma. Se o Google falhar ou não estiver configurado,
      * a mentoria segue sem link (a confirmação não quebra) e uma nova tentativa pode ser feita depois.
      */
