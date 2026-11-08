@@ -495,6 +495,9 @@ WHERE NOT EXISTS (SELECT 1 FROM conteudos_seguranca c WHERE c.titulo = v.titulo)
 
 -- 0) Apaga o cenário da rodada anterior (por causa das chaves: denúncias, avaliações, mentorias, horários)
 DELETE FROM denuncias WHERE descricao LIKE '[TESTE]%';
+DELETE FROM inscricoes_oportunidade WHERE oportunidade_id IN (
+    SELECT id FROM oportunidades WHERE link_externo LIKE 'https://example.com/teste/%');
+DELETE FROM oportunidades WHERE link_externo LIKE 'https://example.com/teste/%';
 DELETE FROM denuncias WHERE avaliacao_id IN (
     SELECT a.id FROM avaliacoes a JOIN mentorias m ON m.id = a.mentoria_id WHERE m.assunto LIKE '[TESTE]%');
 DELETE FROM avaliacoes WHERE mentoria_id IN (SELECT id FROM mentorias WHERE assunto LIKE '[TESTE]%');
@@ -674,3 +677,56 @@ FROM (
      ) v
          JOIN usuarios u ON u.email = v.email
 WHERE NOT EXISTS (SELECT 1 FROM notificacoes n WHERE n.usuario_id = u.id AND n.mensagem = v.mensagem);
+
+
+-- 8) Oportunidades com prazo relativo a "agora" (o link https://example.com/teste/... é o que as identifica na limpeza)
+INSERT INTO oportunidades (tipo, titulo, organizacao, descricao, requisitos, beneficios, area, nivel, localidade, link_externo, prazo_inscricao, ativa)
+SELECT v.tipo, v.titulo, v.organizacao, v.descricao, v.requisitos, v.beneficios, v.area, v.nivel, v.localidade, v.link,
+       CASE WHEN v.dias IS NULL THEN NULL ELSE TIMESTAMPADD(DAY, v.dias, CURRENT_DATE) END, TRUE
+FROM (
+         SELECT 'ESTAGIO' AS tipo, 'Estágio em UX Research' AS titulo, 'Pixel Studio' AS organizacao,
+                'Apoio em pesquisas com usuárias e testes de usabilidade.' AS descricao,
+                'Cursando Design, Psicologia ou áreas afins.' AS requisitos,
+                'Bolsa-auxílio e mentoria semanal.' AS beneficios, 'Design' AS area, 'Iniciante' AS nivel,
+                'Remoto' AS localidade, 'https://example.com/teste/1' AS link, 20 AS dias
+         UNION ALL SELECT 'EMPREGO', 'Desenvolvedora Front-end Júnior', 'Acme Tecnologia',
+                          'Construção de telas em React com o time de produto.',
+                          'Conhecimento de JavaScript e Git.', 'Home office e vale-refeição.', 'Programação', 'Júnior',
+                          'São Paulo - SP (híbrido)', 'https://example.com/teste/2', 12
+         UNION ALL SELECT 'BOLSA', 'Bolsa Mulheres em Dados', 'Instituto Código Feminino',
+                          'Formação em análise de dados com mentoria e projetos reais.',
+                          'Ser mulher e maior de 18 anos.', 'Curso gratuito e certificado.', 'Dados', 'Iniciante',
+                          'Online', 'https://example.com/teste/3', 30
+         UNION ALL SELECT 'EMPREGO', 'Analista de Segurança Júnior', 'DataWorks',
+                          'Monitoramento de alertas e resposta a incidentes.',
+                          'Noções de redes e Linux.', 'Plano de carreira.', 'Segurança', 'Júnior',
+                          'Remoto', 'https://example.com/teste/4', 3
+         UNION ALL SELECT 'EVENTO', 'Meetup de Carreira em Tecnologia', 'TechMentor',
+                          'Conversa aberta com profissionais sobre como começar na área.',
+                          'Aberto ao público.', 'Networking e dicas de carreira.', 'Carreira', 'Todos os níveis',
+                          'Online', 'https://example.com/teste/5', 6
+         UNION ALL SELECT 'EVENTO', 'Oficina de Currículo e LinkedIn', 'TechMentor',
+                          'Oficina prática para montar um currículo e um perfil que chamam atenção.',
+                          'Aberto ao público.', 'Revisão ao vivo do seu currículo.', 'Carreira', 'Iniciante',
+                          'Online', 'https://example.com/teste/6', 1
+         UNION ALL SELECT 'ESTAGIO', 'Estágio em Dados (sem prazo)', 'DataWorks',
+                          'Apoio ao time de dados em análises e relatórios.',
+                          'Cursando áreas de exatas.', 'Mentoria e horário flexível.', 'Dados', 'Iniciante',
+                          'Remoto', 'https://example.com/teste/7', NULL
+     ) v;
+
+-- 9) Candidaturas e inscrições de exemplo, de todas as situações
+INSERT INTO inscricoes_oportunidade (usuario_id, oportunidade_id, status, criada_em)
+SELECT u.id, o.id, v.status, TIMESTAMPADD(HOUR, v.horas, @agora)
+FROM (
+         SELECT 'beatriz.santos@email.com' AS email, 'https://example.com/teste/1' AS link, 'ENVIADA' AS status, -5 AS horas
+         UNION ALL SELECT 'beatriz.santos@email.com',  'https://example.com/teste/2', 'EM_ANALISE', -30
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/2', 'APROVADA',   -72
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/3', 'RECUSADA',   -100
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/5', 'ENVIADA',    -2
+         UNION ALL SELECT 'daniela.martins@email.com', 'https://example.com/teste/1', 'EM_ANALISE', -20
+         UNION ALL SELECT 'daniela.martins@email.com', 'https://example.com/teste/6', 'APROVADA',   -10
+         UNION ALL SELECT 'elisa.ferreira@email.com',  'https://example.com/teste/2', 'ENVIADA',    -1
+     ) v
+         JOIN usuarios u ON u.email = v.email
+         JOIN oportunidades o ON o.link_externo = v.link;

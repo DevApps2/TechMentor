@@ -60,6 +60,21 @@ interface AdminApi {
     @GET("api/oportunidades/{id}")
     suspend fun obterOportunidade(@Path("id") id: Long): AdminOportunidade
 
+    // quem se candidatou (ou se inscreveu) a esta oportunidade
+    @GET("api/admin/oportunidades/{id}/candidaturas")
+    suspend fun listarCandidaturas(
+        @Header("X-Usuario-Id") adminId: Long,
+        @Path("id") oportunidadeId: Long
+    ): List<AdminCandidatura>
+
+    // muda a situação da candidatura; a candidata recebe uma notificação
+    @PATCH("api/admin/candidaturas/{id}/status")
+    suspend fun alterarStatusDaCandidatura(
+        @Header("X-Usuario-Id") adminId: Long,
+        @Path("id") candidaturaId: Long,
+        @Body body: AdminCandidaturaStatusRequest
+    ): AdminCandidatura
+
     @POST("api/oportunidades")
     suspend fun criarOportunidade(
         @Header("X-Usuario-Id") adminId: Long,

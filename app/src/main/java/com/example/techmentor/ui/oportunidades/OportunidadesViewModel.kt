@@ -11,6 +11,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +38,8 @@ data class OportunidadesUiState(
     // null = ainda não carregou
     val oportunidades: List<OportunidadeResponse>? = null,
     val filtro: FiltroTipo = FiltroTipo.TODOS,
+    // texto da caixa de busca
+    val busca: String = "",
     // oportunidades em que a usuária já se candidatou/inscreveu: id da oportunidade -> status (ENVIADA, EM_ANALISE...)
     val participacoes: Map<Long, String> = emptyMap(),
     // id da oportunidade que está sendo enviada agora
@@ -65,6 +68,7 @@ class OportunidadesViewModel : ViewModel() {
         tarefa?.cancel()
 
         val filtro = _estado.value.filtro
+        val busca = _estado.value.busca.trim().ifEmpty { null }
         val usuarioId = Sessao.usuarioId
 
         tarefa = viewModelScope.launch {
@@ -81,7 +85,7 @@ class OportunidadesViewModel : ViewModel() {
 
                 coroutineScope {
                     // Só a lista é obrigatória: se "minhas candidaturas" falhar, a tela abre sem as marcações
-                    val listaPedido = async { api.listarOportunidades(tipo = filtro.tipoApi, area = null) }
+                    val listaPedido = async { api.listarOportunidades(tipo = filtro.tipoApi, area = null, busca = busca) }
                     val minhasPedido = async {
                         if (usuarioId == null) {
                             null
@@ -119,6 +123,21 @@ class OportunidadesViewModel : ViewModel() {
                     _estado.update { it.copy(carregando = false, atualizando = false) }
                 }
             }
+        }
+    }
+
+    private var tarefaDaBusca: Job? = null
+
+    /** Atualiza a lista enquanto a pessoa digita, esperando um instante para não chamar a API a cada letra. */
+    fun digitarBusca(texto: String) {
+        if (texto.length > 60) return
+
+        _estado.update { it.copy(busca = texto) }
+
+        tarefaDaBusca?.cancel()
+        tarefaDaBusca = viewModelScope.launch {
+            delay(400)
+            carregar()
         }
     }
 

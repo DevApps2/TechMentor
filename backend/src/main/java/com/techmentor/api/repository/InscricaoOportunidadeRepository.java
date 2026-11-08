@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface InscricaoOportunidadeRepository extends JpaRepository<InscricaoOportunidade, Long> {
     Optional<InscricaoOportunidade> findByUsuarioIdAndOportunidadeId(Long usuarioId, Long oportunidadeId);
     List<InscricaoOportunidade> findByUsuarioIdOrderByCriadaEmDesc(Long usuarioId);
+    List<InscricaoOportunidade> findByOportunidadeIdOrderByCriadaEmDesc(Long oportunidadeId);
 }

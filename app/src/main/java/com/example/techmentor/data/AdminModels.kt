@@ -88,3 +88,22 @@ data class AdminMentoraPerfilRequest(
 
 // Corpo do POST /api/areas-atuacao
 data class AdminAreaRequest(val nome: String)
+
+
+// ---- Candidaturas de uma oportunidade ----
+
+// Candidatura vista pela administração (GET /api/admin/oportunidades/{id}/candidaturas).
+// status: ENVIADA, EM_ANALISE, APROVADA ou RECUSADA
+data class AdminCandidatura(
+    val id: Long,
+    val usuarioId: Long,
+    val usuarioNome: String,
+    val usuarioEmail: String,
+    val oportunidadeId: Long,
+    val titulo: String,
+    val status: String,
+    val criadaEm: String?
+)
+
+// Corpo do PATCH /api/admin/candidaturas/{id}/status
+data class AdminCandidaturaStatusRequest(val status: String)

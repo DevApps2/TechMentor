@@ -80,4 +80,28 @@ public final class OportunidadeDtos {
             InscricaoOportunidade.Status status,
             @Schema(description = "Data e hora em que a candidatura/inscrição foi criada", example = "2026-10-26T14:30:00")
             LocalDateTime criadaEm) { }
+
+    @Schema(description = "Candidatura vista pela administração, com os dados de quem se candidatou")
+    public record CandidaturaAdminResponse(
+            @Schema(description = "ID da candidatura/inscrição", example = "1")
+            Long id,
+            @Schema(description = "ID da usuária", example = "2")
+            Long usuarioId,
+            @Schema(description = "Nome da usuária", example = "Camila Rocha")
+            String usuarioNome,
+            @Schema(description = "E-mail da usuária", example = "camila.rocha@email.com")
+            String usuarioEmail,
+            @Schema(description = "ID da oportunidade", example = "1")
+            Long oportunidadeId,
+            @Schema(description = "Título da oportunidade", example = "Estágio em Desenvolvimento Java")
+            String titulo,
+            @Schema(description = "Situação: ENVIADA, EM_ANALISE, APROVADA ou RECUSADA", example = "ENVIADA")
+            InscricaoOportunidade.Status status,
+            @Schema(description = "Quando a usuária se candidatou", example = "2026-10-26T14:30:00")
+            LocalDateTime criadaEm) { }
+
+    @Schema(description = "Nova situação de uma candidatura (só administradores)")
+    public record CandidaturaStatusRequest(
+            @Schema(description = "ENVIADA, EM_ANALISE, APROVADA ou RECUSADA", example = "EM_ANALISE")
+            @NotNull(message = "Informe a nova situação") InscricaoOportunidade.Status status) { }
 }

@@ -38,13 +38,18 @@ import com.example.techmentor.ui.theme.ManropeFamily
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.ui.platform.LocalUriHandler
+import com.example.techmentor.ui.auth.OutlinedAuthButton
 
 private val LOCALE_BR: Locale = Locale.forLanguageTag("pt-BR")
+
 
 /** "2026-11-18" -> "18 de novembro de 2026" */
 private fun formatarPrazoCompleto(prazo: String?): String? {
 
     if (prazo.isNullOrBlank()) return null
+
+
 
     return try {
         val data = SimpleDateFormat("yyyy-MM-dd", LOCALE_BR).parse(prazo) ?: return prazo
@@ -126,6 +131,7 @@ private fun DetalheDaOportunidade(
 
     val modalidade = oportunidade.localidade?.takeIf { it.isNotBlank() }
     val prazo = formatarPrazoCompleto(oportunidade.prazoInscricao)
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
@@ -219,6 +225,16 @@ private fun DetalheDaOportunidade(
                     rotulo = "Prazo de inscrição",
                     valor = prazo ?: "Sem prazo",
                     modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Link da vaga no site da organização (só aparece se a admin preencheu). Só abre http/https.
+            val link = oportunidade.linkExterno?.trim()?.takeIf { it.startsWith("http", ignoreCase = true) }
+
+            if (link != null) {
+                OutlinedAuthButton(
+                    text = "Ver no site da organização",
+                    onClick = { runCatching { uriHandler.openUri(link) } }
                 )
             }
 
