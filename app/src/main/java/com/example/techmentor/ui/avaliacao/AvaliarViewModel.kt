@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.AvaliacaoDaMentoriaResponse
 import com.example.techmentor.data.AvaliacaoRequest
+import com.example.techmentor.data.DenunciaRequest
 import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.mentoria.mensagemDaApi
@@ -33,7 +34,11 @@ data class AvaliarUiState(
     val erroAoEnviar: String? = null,
     val enviada: Boolean = false,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
-    val sessaoExpirada: Boolean = false
+    val sessaoExpirada: Boolean = false,
+    // denunciar o comentário que a outra pessoa escreveu sobre mim
+    val enviandoDenuncia: Boolean = false,
+    val denunciaEnviada: Boolean = false,
+    val erroDaDenuncia: String? = null,
 )
 
 class AvaliarViewModel : ViewModel() {
@@ -105,6 +110,48 @@ class AvaliarViewModel : ViewModel() {
         if (texto.length <= LIMITE_COMENTARIO) {
             _estado.update { it.copy(comentario = texto) }
         }
+    }
+
+    /**
+     * Denuncia o comentário que a outra pessoa escreveu sobre mim. O servidor descobre quem escreveu
+     * pelo id da avaliação, então o app só manda qual avaliação é e o motivo.
+     */
+    fun denunciarComentario(motivo: String, detalhe: String) {
+        val atual = _estado.value
+        val avaliacaoId = atual.situacao?.recebida?.id ?: return
+        if (atual.enviandoDenuncia || atual.denunciaEnviada) return
+
+        val usuarioId = Sessao.usuarioId ?: return
+
+        // O servidor exige pelo menos 10 letras na descrição; sem detalhe, vai um texto padrão
+        val texto = if (detalhe.trim().length >= 10) detalhe.trim()
+        else "Comentário de uma avaliação considerado inadequado."
+
+        _estado.update { it.copy(enviandoDenuncia = true, erroDaDenuncia = null) }
+
+        viewModelScope.launch {
+            try {
+                ApiClient.api.denunciar(usuarioId, DenunciaRequest(null, motivo, texto, avaliacaoId))
+                _estado.update { it.copy(enviandoDenuncia = false, denunciaEnviada = true) }
+
+            } catch (e: HttpException) {
+                val daApi = mensagemDaApi(e)
+
+                val mensagem = when (e.code()) {
+                    400, 409, 429 -> daApi ?: "Não foi possível enviar a denúncia."
+                    403 -> "Só quem foi avaliada pode denunciar este comentário."
+                    else -> ERRO_CONEXAO
+                }
+                _estado.update { it.copy(enviandoDenuncia = false, erroDaDenuncia = mensagem) }
+
+            } catch (e: IOException) {
+                _estado.update { it.copy(enviandoDenuncia = false, erroDaDenuncia = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    fun limparErroDaDenuncia() {
+        _estado.update { it.copy(erroDaDenuncia = null) }
     }
 
     fun enviar(agendamentoId: Long) {

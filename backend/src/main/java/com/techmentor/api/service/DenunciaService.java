@@ -1,10 +1,12 @@
 package com.techmentor.api.service;
 
 import com.techmentor.api.evento.EventosDeNotificacao;
+import com.techmentor.api.model.Avaliacao;
 import com.techmentor.api.model.Denuncia;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.dto.SegurancaDtos.DenunciaRequest;
 import com.techmentor.api.dto.SegurancaDtos.DenunciaResponse;
+import com.techmentor.api.repository.AvaliacaoRepository;
 import com.techmentor.api.repository.DenunciaRepository;
 import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.repository.UsuarioRepository;
@@ -25,19 +27,36 @@ public class DenunciaService {
 
     private final DenunciaRepository denuncias;
     private final UsuarioRepository usuarios;
+    private final AvaliacaoRepository avaliacoes;
     private final ApplicationEventPublisher eventos;
 
-    public DenunciaService(DenunciaRepository denuncias, UsuarioRepository usuarios,
+    public DenunciaService(DenunciaRepository denuncias, UsuarioRepository usuarios, AvaliacaoRepository avaliacoes,
                            NotificacaoService notificacoes, ApplicationEventPublisher eventos) {
         this.denuncias = denuncias;
         this.usuarios = usuarios;
+        this.avaliacoes = avaliacoes;
         this.eventos = eventos;
     }
 
     public DenunciaResponse criar(Usuario actor, DenunciaRequest request) {
         if (request == null || request.motivo() == null)
             throw ApiException.badRequest("Motivo da denúncia é obrigatório.");
-        Usuario alvo = request.usuarioDenunciadoId() == null ? null : buscarUsuario(request.usuarioDenunciadoId());
+
+        Avaliacao avaliacao = null;
+        Usuario alvo;
+        if (request.avaliacaoId() != null) {
+            avaliacao = avaliacoes.findById(request.avaliacaoId())
+                    .orElseThrow(() -> ApiException.notFound("Avaliação não encontrada."));
+            // Só quem foi avaliada denuncia o comentário: quem escreveu ou terceiros não
+            if (!avaliacao.getAvaliado().getId().equals(actor.getId())) throw ApiException.forbidden();
+            if (avaliacao.getComentario() == null || avaliacao.getComentario().isBlank())
+                throw ApiException.badRequest("Esta avaliação não tem comentário para denunciar.");
+            if (denuncias.existsByDenuncianteIdAndAvaliacaoId(actor.getId(), avaliacao.getId()))
+                throw ApiException.conflict("Você já denunciou este comentário.");
+            alvo = avaliacao.getAvaliador(); // o denunciado é quem escreveu, não o que o app mandar
+        } else {
+            alvo = request.usuarioDenunciadoId() == null ? null : buscarUsuario(request.usuarioDenunciadoId());
+        }
         if (alvo != null && alvo.getId().equals(actor.getId()))
             throw ApiException.badRequest("Não é possível denunciar a si mesmo.");
 
@@ -45,13 +64,14 @@ public class DenunciaService {
         if (denuncias.countByDenuncianteIdAndCriadaEmAfter(actor.getId(), agora.minusHours(1)) >= MAXIMO_POR_HORA)
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS,
                     "Você enviou muitas denúncias em pouco tempo. Tente de novo mais tarde.");
-        if (alvo != null && denuncias.existsByDenuncianteIdAndDenunciadoIdAndCriadaEmAfter(
+        if (alvo != null && avaliacao == null && denuncias.existsByDenuncianteIdAndDenunciadoIdAndCriadaEmAfter(
                 actor.getId(), alvo.getId(), agora.minusHours(HORAS_ENTRE_DENUNCIAS_DA_MESMA_PESSOA)))
             throw ApiException.conflict("Você já denunciou esta pessoa nas últimas 24 horas.");
 
         Denuncia denuncia = new Denuncia();
         denuncia.setDenunciante(actor);
         denuncia.setDenunciado(alvo);
+        denuncia.setAvaliacao(avaliacao);
         denuncia.setMotivo(request.motivo());
         denuncia.setDescricao(request.descricao());
         Denuncia salva = denuncias.save(denuncia);
@@ -117,9 +137,14 @@ public class DenunciaService {
 
     private DenunciaResponse toResponse(Denuncia denuncia) {
         Usuario denunciado = denuncia.getDenunciado();
+        Avaliacao avaliacao = denuncia.getAvaliacao();
         return new DenunciaResponse(denuncia.getId(), denuncia.getDenunciante().getId(),
                 denunciado == null ? null : denunciado.getId(),
                 denunciado == null ? null : denunciado.getNome(),
-                denuncia.getMotivo(), denuncia.getDescricao(), denuncia.getStatus(), denuncia.getCriadaEm());
+                denuncia.getMotivo(), denuncia.getDescricao(), denuncia.getStatus(), denuncia.getCriadaEm(),
+                avaliacao == null ? null : avaliacao.getId(),
+                avaliacao == null ? null : avaliacao.getNota(),
+                avaliacao == null ? null : avaliacao.getComentario(),
+                avaliacao == null ? null : avaliacao.isOculta());
     }
 }

@@ -13,8 +13,16 @@ data class AdminDenuncia(
     val motivo: String,
     val descricao: String?,
     val status: String,
-    val criadaEm: String?
+    val criadaEm: String?,
+    // preenchidos só quando a denúncia é sobre o comentário de uma avaliação
+    val avaliacaoId: Long? = null,
+    val avaliacaoNota: Int? = null,
+    val avaliacaoComentario: String? = null,
+    val avaliacaoOculta: Boolean? = null
 )
+
+// Corpo do PATCH /api/admin/avaliacoes/{id}/ocultacao: true esconde o comentário, false mostra de novo
+data class AdminOcultacaoRequest(val oculta: Boolean)
 
 // Corpo do PATCH /api/admin/denuncias/{id}/status: ABERTA, EM_ANALISE ou RESOLVIDA
 data class AdminDenunciaStatusRequest(val status: String)

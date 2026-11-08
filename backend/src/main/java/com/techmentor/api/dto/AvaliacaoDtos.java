@@ -83,6 +83,11 @@ public final class AvaliacaoDtos {
             @Schema(description = "Quando foi avaliada", example = "2026-11-03T15:20:00")
             LocalDateTime criadaEm) { }
 
+    @Schema(description = "Esconder ou mostrar de novo o comentário de uma avaliação (moderação)")
+    public record OcultacaoRequest(
+            @Schema(description = "true esconde o comentário; false mostra de novo", example = "true")
+            @NotNull(message = "Informe se o comentário deve ficar oculto") Boolean oculta) { }
+
     @Schema(description = "Nota média, distribuição por estrela e comentários de uma mentora")
     public record AvaliacoesDaMentoraResponse(
             @Schema(description = "Nota média", example = "4.5")

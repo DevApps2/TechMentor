@@ -21,6 +21,9 @@ public class Denuncia {
     @ManyToOne(fetch = FetchType.LAZY, optional = false) private Usuario denunciante;
     @ManyToOne(fetch = FetchType.LAZY) private Usuario denunciado; // pode ser nulo (denúncia geral)
 
+    // Quando a denúncia é sobre o comentário de uma avaliação: qual avaliação (a admin pode escondê-lo)
+    @ManyToOne(fetch = FetchType.LAZY) private Avaliacao avaliacao; // nulo se a denúncia não é sobre uma avaliação
+
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private Motivo motivo;
     @Column(length = 2000) private String descricao;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Status status = Status.ABERTA;

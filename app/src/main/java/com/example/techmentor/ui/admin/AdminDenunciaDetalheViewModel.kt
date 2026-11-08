@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.AdminDenuncia
 import com.example.techmentor.data.AdminDenunciaStatusRequest
+import com.example.techmentor.data.AdminOcultacaoRequest
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
@@ -28,6 +29,9 @@ data class AdminDenunciaDetalheUiState(
     // true enquanto o novo status está sendo enviado
     val alterando: Boolean = false,
     val erroAoAlterar: String? = null,
+    // true enquanto o comentário está sendo escondido (ou mostrado de novo)
+    val ocultando: Boolean = false,
+    val erroAoOcultar: String? = null,
     // mensagem verde depois de mudar o status
     val avisoDeSucesso: String? = null
 )
@@ -119,6 +123,45 @@ class AdminDenunciaDetalheViewModel : ViewModel() {
                     it.copy(
                         alterando = false,
                         erroAoAlterar = resultado.mensagem,
+                        sessaoExpirada = resultado.sessaoExpirada
+                    )
+                }
+            }
+        }
+    }
+
+    /** Esconde o comentário da avaliação denunciada (ou mostra de novo). A nota continua valendo na média. */
+    fun definirOcultacao(oculta: Boolean) {
+        val atual = _estado.value
+        val avaliacaoId = atual.denuncia?.avaliacaoId ?: return
+        if (atual.ocultando) return
+
+        val adminId = Sessao.usuarioId
+        if (adminId == null) {
+            _estado.update { it.copy(sessaoExpirada = true) }
+            return
+        }
+
+        viewModelScope.launch {
+            _estado.update { it.copy(ocultando = true, erroAoOcultar = null, avisoDeSucesso = null) }
+
+            val resultado = chamar {
+                ApiClient.adminApi.ocultarAvaliacao(adminId, avaliacaoId, AdminOcultacaoRequest(oculta))
+            }
+
+            when (resultado) {
+                is Resultado.Ok -> _estado.update {
+                    it.copy(
+                        ocultando = false,
+                        denuncia = it.denuncia?.copy(avaliacaoOculta = oculta),
+                        avisoDeSucesso = if (oculta) "Comentário escondido." else "Comentário visível de novo."
+                    )
+                }
+
+                is Resultado.Falha -> _estado.update {
+                    it.copy(
+                        ocultando = false,
+                        erroAoOcultar = resultado.mensagem,
                         sessaoExpirada = resultado.sessaoExpirada
                     )
                 }
