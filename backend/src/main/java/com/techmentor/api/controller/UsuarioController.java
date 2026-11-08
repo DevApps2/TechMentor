@@ -7,11 +7,14 @@ import com.techmentor.api.dto.UsuarioDtos.Response;
 import com.techmentor.api.dto.UsuarioDtos.Resumo;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
 import com.techmentor.api.service.EmailService;
+import com.techmentor.api.service.LimiteDeCadastro;
 import com.techmentor.api.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,11 @@ public class UsuarioController {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final UsuarioAtualService usuarios;
+    private final LimiteDeCadastro limiteDeCadastro;
+
+    // true = a API está atrás de um proxy (ngrok, nginx) e o IP real vem no cabeçalho X-Forwarded-For
+    @Value("${app.proxy.confiavel:false}")
+    private boolean proxyConfiavel;
 
     @Operation(summary = "Listar usuários")
     @GetMapping
@@ -49,7 +57,8 @@ public class UsuarioController {
 
     @Operation(summary = "Cadastrar usuário", description = "Cria a conta de uma nova usuária. Retorna 409 se o e-mail já estiver cadastrado.")
     @PostMapping
-    public ResponseEntity<Response> cadastrar(@Valid @RequestBody CreateRequest dto) {
+    public ResponseEntity<Response> cadastrar(@Valid @RequestBody CreateRequest dto, HttpServletRequest request) {
+        limiteDeCadastro.registrar(ipDoCliente(request));
         return ResponseEntity.status(201).body(service.criarUsuario(dto));
     }
 
@@ -64,7 +73,8 @@ public class UsuarioController {
         var usuario = service.loginUsuario(dto.email(), dto.senha());
 
         String token = jwtService.gerarToken(
-                usuario.getId().toString()
+                usuario.getId().toString(),
+                usuario.versaoDoToken()
         );
 
         LoginResponse resposta = new LoginResponse(
@@ -118,6 +128,15 @@ public class UsuarioController {
         service.trocarSenha(id, dto.senhaAtual(), dto.novaSenha());
         return ResponseEntity.noContent().build();
     }
+
+    /** O endereço de quem chamou. Só confia no X-Forwarded-For se a API estiver mesmo atrás de um proxy. */
+    private String ipDoCliente(HttpServletRequest request) {
+        if (proxyConfiavel) {
+            String encaminhado = request.getHeader("X-Forwarded-For");
+            if (encaminhado != null && !encaminhado.isBlank()) {
+                return encaminhado.split(",")[0].trim();
+            }
+        }
+        return request.getRemoteAddr();
+    }
 }
-
-

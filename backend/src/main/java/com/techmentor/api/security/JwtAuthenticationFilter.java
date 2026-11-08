@@ -55,7 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .findByIdAndAtivoTrue(usuarioId)
                     .orElse(null);
 
-            if (usuario != null) {
+            // Token de antes da última troca de senha não vale mais
+            if (usuario != null && jwtService.extrairVersao(token) == usuario.versaoDoToken()) {
 
                 var autoridade = new SimpleGrantedAuthority(
                         "ROLE_" + usuario.getTipo().name()

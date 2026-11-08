@@ -108,6 +108,7 @@ public class RecuperacaoSenhaService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuario.invalidarTokens();
         pedido.setUsado(true);
     }
 }

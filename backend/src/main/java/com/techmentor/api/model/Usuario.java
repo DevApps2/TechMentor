@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,6 +51,19 @@ public class Usuario {
     private int nivel = 1;
     private int sequenciaDias = 0;
     private LocalDate ultimaAtividade;
+
+    // Sobe a cada troca de senha: tokens emitidos com um número antigo deixam de valer (null conta como 0)
+    @JsonIgnore
+    private Integer tokenVersao = 0;
+
+    public int versaoDoToken() {
+        return tokenVersao == null ? 0 : tokenVersao;
+    }
+
+    /** Chame ao trocar a senha: derruba os tokens que já estavam por aí. */
+    public void invalidarTokens() {
+        this.tokenVersao = versaoDoToken() + 1;
+    }
 
     @Column(updatable = false) private LocalDateTime criadoEm = LocalDateTime.now();
 }

@@ -28,6 +28,11 @@ public class JwtService {
     }
 
     public String gerarToken(String subject) {
+        return gerarToken(subject, 0);
+    }
+
+    /** A versão sobe a cada troca de senha da pessoa: token com versão antiga deixa de valer. */
+    public String gerarToken(String subject, int versao) {
 
         Date agora = new Date();
 
@@ -38,6 +43,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(subject)
                 .issuedAt(agora)
+                .claim("ver", versao)
                 .expiration(expiracao)
                 .signWith(secretKey)
                 .compact();
@@ -52,6 +58,19 @@ public class JwtService {
                 .getPayload();
 
         return claims.getSubject();
+    }
+
+    /** A versão guardada no token; tokens antigos, sem esse campo, contam como versão 0. */
+    public int extrairVersao(String token) {
+
+        Object versao = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("ver");
+
+        return versao instanceof Number numero ? numero.intValue() : 0;
     }
 
     public boolean validarToken(String token, String subjectEsperado) {
