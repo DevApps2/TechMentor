@@ -27,6 +27,9 @@ public interface MentoriaRepository extends JpaRepository<Mentoria, Long> {
     /** Mentorias nesta situação cujo horário já terminou (usado para marcar como concluídas). */
     List<Mentoria> findByStatusAndHorarioFimBefore(Mentoria.Status status, java.time.LocalDateTime limite);
 
+    /** Mentorias nesta situação cujo horário já começou (usado para expirar as que ninguém confirmou). */
+    List<Mentoria> findByStatusAndHorarioInicioBefore(Mentoria.Status status, java.time.LocalDateTime limite);
+
     /**
      * Mentorias do usuário, no status pedido, que terminaram depois do limite e que ele ainda não avaliou.
      * É a lista de "avaliações pendentes".

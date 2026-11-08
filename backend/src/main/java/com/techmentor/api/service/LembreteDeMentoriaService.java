@@ -60,6 +60,9 @@ public class LembreteDeMentoriaService {
     public void processar() {
         LocalDateTime agora = LocalDateTime.now();
 
+        // 0) Mentorias que ninguém confirmou e cujo horário já começou: expiram (e avisam as duas pessoas)
+        expirarNaoConfirmadas(agora);
+
         // 1) Mentorias que terminaram viram CONCLUIDA (e convidam a avaliar)
         concluirTerminadas(agora);
 
@@ -77,6 +80,15 @@ public class LembreteDeMentoriaService {
         mentorias.findByStatusAndLembreteEnviadoEmIsNullAndHorarioInicioBetween(
                         Mentoria.Status.CONFIRMADA, agora, agora.plusMinutes(MINUTOS_DE_ANTECEDENCIA))
                 .forEach(mentoria -> lembrar(mentoria, agora));
+    }
+
+    /**
+     * As AGENDADAS cujo horário já começou sem a mentora confirmar viram CANCELADA.
+     * A regra de "o que fazer" fica no AgendamentoService.expirar; aqui só se escolhe quais.
+     */
+    private void expirarNaoConfirmadas(LocalDateTime agora) {
+        mentorias.findByStatusAndHorarioInicioBefore(Mentoria.Status.AGENDADA, agora)
+                .forEach(agendamentos::expirar);
     }
 
     /**

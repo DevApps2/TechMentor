@@ -32,6 +32,11 @@ public final class EventosDeNotificacao {
     public record MentoriaCancelada(Usuario destinatario, String quemCancelou, LocalDateTime inicio,
                                     String nomeDoDestinatario, String emailDoDestinatario) { }
 
+    // Ninguém confirmou a tempo: a mentoria foi cancelada pelo sistema. Um evento por pessoa.
+    // outraPessoa = o nome de quem estava do outro lado; destinatarioEhMentora muda o texto do aviso.
+    public record MentoriaExpirada(Usuario destinatario, String outraPessoa, LocalDateTime inicio,
+                                   boolean destinatarioEhMentora) { }
+
     // Alguém trocou o horário: avisa a outra pessoa. precisaConfirmar = a mentora ainda vai confirmar o novo horário
     public record MentoriaReagendada(Usuario destinatario, String quemReagendou, LocalDateTime novoInicio, boolean precisaConfirmar,
                                      String nomeDoDestinatario, String emailDoDestinatario) { }

@@ -5,6 +5,7 @@ import com.techmentor.api.evento.EventosDeNotificacao.CursoConcluido;
 import com.techmentor.api.evento.EventosDeNotificacao.DesafioConcluido;
 import com.techmentor.api.evento.EventosDeNotificacao.NivelSubiu;
 import com.techmentor.api.evento.EventosDeNotificacao.StatusDaDenunciaMudou;
+import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.service.NivelRegraService;
 import com.techmentor.api.service.NotificacaoService;
@@ -20,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeMentoria;
 import com.techmentor.api.evento.EventosDeNotificacao.AvaliacaoRecebida;
 import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeAvaliacao;
+import com.techmentor.api.evento.EventosDeNotificacao.MentoriaExpirada;
 
 /**
  * Observer das notificações: escuta os fatos do sistema e cria a notificação de cada um.
@@ -92,6 +94,26 @@ public class NotificadorListener {
     public void aoCancelarMentoria(MentoriaCancelada evento) {
         notificacoes.notificar(evento.destinatario(), "Mentoria cancelada",
                 evento.quemCancelou() + " cancelou a mentoria de " + evento.inicio().format(DATA_E_HORA) + ".");
+    }
+
+    /**
+     * Chamado pelo relógio (não é rota): a mentoria ficou AGENDADA e o horário começou sem a mentora confirmar.
+     * Cancela e avisa as duas pessoas. O horário continua reservado de propósito: ele já passou,
+     * e liberar faria um horário antigo aparecer como disponível no perfil da mentora.
+     */
+    @EventListener
+    public void aoExpirarMentoria(MentoriaExpirada evento) {
+        String quando = evento.inicio().format(DATA_E_HORA);
+
+        if (evento.destinatarioEhMentora()) {
+            notificacoes.notificar(evento.destinatario(), "Mentoria expirada",
+                    "A mentoria de " + quando + " com " + evento.outraPessoa()
+                            + " não foi confirmada a tempo e foi cancelada.");
+        } else {
+            notificacoes.notificar(evento.destinatario(), "Mentoria não confirmada",
+                    "A mentoria de " + quando + " com " + evento.outraPessoa()
+                            + " não foi confirmada a tempo e foi cancelada. Que tal escolher outro horário?");
+        }
     }
 
     @EventListener
