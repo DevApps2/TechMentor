@@ -13,4 +13,7 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
 
     // Limite por alvo: esta pessoa já denunciou este usuário desde o horário informado?
     boolean existsByDenuncianteIdAndDenunciadoIdAndCriadaEmAfter(Long denuncianteId, Long denunciadoId, LocalDateTime desde);
+
+    // Esta pessoa já denunciou este comentário de avaliação?
+    boolean existsByDenuncianteIdAndAvaliacaoId(Long denuncianteId, Long avaliacaoId);
 }

@@ -20,7 +20,16 @@ public final class SegurancaDtos {
             @NotNull Denuncia.Motivo motivo,
             @Schema(description = "Detalhes da denúncia (mínimo de 10 caracteres)", example = "Mensagens ofensivas enviadas no chat", minLength = 10, maxLength = 2000)
             @NotBlank(message = "Descreva a situação")
-            @Size(min = 10, max = 2000, message = "A descrição deve ter entre 10 e 2000 caracteres") String descricao) { }
+            @Size(min = 10, max = 2000, message = "A descrição deve ter entre 10 e 2000 caracteres") String descricao,
+            @Schema(description = "ID da avaliação, quando a denúncia é sobre o comentário dela. Só quem foi avaliada pode denunciar; "
+                    + "o denunciado passa a ser quem escreveu o comentário", example = "12", nullable = true)
+            @Positive Long avaliacaoId) {
+
+        /** Denúncia comum, sem avaliação. */
+        public DenunciaRequest(Long usuarioDenunciadoId, Denuncia.Motivo motivo, String descricao) {
+            this(usuarioDenunciadoId, motivo, descricao, null);
+        }
+    }
 
     @Schema(description = "Denúncia registrada na plataforma")
     public record DenunciaResponse(
@@ -39,7 +48,15 @@ public final class SegurancaDtos {
             @Schema(description = "Situação da denúncia", example = "ABERTA")
             Denuncia.Status status,
             @Schema(description = "Data e hora em que a denúncia foi criada", example = "2026-10-26T14:30:00")
-            LocalDateTime criadaEm) { }
+            LocalDateTime criadaEm,
+            @Schema(description = "ID da avaliação denunciada; nulo se a denúncia não é sobre uma avaliação", nullable = true)
+            Long avaliacaoId,
+            @Schema(description = "Nota da avaliação denunciada", nullable = true)
+            Integer avaliacaoNota,
+            @Schema(description = "Comentário da avaliação denunciada", nullable = true)
+            String avaliacaoComentario,
+            @Schema(description = "Se o comentário já foi escondido pela moderação", nullable = true)
+            Boolean avaliacaoOculta) { }
 
     @Schema(description = "Nova situação de uma denúncia (só administradores)")
     public record DenunciaStatusRequest(

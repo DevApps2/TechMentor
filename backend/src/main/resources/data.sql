@@ -476,6 +476,201 @@ FROM (
     UNION ALL SELECT 'CANAL_AJUDA', 'Em caso de emergência',
            'Procure os serviços de emergência da sua região. No Brasil, ligue 190 para a Polícia Militar.', '190'
     UNION ALL SELECT 'CANAL_AJUDA', 'Apoio emocional',
-           'O CVV atende gratuitamente pelo número 188.', '188'
-) v
+                     'O CVV atende gratuitamente pelo número 188.', '188'
+     ) v
 WHERE NOT EXISTS (SELECT 1 FROM conteudos_seguranca c WHERE c.titulo = v.titulo);
+
+-- =====================================================================
+-- CENÁRIO DE TESTE DAS FUNCIONALIDADES NOVAS
+
+
+
+-- =====================================================================
+-- CENÁRIO DE TESTE DAS FUNCIONALIDADES NOVAS
+-- As datas são relativas a "agora", e o cenário pode ser recriado quantas vezes quiser:
+-- ele apaga o anterior (assunto/descrição começam com [TESTE], horários de 45 minutos) e cria de novo.
+-- Senha de todos os usuários: Techmentor@123
+-- =====================================================================
+    SET @agora = LOCALTIMESTAMP;
+
+-- 0) Apaga o cenário da rodada anterior (por causa das chaves: denúncias, avaliações, mentorias, horários)
+DELETE FROM denuncias WHERE descricao LIKE '[TESTE]%';
+DELETE FROM denuncias WHERE avaliacao_id IN (
+    SELECT a.id FROM avaliacoes a JOIN mentorias m ON m.id = a.mentoria_id WHERE m.assunto LIKE '[TESTE]%');
+DELETE FROM avaliacoes WHERE mentoria_id IN (SELECT id FROM mentorias WHERE assunto LIKE '[TESTE]%');
+DELETE FROM mentorias WHERE assunto LIKE '[TESTE]%';
+DELETE FROM horarios_disponiveis
+WHERE TIMESTAMPDIFF(MINUTE, inicio, fim) = 45
+  AND NOT EXISTS (SELECT 1 FROM mentorias m WHERE m.horario_id = horarios_disponiveis.id);
+
+-- 1) Horários (todos de 45 minutos: é o que os identifica na limpeza). Passados e reservados ficam reservados,
+--    para não aparecerem como "disponíveis" no perfil da mentora.
+INSERT INTO horarios_disponiveis (mentora_id, inicio, fim, reservado)
+SELECT p.id, v.inicio, TIMESTAMPADD(MINUTE, 45, v.inicio), v.reservado
+FROM (
+         -- Juliana
+         SELECT 'juliana.costa@techmentor.com' AS email, TIMESTAMPADD(MINUTE, -30, @agora) AS inicio, 1 AS reservado
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, -72, @agora),  1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, -480, @agora), 1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, -26, @agora),  1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, -220, @agora), 1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, 28, @agora),   1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, 100, @agora),  1
+         UNION ALL SELECT 'juliana.costa@techmentor.com', TIMESTAMPADD(HOUR, 96, @agora),   0
+         -- Maria
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, 48, @agora),   1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(MINUTE, 20, @agora), 1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, 76, @agora),   1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, 148, @agora),  1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, -200, @agora), 1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, -240, @agora), 1
+         UNION ALL SELECT 'maria.silva@techmentor.com',   TIMESTAMPADD(HOUR, 72, @agora),   0
+         -- Fernanda
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, -48, @agora),  1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, -96, @agora),  1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, 52, @agora),   1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, 124, @agora),  1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, -150, @agora), 1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', TIMESTAMPADD(HOUR, 120, @agora),  0
+     ) v
+         JOIN usuarios u ON u.email = v.email
+         JOIN perfis_mentora p ON p.usuario_id = u.id;
+
+-- 2) Mentorias de cada situação
+INSERT INTO mentorias (aluna_id, horario_id, status, assunto, criada_em)
+SELECT al.id, h.id, v.status, v.assunto, TIMESTAMPADD(DAY, -1, v.inicio)
+FROM (
+         -- Pedidos aguardando confirmação
+         SELECT 'camila.rocha@email.com' AS aluna, 'juliana.costa@techmentor.com' AS mentora,
+                TIMESTAMPADD(MINUTE, -30, @agora) AS inicio, 'AGENDADA' AS status,
+                '[TESTE] Pedido sem resposta: expira sozinho em até 1 minuto' AS assunto
+         UNION ALL SELECT 'elisa.ferreira@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(HOUR, 48, @agora), 'AGENDADA', '[TESTE] Pedido novo: a mentora confirma ou reagenda'
+         UNION ALL SELECT 'beatriz.santos@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(HOUR, 76, @agora), 'AGENDADA', '[TESTE] Pedido pendente: revisão de currículo'
+         UNION ALL SELECT 'camila.rocha@email.com', 'fernanda.alves@techmentor.com',
+                          TIMESTAMPADD(HOUR, 52, @agora), 'AGENDADA', '[TESTE] Pedido pendente: dúvidas sobre UX'
+         UNION ALL SELECT 'daniela.martins@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, 28, @agora), 'AGENDADA', '[TESTE] Pedido pendente: carreira em dados'
+         -- Confirmadas
+         UNION ALL SELECT 'daniela.martins@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(MINUTE, 20, @agora), 'CONFIRMADA', '[TESTE] Começa em 20 minutos: a sala já abre no app'
+         UNION ALL SELECT 'elisa.ferreira@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, 100, @agora), 'CONFIRMADA', '[TESTE] Confirmada: primeiros passos em dados'
+         UNION ALL SELECT 'beatriz.santos@email.com', 'fernanda.alves@techmentor.com',
+                          TIMESTAMPADD(HOUR, 124, @agora), 'CONFIRMADA', '[TESTE] Confirmada: portfólio de design'
+         UNION ALL SELECT 'camila.rocha@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(HOUR, 148, @agora), 'CONFIRMADA', '[TESTE] Confirmada: entrevista técnica'
+         -- Cancelada
+         UNION ALL SELECT 'daniela.martins@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, -26, @agora), 'CANCELADA', '[TESTE] Cancelada: a aluna precisou remarcar'
+         -- Concluídas sem avaliação (as duas podem avaliar / o prazo acabou)
+         UNION ALL SELECT 'camila.rocha@email.com', 'fernanda.alves@techmentor.com',
+                          TIMESTAMPADD(HOUR, -48, @agora), 'CONCLUIDA', '[TESTE] Concluída sem avaliação: as duas podem avaliar'
+         UNION ALL SELECT 'beatriz.santos@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, -480, @agora), 'CONCLUIDA', '[TESTE] Concluída há 20 dias: o prazo de avaliação acabou'
+         -- Concluídas e avaliadas pelas duas
+         UNION ALL SELECT 'elisa.ferreira@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, -72, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)'
+         UNION ALL SELECT 'daniela.martins@email.com', 'fernanda.alves@techmentor.com',
+                          TIMESTAMPADD(HOUR, -96, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário ofensivo (para denunciar no app)'
+         UNION ALL SELECT 'camila.rocha@email.com', 'juliana.costa@techmentor.com',
+                          TIMESTAMPADD(HOUR, -220, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)'
+         UNION ALL SELECT 'beatriz.santos@email.com', 'fernanda.alves@techmentor.com',
+                          TIMESTAMPADD(HOUR, -150, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (1)'
+         UNION ALL SELECT 'camila.rocha@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(HOUR, -200, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (2)'
+         UNION ALL SELECT 'daniela.martins@email.com', 'maria.silva@techmentor.com',
+                          TIMESTAMPADD(HOUR, -240, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (3)'
+     ) v
+         JOIN usuarios al ON al.email = v.aluna
+         JOIN usuarios um ON um.email = v.mentora
+         JOIN perfis_mentora p ON p.usuario_id = um.id
+         JOIN horarios_disponiveis h ON h.mentora_id = p.id AND h.inicio = v.inicio;
+
+-- 3) A aluna avaliou a mentora (3 elogios, 2 comentários ofensivos e 1 já escondido pela moderação)
+INSERT INTO avaliacoes (mentoria_id, avaliador_id, avaliado_id, autor, nota, comentario, oculta, criada_em)
+SELECT m.id, m.aluna_id, p.usuario_id, 'ALUNA', v.nota, v.comentario, v.oculta, TIMESTAMPADD(HOUR, 1, h.fim)
+FROM (
+         SELECT '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)' AS assunto, 1 AS nota,
+                'Atendimento ruim, achei a mentora grosseira e sem preparo.' AS comentario, FALSE AS oculta
+         UNION ALL SELECT '[TESTE] Avaliada com comentário ofensivo (para denunciar no app)', 1,
+                          'Perdi meu tempo. Mentora arrogante e despreparada.', FALSE
+         UNION ALL SELECT '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)', 1,
+                          'Texto ofensivo que a moderação já escondeu.', TRUE
+         UNION ALL SELECT '[TESTE] Avaliada com elogio (1)', 5,
+                          'A Fernanda explicou cada etapa do portfólio com muita paciência. Recomendo!', FALSE
+         UNION ALL SELECT '[TESTE] Avaliada com elogio (2)', 4,
+                          'Mentoria objetiva e cheia de dicas práticas para a entrevista.', FALSE
+         UNION ALL SELECT '[TESTE] Avaliada com elogio (3)', 5,
+                          'A Maria me ajudou a montar um plano de estudos claro. Super atenciosa!', FALSE
+     ) v
+         JOIN mentorias m ON m.assunto = v.assunto
+         JOIN horarios_disponiveis h ON h.id = m.horario_id
+         JOIN perfis_mentora p ON p.id = h.mentora_id;
+
+-- 3b) A mentora também avaliou a aluna (nota 5, sem comentário). Por isso a tela mostra o que escreveram sobre ela.
+INSERT INTO avaliacoes (mentoria_id, avaliador_id, avaliado_id, autor, nota, comentario, oculta, criada_em)
+SELECT m.id, p.usuario_id, m.aluna_id, 'MENTORA', 5, NULL, FALSE, TIMESTAMPADD(HOUR, 3, h.fim)
+FROM mentorias m
+         JOIN horarios_disponiveis h ON h.id = m.horario_id
+         JOIN perfis_mentora p ON p.id = h.mentora_id
+WHERE m.assunto LIKE '[TESTE] Avaliada%';
+
+-- 4) Denúncias sobre o comentário de uma avaliação (a mentora denunciou a aluna): uma aberta e uma já resolvida
+INSERT INTO denuncias (denunciante_id, denunciado_id, avaliacao_id, motivo, descricao, status, criada_em)
+SELECT p.usuario_id, a.avaliador_id, a.id, 'COMPORTAMENTO_INADEQUADO',
+       'Comentário ofensivo e sem respeito na avaliação da mentoria.', v.status, TIMESTAMPADD(HOUR, 2, h.fim)
+FROM (
+         SELECT '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)' AS assunto, 'ABERTA' AS status
+         UNION ALL SELECT '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)', 'RESOLVIDA'
+     ) v
+         JOIN mentorias m ON m.assunto = v.assunto
+         JOIN avaliacoes a ON a.mentoria_id = m.id AND a.autor = 'ALUNA'
+         JOIN horarios_disponiveis h ON h.id = m.horario_id
+         JOIN perfis_mentora p ON p.id = h.mentora_id;
+
+-- 5) Outras denúncias, de situações variadas (a descrição começa com [TESTE] para a limpeza achar)
+INSERT INTO denuncias (denunciante_id, denunciado_id, motivo, descricao, status, criada_em)
+SELECT du.id, dd.id, v.motivo, v.descricao, v.status, TIMESTAMPADD(HOUR, v.horas, @agora)
+FROM (
+         SELECT 'daniela.martins@email.com' AS denunciante, 'suspeito@email.com' AS denunciado, 'SPAM' AS motivo,
+                '[TESTE] Mandou links suspeitos pedindo dados pessoais.' AS descricao, 'ABERTA' AS status, -5 AS horas
+         UNION ALL SELECT 'elisa.ferreira@email.com', 'suspeito@email.com', 'PERFIL_FALSO',
+                          '[TESTE] Usa a foto de outra pessoa no perfil.', 'EM_ANALISE', -30
+         UNION ALL SELECT 'juliana.costa@techmentor.com', 'suspeito@email.com', 'ASSEDIO',
+                          '[TESTE] Tentou contato fora do app depois de ser ignorado.', 'RESOLVIDA', -120
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', 'elisa.ferreira@email.com', 'COMPORTAMENTO_INADEQUADO',
+                          '[TESTE] Comentários desrespeitosos durante a mentoria.', 'ABERTA', -2
+         UNION ALL SELECT 'beatriz.santos@email.com', NULL, 'OUTRO',
+                          '[TESTE] A tela de oportunidades demorou muito para carregar.', 'ABERTA', -8
+     ) v
+         JOIN usuarios du ON du.email = v.denunciante
+         LEFT JOIN usuarios dd ON dd.email = v.denunciado;
+
+-- 6) A nota média e o total de cada mentora, recalculados a partir das avaliações que existem (só as das alunas)
+UPDATE perfis_mentora
+SET nota_media = COALESCE((SELECT ROUND(AVG(a.nota), 1) FROM avaliacoes a
+                           WHERE a.avaliado_id = perfis_mentora.usuario_id AND a.autor = 'ALUNA'), 0),
+    total_avaliacoes = (SELECT COUNT(*) FROM avaliacoes a
+                        WHERE a.avaliado_id = perfis_mentora.usuario_id AND a.autor = 'ALUNA')
+WHERE usuario_id IN (SELECT id FROM usuarios
+                     WHERE email IN ('maria.silva@techmentor.com', 'juliana.costa@techmentor.com', 'fernanda.alves@techmentor.com'));
+
+-- 7) Notificações no sininho (só entram se ainda não existirem, então rodar de novo não duplica)
+INSERT INTO notificacoes (usuario_id, titulo, mensagem, lida, criada_em)
+SELECT u.id, v.titulo, v.mensagem, v.lida, TIMESTAMPADD(HOUR, v.horas, @agora)
+FROM (
+         SELECT 'maria.silva@techmentor.com' AS email, 'Nova mentoria para confirmar' AS titulo,
+                'Beatriz Santos quer conversar com você. Abra o app para confirmar.' AS mensagem, FALSE AS lida, -3 AS horas
+         UNION ALL SELECT 'maria.silva@techmentor.com', 'Você recebeu uma avaliação',
+                          'Daniela M. avaliou a mentoria com 5 estrelas.', TRUE, -200
+         UNION ALL SELECT 'juliana.costa@techmentor.com', 'Nova mentoria para confirmar',
+                          'Daniela Martins quer conversar com você. Abra o app para confirmar.', FALSE, -1
+         UNION ALL SELECT 'fernanda.alves@techmentor.com', 'Falta avaliar sua mentoria',
+                          'Sua opinião sobre a mentoria com Camila Rocha ainda não foi enviada.', FALSE, -20
+         UNION ALL SELECT 'camila.rocha@email.com', 'Mentoria confirmada!',
+                          'Maria Silva confirmou a mentoria. Veja o horário na aba Mentoria.', FALSE, -6
+     ) v
+         JOIN usuarios u ON u.email = v.email
+WHERE NOT EXISTS (SELECT 1 FROM notificacoes n WHERE n.usuario_id = u.id AND n.mensagem = v.mensagem);
