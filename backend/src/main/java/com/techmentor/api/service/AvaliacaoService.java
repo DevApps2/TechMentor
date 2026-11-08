@@ -144,6 +144,14 @@ public class AvaliacaoService {
                 .toList();
     }
 
+    /** Moderação: só a admin. Esconde (ou mostra de novo) o comentário; a nota continua valendo na média. */
+    public void ocultar(Usuario actor, Long id, boolean oculta) {
+        RegraAcesso.exigirAdmin(actor);
+        Avaliacao avaliacao = avaliacoes.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Avaliação não encontrada."));
+        avaliacao.setOculta(oculta);
+    }
+
     /** Perfil público: nota média, barrinhas por estrela e os comentários (com o nome da aluna abreviado). */
     @Transactional(readOnly = true)
     public AvaliacoesDaMentoraResponse daMentora(Long mentoraPerfilId, int limite) {

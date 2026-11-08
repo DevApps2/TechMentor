@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import com.techmentor.api.dto.AvaliacaoDtos.OcultacaoRequest;
 
 import java.util.List;
 
@@ -68,5 +69,15 @@ public class AvaliacaoController {
                                                  @Parameter(description = "Quantas avaliações trazer (padrão 20, máximo 50)")
                                                  @RequestParam(defaultValue = "20") int limite) {
         return avaliacoes.daMentora(id, limite);
+    }
+
+    @Operation(summary = "Esconder ou mostrar o comentário de uma avaliação",
+            description = "Só para administradoras (moderação). O comentário deixa de aparecer para todo mundo, "
+                    + "mas a nota continua valendo na média.")
+    @PatchMapping("/admin/avaliacoes/{id}/ocultacao")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void ocultar(@Parameter(description = "ID da avaliação") @PathVariable Long id,
+                        @Valid @RequestBody OcultacaoRequest request) {
+        avaliacoes.ocultar(usuarios.buscarAtual(), id, request.oculta());
     }
 }
