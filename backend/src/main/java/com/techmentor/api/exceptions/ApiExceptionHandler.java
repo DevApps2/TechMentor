@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
@@ -44,11 +43,6 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<Map<String, String>> unreadableBody(HttpMessageNotReadableException ex) {
         return ResponseEntity.badRequest().body(Map.of("erro", "Corpo da requisição inválido ou com valor desconhecido."));
-    }
-
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    ResponseEntity<Map<String, String>> missingIdentity(MissingRequestHeaderException ex) {
-        return ResponseEntity.badRequest().body(Map.of("erro", "Informe o cabeçalho X-Usuario-Id."));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

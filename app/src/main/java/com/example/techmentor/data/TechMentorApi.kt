@@ -16,7 +16,7 @@ import retrofit2.http.Query
 interface TechMentorApi {
 
     @POST("usuarios/login")
-    suspend fun login(@Body body: LoginRequest): UsuarioResponse
+    suspend fun login(@Body body: LoginRequest): LoginResponse
 
     @POST("usuarios")
     suspend fun cadastrar(@Body body: CadastroRequest): UsuarioResponse

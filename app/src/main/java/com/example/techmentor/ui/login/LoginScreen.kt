@@ -108,8 +108,8 @@ fun LoginScreen(
         loading = true
         scope.launch {
             try {
-                val usuario = ApiClient.api.login(LoginRequest(emailLimpo, password))
-                Sessao.entrar(usuario.id, usuario.tipo)
+                val resposta = ApiClient.api.login(LoginRequest(emailLimpo, password))
+                Sessao.entrar(resposta.usuario.id, resposta.usuario.tipo, resposta.accessToken)
                 navController.navigate(Sessao.rotaInicial()) {
                     popUpTo("login") { inclusive = true }
                 }

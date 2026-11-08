@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
-@Tag(name = "Administração", description = "Ações exclusivas de administradoras (envie o ID da administradora em X-Usuario-Id)")
+@Tag(name = "Administração", description = "Ações exclusivas de administradoras (exigem login com token de administradora)")
 public class AdminController {
     private final AdminService admin;
     private final UsuarioAtualService usuarios;
@@ -29,16 +29,14 @@ public class AdminController {
             description = "Cria a conta (tipo MENTORA) e o perfil de mentora de uma vez. Retorna 409 se o e-mail já existir.")
     @PostMapping("/mentoras")
     @ResponseStatus(HttpStatus.CREATED)
-    public MentoraResponse cadastrarMentora(@RequestHeader("X-Usuario-Id") Long actorId,
-                                            @Valid @RequestBody MentoraCadastroRequest request) {
-        return admin.cadastrarMentora(usuarios.buscar(actorId), request);
+    public MentoraResponse cadastrarMentora(@Valid @RequestBody MentoraCadastroRequest request) {
+        return admin.cadastrarMentora(usuarios.buscarAtual(), request);
     }
 
     @Operation(summary = "Alterar o status de uma denúncia", description = "ABERTA, EM_ANALISE ou RESOLVIDA.")
     @PatchMapping("/denuncias/{id}/status")
-    public DenunciaResponse alterarStatusDenuncia(@RequestHeader("X-Usuario-Id") Long actorId,
-                                                  @Parameter(description = "ID da denúncia") @PathVariable Long id,
+    public DenunciaResponse alterarStatusDenuncia(@Parameter(description = "ID da denúncia") @PathVariable Long id,
                                                   @Valid @RequestBody DenunciaStatusRequest request) {
-        return admin.alterarStatusDenuncia(usuarios.buscar(actorId), id, request.status());
+        return admin.alterarStatusDenuncia(usuarios.buscarAtual(), id, request.status());
     }
 }

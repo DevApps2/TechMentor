@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-
+import com.techmentor.api.security.JwtService;
 import javax.sql.DataSource;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,14 +37,21 @@ class SeedDataTest {
     private int porta;
 
     @Autowired
+    private JwtService jwtService;
+
+    @Autowired
     private DataSource dataSource;
 
     @Autowired
     private JdbcTemplate jdbc;
 
     private String get(String caminho) throws Exception {
+        // a API agora exige login: usa o token de um usuário ativo qualquer do seed (os GETs só leem dados)
+        Long usuarioId = jdbc.queryForObject("select min(id) from usuarios where ativo = true", Long.class);
         HttpResponse<String> r = HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create("http://localhost:" + porta + caminho)).build(),
+                HttpRequest.newBuilder(URI.create("http://localhost:" + porta + caminho))
+                        .header("Authorization", "Bearer " + jwtService.gerarToken(usuarioId.toString()))
+                        .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         assertEquals(200, r.statusCode(), caminho + " -> " + r.body());
         return r.body();
