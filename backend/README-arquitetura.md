@@ -9,10 +9,11 @@ src/main/java/com/techmentor/api/
 ├── model/        # entidades JPA compartilhadas
 ├── repository/   # consultas e persistência
 ├── service/      # regras de negócio, separadas por responsabilidade
-├── ApiException.java
-└── ApiExceptionHandler.java
+├── security/     # JWT: geração do token e filtro que identifica quem chama
+├── config/       # SecurityConfig e outras configurações
+└── exceptions/   # ApiException e o tratamento dos erros ({"erro": "mensagem"})
 ```
 
 Os serviços do módulo do Matheus ficam juntos em `service/`: `MentoraService` e `AgendamentoService`, `OportunidadeService`, `DenunciaService` e `BloqueioService`. `UsuarioAtualService` resolve o usuário das requisições sem substituir o `UsuarioService` de autenticação existente; `RegraAcesso` concentra regras compartilhadas. Os DTOs foram separados por assunto dentro de `dto/`.
 
-As rotas HTTP foram mantidas. As rotas protegidas ainda usam `X-Usuario-Id`; a integração com uma identidade autenticada confiável continua necessária antes da publicação.
+A identidade de quem chama vem do token JWT (`security/`), e `UsuarioAtualService.buscarAtual()` entrega o usuário logado aos controllers; nenhuma rota aceita um id de usuário enviado pelo cliente. As regras por URL (administradora, dona do dado) ficam em `config/SecurityConfig`, e as regras que dependem do dado ficam nos serviços, com `RegraAcesso`.

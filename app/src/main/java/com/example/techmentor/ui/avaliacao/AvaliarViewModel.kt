@@ -63,8 +63,8 @@ class AvaliarViewModel : ViewModel() {
                 val api = ApiClient.api
 
                 coroutineScope {
-                    val agendamentoPedido = async { api.obterAgendamento(usuarioId, agendamentoId) }
-                    val situacaoPedido = async { api.situacaoDaAvaliacao(usuarioId, agendamentoId) }
+                    val agendamentoPedido = async { api.obterAgendamento(agendamentoId) }
+                    val situacaoPedido = async { api.situacaoDaAvaliacao(agendamentoId) }
 
                     val agendamento = agendamentoPedido.await()
                     val situacao = situacaoPedido.await()
@@ -131,7 +131,7 @@ class AvaliarViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                ApiClient.api.denunciar(usuarioId, DenunciaRequest(null, motivo, texto, avaliacaoId))
+                ApiClient.api.denunciar(DenunciaRequest(null, motivo, texto, avaliacaoId))
                 _estado.update { it.copy(enviandoDenuncia = false, denunciaEnviada = true) }
 
             } catch (e: HttpException) {
@@ -170,7 +170,6 @@ class AvaliarViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 ApiClient.api.avaliar(
-                    usuarioId,
                     agendamentoId,
                     AvaliacaoRequest(nota = atual.nota, comentario = atual.comentario.trim().ifEmpty { null })
                 )
@@ -201,7 +200,7 @@ class AvaliarViewModel : ViewModel() {
 
     private suspend fun atualizarSituacao(usuarioId: Long, agendamentoId: Long) {
         try {
-            val situacao = ApiClient.api.situacaoDaAvaliacao(usuarioId, agendamentoId)
+            val situacao = ApiClient.api.situacaoDaAvaliacao(agendamentoId)
             _estado.update { it.copy(situacao = situacao) }
         } catch (e: HttpException) {
             // a mensagem de erro já está na tela; não precisa de outra

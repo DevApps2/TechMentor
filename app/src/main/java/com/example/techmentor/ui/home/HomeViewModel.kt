@@ -73,7 +73,7 @@ class HomeViewModel : ViewModel() {
                     // Só o usuário é obrigatório: se curso ou mentoria falharem, a Home abre sem eles.
                     val usuarioPedido = async { api.obterUsuario(usuarioId) }
                     val matriculasPedido = async { runCatching { api.listarMatriculas(usuarioId) }.getOrNull() }
-                    val agendamentosPedido = async { runCatching { api.listarAgendamentos(usuarioId) }.getOrNull() }
+                    val agendamentosPedido = async { runCatching { api.listarAgendamentos() }.getOrNull() }
 
                     val usuario = usuarioPedido.await()
                     val matriculas = matriculasPedido.await()
@@ -114,7 +114,7 @@ class HomeViewModel : ViewModel() {
             _estado.update { it.copy(cancelando = true, erroCancelamento = null) }
 
             try {
-                ApiClient.api.cancelarAgendamento(usuarioId, agendamentoId)
+                ApiClient.api.cancelarAgendamento(agendamentoId)
 
                 _estado.update { it.copy(cancelando = false) }
                 carregar()

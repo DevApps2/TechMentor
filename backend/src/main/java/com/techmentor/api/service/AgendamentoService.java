@@ -289,6 +289,6 @@ public class AgendamentoService {
         return new AgendamentoResponse(mentoria.getId(), mentoria.getAluna().getId(), mentoria.getAluna().getNome(),
                 horario.getMentora().getId(), horario.getMentora().getUsuario().getNome(), horario.getId(),
                 horario.getInicio(), horario.getFim(), mentoria.getStatus(), mentoria.getAssunto(), mentoria.getCriadaEm(),
-                mentoria.getLinkSala());
+                mentoria.getLinkSala(), LembreteDeMentoriaService.MINUTOS_PARA_ABRIR_SALA);
     }
 }

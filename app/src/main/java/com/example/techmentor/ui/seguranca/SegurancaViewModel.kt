@@ -103,10 +103,10 @@ class SegurancaViewModel : ViewModel() {
                     // Só os textos são obrigatórios: se a lista de bloqueados falhar, a tela abre sem ela
                     val conteudosPedido = async { api.listarConteudosSeguranca() }
                     val bloqueiosPedido = async {
-                        if (usuarioId == null) null else runCatching { api.listarBloqueios(usuarioId) }.getOrNull()
+                        if (usuarioId == null) null else runCatching { api.listarBloqueios() }.getOrNull()
                     }
                     val denunciasPedido = async {
-                        if (usuarioId == null) null else runCatching { api.minhasDenuncias(usuarioId) }.getOrNull()
+                        if (usuarioId == null) null else runCatching { api.minhasDenuncias() }.getOrNull()
                     }
 
                     val conteudos = conteudosPedido.await()
@@ -150,7 +150,7 @@ class SegurancaViewModel : ViewModel() {
             _estado.update { it.copy(buscando = true) }
 
             try {
-                val lista = ApiClient.api.buscarUsuarios(termo, usuarioId)
+                val lista = ApiClient.api.buscarUsuarios(termo)
 
                 if (minhaBusca == numeroDaBusca) {
                     _estado.update { it.copy(resultadosBusca = lista) }
@@ -175,7 +175,6 @@ class SegurancaViewModel : ViewModel() {
     fun denunciar(usuarioDenunciadoId: Long?, motivo: MotivoDenuncia, descricao: String) {
         executarAcao { api, usuarioId ->
             val criada = api.denunciar(
-                usuarioId,
                 DenunciaRequest(
                     usuarioDenunciadoId = usuarioDenunciadoId,
                     motivo = motivo.api,
@@ -194,7 +193,7 @@ class SegurancaViewModel : ViewModel() {
 
     fun bloquear(bloqueadoId: Long, aoTerminar: () -> Unit) {
         executarAcao { api, usuarioId ->
-            val criado = api.bloquear(usuarioId, BloqueioRequest(bloqueadoId))
+            val criado = api.bloquear(BloqueioRequest(bloqueadoId))
 
             _estado.update {
                 it.copy(
@@ -208,7 +207,7 @@ class SegurancaViewModel : ViewModel() {
 
     fun desbloquear(bloqueadoId: Long) {
         executarAcao { api, usuarioId ->
-            api.desbloquear(usuarioId, bloqueadoId)
+            api.desbloquear(bloqueadoId)
 
             _estado.update {
                 it.copy(bloqueados = it.bloqueados.filter { b -> b.usuarioId != bloqueadoId })

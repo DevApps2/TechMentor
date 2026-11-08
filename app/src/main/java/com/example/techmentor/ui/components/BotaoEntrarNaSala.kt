@@ -27,8 +27,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// A sala abre este tanto de minutos antes do começo da mentoria
-private const val MINUTOS_ANTES = 30L
+// Só vale se o servidor não informar quantos minutos antes a sala abre (o servidor é a fonte desse número)
+private const val MINUTOS_PADRAO = 30
 private const val DOZE_HORAS = 12 * 60 * 60 * 1000L
 
 /**
@@ -40,7 +40,9 @@ fun BotaoEntrarNaSala(
     status: String,
     inicio: String,
     fim: String,
-    linkSala: String?
+    linkSala: String?,
+    // vem do servidor (AgendamentoResponse.minutosParaAbrirSala)
+    minutosAntes: Int? = null
 ) {
 
     if (status != "CONFIRMADA") return
@@ -59,12 +61,13 @@ fun BotaoEntrarNaSala(
     if (agora >= termino.time) return
 
     val uriHandler = LocalUriHandler.current
-    val liberaEm = comeco.time - MINUTOS_ANTES * 60_000
+    val minutos = minutosAntes ?: MINUTOS_PADRAO
+    val liberaEm = comeco.time - minutos * 60_000L
     val liberada = agora >= liberaEm
 
     val legenda = when {
         liberada -> "A sala já está aberta"
-        liberaEm - agora > DOZE_HORAS -> "Libera $MINUTOS_ANTES min antes da mentoria"
+        liberaEm - agora > DOZE_HORAS -> "Libera $minutos min antes da mentoria"
         else -> "Libera às " + SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR")).format(Date(liberaEm))
     }
 

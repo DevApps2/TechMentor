@@ -23,8 +23,8 @@ public class MentoriaConfirmadaEmailListener {
     // Ex.: "segunda-feira, 02/11 às 14:00"
     private static final DateTimeFormatter QUANDO = DateTimeFormatter.ofPattern("EEEE, dd/MM 'às' HH:mm", PT_BR);
 
-    // Tem que ser igual ao MINUTOS_DE_ANTECEDENCIA do LembreteDeMentoriaService
-    private static final int MINUTOS_DO_LEMBRETE = 30;
+    // O lembrete sai junto com a abertura da sala (mesmo número do LembreteDeMentoriaService)
+    private static final int MINUTOS_DO_LEMBRETE = LembreteDeMentoriaService.MINUTOS_PARA_ABRIR_SALA;
 
     private final EmailService emailService;
 
@@ -36,7 +36,7 @@ public class MentoriaConfirmadaEmailListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void enviar(MentoriaConfirmada evento) {
         try {
-            // Se faltam 30 minutos ou menos, o lembrete (com o link) sai em até 1 minuto: mandar os dois seria e-mail repetido
+            // Se faltam MINUTOS_DO_LEMBRETE ou menos, o lembrete (com o link) sai em até 1 minuto: mandar os dois seria e-mail repetido
             if (!evento.inicio().isAfter(LocalDateTime.now().plusMinutes(MINUTOS_DO_LEMBRETE))) {
                 return;
             }
@@ -56,7 +56,7 @@ public class MentoriaConfirmadaEmailListener {
                 modelo.detalhe("Assunto", evento.assunto());
             }
 
-            modelo.paragrafo("A conversa acontece por videochamada no Google Meet. A sala abre no aplicativo 30 minutos antes "
+            modelo.paragrafo("A conversa acontece por videochamada no Google Meet. A sala abre no aplicativo " + MINUTOS_DO_LEMBRETE + " minutos antes "
                     + "do início, e o link também chega por e-mail nesse momento.");
 
             modelo.nota("Precisa remarcar ou cancelar? Abra o aplicativo do TechMentor e use as opções da sua mentoria.");

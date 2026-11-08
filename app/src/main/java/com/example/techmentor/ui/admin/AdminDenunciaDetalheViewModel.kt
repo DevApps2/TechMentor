@@ -61,7 +61,7 @@ class AdminDenunciaDetalheViewModel : ViewModel() {
             }
 
             coroutineScope {
-                val denunciaPedido = async { chamar { ApiClient.adminApi.obterDenuncia(adminId, denunciaId) } }
+                val denunciaPedido = async { chamar { ApiClient.adminApi.obterDenuncia(denunciaId) } }
                 val usuariosPedido = async { chamar { ApiClient.adminApi.listarUsuarios() } }
 
                 val resultado = denunciaPedido.await()
@@ -107,7 +107,7 @@ class AdminDenunciaDetalheViewModel : ViewModel() {
             _estado.update { it.copy(alterando = true, erroAoAlterar = null, avisoDeSucesso = null) }
 
             val resultado = chamar {
-                ApiClient.adminApi.alterarStatusDenuncia(adminId, denunciaId, AdminDenunciaStatusRequest(novoStatus))
+                ApiClient.adminApi.alterarStatusDenuncia(denunciaId, AdminDenunciaStatusRequest(novoStatus))
             }
 
             when (resultado) {
@@ -146,7 +146,7 @@ class AdminDenunciaDetalheViewModel : ViewModel() {
             _estado.update { it.copy(ocultando = true, erroAoOcultar = null, avisoDeSucesso = null) }
 
             val resultado = chamar {
-                ApiClient.adminApi.ocultarAvaliacao(adminId, avaliacaoId, AdminOcultacaoRequest(oculta))
+                ApiClient.adminApi.ocultarAvaliacao(avaliacaoId, AdminOcultacaoRequest(oculta))
             }
 
             when (resultado) {

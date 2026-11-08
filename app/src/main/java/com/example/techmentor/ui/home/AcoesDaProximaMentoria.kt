@@ -96,7 +96,8 @@ fun AcoesDaProximaMentoria(
         status = proxima.status,
         inicio = proxima.inicio,
         fim = proxima.fim,
-        linkSala = proxima.linkSala
+        linkSala = proxima.linkSala,
+        minutosAntes = proxima.minutosParaAbrirSala
     )
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

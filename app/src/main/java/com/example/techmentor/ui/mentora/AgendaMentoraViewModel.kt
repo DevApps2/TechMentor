@@ -68,7 +68,7 @@ class AgendaMentoraViewModel : ViewModel() {
 
                 // 404 = a mentora ainda não preencheu o perfil
                 val mentora = try {
-                    api.minhaMentora(usuarioId)
+                    api.minhaMentora()
                 } catch (e: HttpException) {
                     if (e.code() == 404) null else throw e
                 }
@@ -114,7 +114,7 @@ class AgendaMentoraViewModel : ViewModel() {
             _estado.update { it.copy(adicionando = true, erroAcao = null) }
 
             try {
-                val criado = ApiClient.api.criarHorario(usuarioId, mentoraId, HorarioRequest(inicio, fim))
+                val criado = ApiClient.api.criarHorario(mentoraId, HorarioRequest(inicio, fim))
 
                 _estado.update {
                     it.copy(adicionando = false, horarios = horariosDisponiveis(it.horarios + criado))
@@ -141,7 +141,7 @@ class AgendaMentoraViewModel : ViewModel() {
             _estado.update { it.copy(removendoId = horarioId, erroAcao = null) }
 
             try {
-                ApiClient.api.excluirHorario(usuarioId, horarioId)
+                ApiClient.api.excluirHorario(horarioId)
 
                 _estado.update {
                     it.copy(removendoId = null, horarios = it.horarios.filter { h -> h.id != horarioId })

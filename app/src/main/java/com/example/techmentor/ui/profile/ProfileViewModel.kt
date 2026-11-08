@@ -77,7 +77,7 @@ class ProfileViewModel : ViewModel() {
                     val usuarioPedido = async { api.obterUsuario(usuarioId) }
                     val conquistasPedido = async { runCatching { api.listarConquistasDoUsuario(usuarioId) }.getOrNull() }
                     val matriculasPedido = async { runCatching { api.listarMatriculas(usuarioId) }.getOrNull() }
-                    val agendamentosPedido = async { runCatching { api.listarAgendamentos(usuarioId) }.getOrNull() }
+                    val agendamentosPedido = async { runCatching { api.listarAgendamentos() }.getOrNull() }
 
                     val usuario = usuarioPedido.await()
                     val conquistas = conquistasPedido.await()

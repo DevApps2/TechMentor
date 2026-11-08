@@ -116,7 +116,7 @@ class AdminMentoraFormViewModel : ViewModel() {
         viewModelScope.launch {
             _estado.update { it.copy(criandoArea = true, erroDaArea = null) }
 
-            when (val resultado = chamar { ApiClient.adminApi.criarArea(adminId, AdminAreaRequest(nomeLimpo)) }) {
+            when (val resultado = chamar { ApiClient.adminApi.criarArea(AdminAreaRequest(nomeLimpo)) }) {
                 is Resultado.Ok -> _estado.update {
                     val nova = resultado.valor
                     it.copy(
@@ -173,7 +173,7 @@ class AdminMentoraFormViewModel : ViewModel() {
 
         viewModelScope.launch {
             _estado.update { it.copy(salvando = true, erroAoSalvar = null) }
-            terminar(chamar { ApiClient.adminApi.cadastrarMentora(adminId, pedido) })
+            terminar(chamar { ApiClient.adminApi.cadastrarMentora(pedido) })
         }
     }
 
@@ -205,7 +205,7 @@ class AdminMentoraFormViewModel : ViewModel() {
 
         viewModelScope.launch {
             _estado.update { it.copy(salvando = true, erroAoSalvar = null) }
-            terminar(chamar { ApiClient.adminApi.atualizarMentora(adminId, mentoraId, pedido) })
+            terminar(chamar { ApiClient.adminApi.atualizarMentora(mentoraId, pedido) })
         }
     }
 
@@ -222,7 +222,7 @@ class AdminMentoraFormViewModel : ViewModel() {
         viewModelScope.launch {
             _estado.update { it.copy(excluindo = true, erroAoSalvar = null) }
 
-            when (val resultado = chamarSemCorpo { ApiClient.adminApi.excluirMentora(adminId, mentoraId) }) {
+            when (val resultado = chamarSemCorpo { ApiClient.adminApi.excluirMentora(mentoraId) }) {
                 is Resultado.Ok -> _estado.update { it.copy(excluindo = false, concluido = true) }
 
                 is Resultado.Falha -> _estado.update {

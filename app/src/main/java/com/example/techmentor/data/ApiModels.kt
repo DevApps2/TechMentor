@@ -58,7 +58,9 @@ data class AgendamentoResponse(
     val assunto: String?,
     val criadaEm: String?,
     // link da sala do Google Meet; nulo até a mentora confirmar
-    val linkSala: String? = null
+    val linkSala: String? = null,
+    // quantos minutos antes do início a sala abre (o servidor é a fonte; nulo em servidor antigo)
+    val minutosParaAbrirSala: Int? = null
 )
 
 // Conquista desbloqueada por uma usuária (GET /conquistas/usuarios/{id})

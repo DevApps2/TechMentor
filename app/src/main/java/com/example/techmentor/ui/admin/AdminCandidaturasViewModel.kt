@@ -46,7 +46,7 @@ class AdminCandidaturasViewModel : ViewModel() {
             // O "carregando" só aparece na primeira vez
             _estado.update { if (it.candidaturas == null) it.copy(carregando = true, erro = null) else it }
 
-            when (val resultado = chamar { ApiClient.adminApi.listarCandidaturas(adminId, oportunidadeId) }) {
+            when (val resultado = chamar { ApiClient.adminApi.listarCandidaturas(oportunidadeId) }) {
                 is Resultado.Ok -> _estado.update {
                     it.copy(carregando = false, erro = null, candidaturas = resultado.valor)
                 }
@@ -76,8 +76,7 @@ class AdminCandidaturasViewModel : ViewModel() {
             _estado.update { it.copy(alterandoId = candidaturaId, erroAoAlterar = null) }
 
             val resultado = chamar {
-                ApiClient.adminApi.alterarStatusDaCandidatura(
-                    adminId, candidaturaId, AdminCandidaturaStatusRequest(novoStatus)
+                ApiClient.adminApi.alterarStatusDaCandidatura(candidaturaId, AdminCandidaturaStatusRequest(novoStatus)
                 )
             }
 

@@ -456,7 +456,8 @@ private fun CartaoDeMentoria(
             status = mentoria.status,
             inicio = mentoria.inicio,
             fim = mentoria.fim,
-            linkSala = mentoria.linkSala
+            linkSala = mentoria.linkSala,
+            minutosAntes = mentoria.minutosParaAbrirSala
         )
 
         Spacer(modifier = Modifier.height(10.dp))

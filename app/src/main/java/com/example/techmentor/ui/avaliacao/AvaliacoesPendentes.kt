@@ -65,7 +65,7 @@ class PendentesViewModel : ViewModel() {
 
         tarefa = viewModelScope.launch {
             try {
-                _pendentes.value = ApiClient.api.avaliacoesPendentes(usuarioId)
+                _pendentes.value = ApiClient.api.avaliacoesPendentes()
             } catch (e: HttpException) {
                 // É um extra da tela: se falhar, o cartão só não aparece
             } catch (e: IOException) {

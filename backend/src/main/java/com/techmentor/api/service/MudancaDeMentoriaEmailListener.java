@@ -64,7 +64,7 @@ public class MudancaDeMentoriaEmailListener {
                 modelo.paragrafo("Abra o aplicativo do TechMentor para confirmar o novo horário.");
             } else {
                 modelo.paragrafo("Se não puder nesse horário, abra o aplicativo do TechMentor para escolher outro ou cancelar.")
-                        .paragrafo("A sala do Google Meet continua valendo para o novo horário: o link chega por e-mail 30 minutos antes.");
+                        .paragrafo("A sala do Google Meet continua valendo para o novo horário: o link chega por e-mail " + LembreteDeMentoriaService.MINUTOS_PARA_ABRIR_SALA + " minutos antes.");
             }
 
             emailService.enviar(

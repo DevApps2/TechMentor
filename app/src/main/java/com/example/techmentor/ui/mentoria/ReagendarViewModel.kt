@@ -86,7 +86,7 @@ class ReagendarViewModel : ViewModel() {
             _estado.update { it.copy(enviando = true, erroEnvio = null) }
 
             try {
-                ApiClient.api.reagendarAgendamento(usuarioId, agendamentoId, ReagendamentoRequest(horarioId))
+                ApiClient.api.reagendarAgendamento(agendamentoId, ReagendamentoRequest(horarioId))
 
                 _estado.update { it.copy(enviando = false, concluido = true) }
             } catch (e: HttpException) {
