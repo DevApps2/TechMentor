@@ -93,8 +93,10 @@ public class AgendamentoService {
         conquistas.desbloquear(actor, ConquistaService.PRIMEIRA_MENTORIA);
         desafios.verificarDesafios(actor);
 
+        Usuario mentoraDaMentoria = horario.getMentora().getUsuario();
         eventos.publishEvent(new EventosDeNotificacao.MentoriaAgendada(
-                horario.getMentora().getUsuario(), actor.getNome(), horario.getInicio()));
+                mentoraDaMentoria, actor.getNome(), horario.getInicio(),
+                mentoraDaMentoria.getNome(), mentoraDaMentoria.getEmail(), request.assunto()));
 
         return toResponse(salva);
     }
