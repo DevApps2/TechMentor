@@ -75,12 +75,12 @@ class MentoraHomeViewModel : ViewModel() {
                     // As três chamadas saem ao mesmo tempo.
                     // Para uma mentora, a API devolve as mentorias em que ela é a mentora.
                     val usuarioPedido = async { api.obterUsuario(usuarioId) }
-                    val agendamentosPedido = async { api.listarAgendamentos(usuarioId) }
+                    val agendamentosPedido = async { api.listarAgendamentos() }
 
                     // 404 = a mentora ainda não preencheu o perfil
                     val semPerfilPedido = async {
                         try {
-                            api.minhaMentora(usuarioId)
+                            api.minhaMentora()
                             false
                         } catch (e: HttpException) {
                             if (e.code() == 404) true else throw e
@@ -127,14 +127,14 @@ class MentoraHomeViewModel : ViewModel() {
     /** A mentora confirma: a mentoria passa a CONFIRMADA e a aluna é avisada pelo backend. */
     fun confirmar(agendamentoId: Long) {
         executar(agendamentoId) { usuarioId ->
-            ApiClient.api.confirmarAgendamento(usuarioId, agendamentoId)
+            ApiClient.api.confirmarAgendamento(agendamentoId)
         }
     }
 
     /** A mentora cancela: a aluna é avisada e o horário volta a ficar livre. */
     fun cancelar(agendamentoId: Long) {
         executar(agendamentoId) { usuarioId ->
-            ApiClient.api.cancelarAgendamento(usuarioId, agendamentoId)
+            ApiClient.api.cancelarAgendamento(agendamentoId)
         }
     }
 

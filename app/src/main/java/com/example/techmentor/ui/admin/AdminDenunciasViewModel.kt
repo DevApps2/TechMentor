@@ -60,7 +60,7 @@ class AdminDenunciasViewModel : ViewModel() {
 
             coroutineScope {
                 // Só as denúncias são obrigatórias: se os nomes falharem, a lista mostra "Usuária #número"
-                val denunciasPedido = async { chamar { ApiClient.adminApi.listarDenuncias(adminId) } }
+                val denunciasPedido = async { chamar { ApiClient.adminApi.listarDenuncias() } }
                 val usuariosPedido = async { chamar { ApiClient.adminApi.listarUsuarios() } }
 
                 val resultado = denunciasPedido.await()

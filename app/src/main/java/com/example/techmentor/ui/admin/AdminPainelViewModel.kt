@@ -59,7 +59,7 @@ class AdminPainelViewModel : ViewModel() {
 
             coroutineScope {
                 val perfil = async { chamar { ApiClient.api.obterUsuario(adminId) } }
-                val denuncias = async { chamar { ApiClient.adminApi.listarDenuncias(adminId) } }
+                val denuncias = async { chamar { ApiClient.adminApi.listarDenuncias() } }
                 val oportunidades = async { chamar { ApiClient.adminApi.listarOportunidades() } }
                 val mentoras = async { chamar { ApiClient.api.listarMentoras(null, null) } }
                 val usuarios = async { chamar { ApiClient.adminApi.listarUsuarios() } }

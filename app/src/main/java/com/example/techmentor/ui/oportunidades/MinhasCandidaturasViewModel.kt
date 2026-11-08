@@ -59,8 +59,8 @@ class MinhasCandidaturasViewModel : ViewModel() {
                 val api = ApiClient.api
 
                 coroutineScope {
-                    val candidaturas = async { api.minhasCandidaturas(usuarioId) }
-                    val inscricoes = async { api.minhasInscricoes(usuarioId) }
+                    val candidaturas = async { api.minhasCandidaturas() }
+                    val inscricoes = async { api.minhasInscricoes() }
 
                     // Mais novas primeiro (a data chega como texto ISO, que ordena certo)
                     val itens = (candidaturas.await().map { ItemDeParticipacao(it, false) } +
@@ -88,7 +88,7 @@ class MinhasCandidaturasViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                ApiClient.api.desistirDaCandidatura(usuarioId, inscricaoId)
+                ApiClient.api.desistirDaCandidatura(inscricaoId)
 
                 _estado.update { atual ->
                     atual.copy(

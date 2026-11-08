@@ -91,7 +91,7 @@ class OportunidadesViewModel : ViewModel() {
                             null
                         } else {
                             runCatching {
-                                api.minhasCandidaturas(usuarioId) + api.minhasInscricoes(usuarioId)
+                                api.minhasCandidaturas() + api.minhasInscricoes()
                             }.getOrNull()
                         }
                     }
@@ -167,9 +167,9 @@ class OportunidadesViewModel : ViewModel() {
             try {
                 val api = ApiClient.api
                 val criada = if (evento) {
-                    api.inscreverEmEvento(usuarioId, oportunidade.id)
+                    api.inscreverEmEvento(oportunidade.id)
                 } else {
-                    api.candidatar(usuarioId, oportunidade.id)
+                    api.candidatar(oportunidade.id)
                 }
 
                 _estado.update {

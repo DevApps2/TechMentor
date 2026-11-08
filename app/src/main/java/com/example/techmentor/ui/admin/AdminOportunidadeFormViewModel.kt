@@ -112,9 +112,9 @@ class AdminOportunidadeFormViewModel : ViewModel() {
 
             val resultado = chamar {
                 if (oportunidadeId == null) {
-                    ApiClient.adminApi.criarOportunidade(adminId, pedido)
+                    ApiClient.adminApi.criarOportunidade(pedido)
                 } else {
-                    ApiClient.adminApi.atualizarOportunidade(adminId, oportunidadeId, pedido)
+                    ApiClient.adminApi.atualizarOportunidade(oportunidadeId, pedido)
                 }
             }
 
@@ -145,7 +145,7 @@ class AdminOportunidadeFormViewModel : ViewModel() {
         viewModelScope.launch {
             _estado.update { it.copy(excluindo = true, erroAoSalvar = null) }
 
-            when (val resultado = chamarSemCorpo { ApiClient.adminApi.excluirOportunidade(adminId, oportunidadeId) }) {
+            when (val resultado = chamarSemCorpo { ApiClient.adminApi.excluirOportunidade(oportunidadeId) }) {
                 is Resultado.Ok -> _estado.update { it.copy(excluindo = false, concluido = true) }
 
                 is Resultado.Falha -> _estado.update {

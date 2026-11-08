@@ -121,6 +121,8 @@ public final class MentoriaDtos {
             LocalDateTime criadaEm,
             @Schema(description = "Link da sala do Google Meet; nulo até a mentora confirmar (ou se o Google não estiver configurado)",
                     example = "https://meet.google.com/abc-defg-hij")
-            String linkSala) { }
+            String linkSala,
+            @Schema(description = "Quantos minutos antes do início a sala abre no app", example = "30")
+            int minutosParaAbrirSala) { }
 
 }

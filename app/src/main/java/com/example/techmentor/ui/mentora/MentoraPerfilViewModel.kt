@@ -65,7 +65,7 @@ class MentoraPerfilFormViewModel : ViewModel() {
                     // 404 não é erro aqui: só quer dizer "ainda não preencheu"
                     val perfilPedido = async {
                         try {
-                            api.minhaMentora(usuarioId)
+                            api.minhaMentora()
                         } catch (e: HttpException) {
                             if (e.code() == 404) null else throw e
                         }
@@ -153,9 +153,9 @@ class MentoraPerfilFormViewModel : ViewModel() {
                 val perfil = atual.perfilAtual
 
                 val resposta = if (perfil == null) {
-                    api.criarPerfilDeMentora(usuarioId, pedido)
+                    api.criarPerfilDeMentora(pedido)
                 } else {
-                    api.atualizarPerfilDeMentora(usuarioId, perfil.id, pedido)
+                    api.atualizarPerfilDeMentora(perfil.id, pedido)
                 }
 
                 _estado.update { it.copy(salvando = false, perfilAtual = resposta, salvo = true) }

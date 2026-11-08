@@ -25,8 +25,12 @@ import java.time.LocalDateTime;
 @Service
 public class LembreteDeMentoriaService {
 
-    /** A sala abre no app este tanto antes do início. Tem que ser igual ao MINUTOS_ANTES do app (BotaoEntrarNaSala). */
-    private static final int MINUTOS_PARA_ABRIR_SALA = 30;
+    /**
+     * A sala abre no app, e o lembrete sai por e-mail, este tanto de minutos antes do início.
+     * É a ÚNICA fonte desse número: o agendamento devolve o valor ao app (minutosParaAbrirSala),
+     * e os textos dos e-mails também usam esta constante.
+     */
+    public static final int MINUTOS_PARA_ABRIR_SALA = 30;
 
     /** O lembrete sai junto com a abertura da sala, para o link do e-mail só chegar quando já pode ser usado. */
     private static final int MINUTOS_DE_ANTECEDENCIA = MINUTOS_PARA_ABRIR_SALA;

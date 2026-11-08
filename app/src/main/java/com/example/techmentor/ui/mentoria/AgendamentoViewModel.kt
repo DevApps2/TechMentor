@@ -117,7 +117,6 @@ class AgendamentoViewModel : ViewModel() {
 
             try {
                 val criado = ApiClient.api.criarAgendamento(
-                    usuarioId,
                     AgendamentoRequest(
                         horarioId = horarioId,
                         assunto = assunto.trim().ifEmpty { null }

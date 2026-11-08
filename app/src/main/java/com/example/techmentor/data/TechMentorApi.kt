@@ -4,7 +4,6 @@ import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -28,7 +27,7 @@ interface TechMentorApi {
     suspend fun listarMatriculas(@Path("id") id: Long): List<MatriculaResponse>
 
     @GET("api/agendamentos")
-    suspend fun listarAgendamentos(@Header("X-Usuario-Id") usuarioId: Long): List<AgendamentoResponse>
+    suspend fun listarAgendamentos(): List<AgendamentoResponse>
 
     // ---- Mentoria ----
 
@@ -51,58 +50,50 @@ interface TechMentorApi {
 
     @POST("api/agendamentos")
     suspend fun criarAgendamento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: AgendamentoRequest
     ): AgendamentoResponse
 
     // 404 = a mentora ainda não preencheu o perfil
     @GET("api/mentoras/minha")
-    suspend fun minhaMentora(@Header("X-Usuario-Id") usuarioId: Long): MentoraResponse
+    suspend fun minhaMentora(): MentoraResponse
 
     @POST("api/mentoras")
     suspend fun criarPerfilDeMentora(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: MentoraRequest
     ): MentoraResponse
 
     @PUT("api/mentoras/{id}")
     suspend fun atualizarPerfilDeMentora(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") mentoraId: Long,
         @Body body: MentoraRequest
     ): MentoraResponse
 
     @POST("api/mentoras/{id}/disponibilidades")
     suspend fun criarHorario(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") mentoraId: Long,
         @Body body: HorarioRequest
     ): HorarioResponse
 
     @DELETE("api/disponibilidades/{id}")
     suspend fun excluirHorario(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") horarioId: Long
     )
 
     // A mentora confirma: AGENDADA vira CONFIRMADA e a aluna é avisada
     @PATCH("api/agendamentos/{id}/confirmacao")
     suspend fun confirmarAgendamento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long
     ): AgendamentoResponse
 
     // Aluna ou mentora cancela: o horário volta a ficar livre e a outra pessoa é avisada
     @PATCH("api/agendamentos/{id}/cancelamento")
     suspend fun cancelarAgendamento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long
     ): AgendamentoResponse
 
     // Troca por outro horário livre da mesma mentora (será usado na próxima etapa)
     @PATCH("api/agendamentos/{id}/reagendamento")
     suspend fun reagendarAgendamento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long,
         @Body body: ReagendamentoRequest
     ): AgendamentoResponse
@@ -127,58 +118,51 @@ interface TechMentorApi {
     // mínimo de 2 letras; o backend tira da lista quem está buscando
     @GET("usuarios/busca")
     suspend fun buscarUsuarios(
-        @Query("nome") nome: String,
-        @Header("X-Usuario-Id") solicitanteId: Long
+        @Query("nome") nome: String
     ): List<UsuarioResumoResponse>
 
     @POST("api/denuncias")
     suspend fun denunciar(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: DenunciaRequest
     ): DenunciaResponse
 
     // as denúncias que a própria pessoa fez, da mais nova para a mais antiga; status: ABERTA, EM_ANALISE ou RESOLVIDA
     @GET("api/denuncias/minhas")
-    suspend fun minhasDenuncias(@Header("X-Usuario-Id") usuarioId: Long): List<DenunciaResponse>
+    suspend fun minhasDenuncias(): List<DenunciaResponse>
 
     @GET("api/bloqueios")
-    suspend fun listarBloqueios(@Header("X-Usuario-Id") usuarioId: Long): List<BloqueioResponse>
+    suspend fun listarBloqueios(): List<BloqueioResponse>
 
     @POST("api/bloqueios")
     suspend fun bloquear(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Body body: BloqueioRequest
     ): BloqueioResponse
 
     @DELETE("api/bloqueios/{usuarioId}")
     suspend fun desbloquear(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("usuarioId") bloqueadoId: Long
     )
 
     // vagas e bolsas: candidatura; eventos: inscrição (o backend recusa o tipo errado com 400)
     @POST("api/oportunidades/{id}/candidaturas")
     suspend fun candidatar(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") oportunidadeId: Long
     ): InscricaoResponse
 
     @POST("api/oportunidades/{id}/inscricoes")
     suspend fun inscreverEmEvento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") oportunidadeId: Long
     ): InscricaoResponse
 
     @GET("api/candidaturas/minhas")
-    suspend fun minhasCandidaturas(@Header("X-Usuario-Id") usuarioId: Long): List<InscricaoResponse>
+    suspend fun minhasCandidaturas(): List<InscricaoResponse>
 
     @GET("api/inscricoes/minhas")
-    suspend fun minhasInscricoes(@Header("X-Usuario-Id") usuarioId: Long): List<InscricaoResponse>
+    suspend fun minhasInscricoes(): List<InscricaoResponse>
 
     // retira a candidatura/inscrição enquanto a equipe ainda não respondeu (409 se já foi aprovada ou recusada)
     @DELETE("api/candidaturas/{id}")
     suspend fun desistirDaCandidatura(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") inscricaoId: Long
     )
 
@@ -223,24 +207,21 @@ interface TechMentorApi {
 
     @GET("api/agendamentos/{id}")
     suspend fun obterAgendamento(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long
     ): AgendamentoResponse
 
     // mentorias concluídas, dentro do prazo, que a pessoa ainda não avaliou
     @GET("api/avaliacoes/pendentes")
-    suspend fun avaliacoesPendentes(@Header("X-Usuario-Id") usuarioId: Long): List<AvaliacaoPendenteResponse>
+    suspend fun avaliacoesPendentes(): List<AvaliacaoPendenteResponse>
 
     @GET("api/agendamentos/{id}/avaliacoes")
     suspend fun situacaoDaAvaliacao(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long
     ): AvaliacaoDaMentoriaResponse
 
     // 409 = não dá para avaliar agora (não concluída, prazo vencido ou já avaliou); o motivo vem na mensagem
     @POST("api/agendamentos/{id}/avaliacoes")
     suspend fun avaliar(
-        @Header("X-Usuario-Id") usuarioId: Long,
         @Path("id") agendamentoId: Long,
         @Body body: AvaliacaoRequest
     ): AvaliacaoResponse
