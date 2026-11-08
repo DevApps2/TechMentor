@@ -22,6 +22,7 @@ import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeMentoria;
 import com.techmentor.api.evento.EventosDeNotificacao.AvaliacaoRecebida;
 import com.techmentor.api.evento.EventosDeNotificacao.LembreteDeAvaliacao;
 import com.techmentor.api.evento.EventosDeNotificacao.MentoriaExpirada;
+import com.techmentor.api.evento.EventosDeNotificacao.CandidaturaAtualizada;
 
 /**
  * Observer das notificações: escuta os fatos do sistema e cria a notificação de cada um.
@@ -150,5 +151,24 @@ public class NotificadorListener {
         notificacoes.notificar(evento.destinatario(), "Você recebeu uma avaliação",
                 evento.quemAvaliou() + " avaliou a mentoria com " + evento.nota()
                         + (evento.nota() == 1 ? " estrela." : " estrelas."));
+    }
+
+    @EventListener
+    public void aoAtualizarCandidatura(CandidaturaAtualizada evento) {
+        String o = "\"" + evento.tituloDaOportunidade() + "\"";
+        String tipo = evento.evento() ? "inscrição" : "candidatura";
+
+        String mensagem = switch (evento.novoStatus()) {
+            case EM_ANALISE -> "Sua " + tipo + " em " + o + " está em análise pela equipe.";
+            case APROVADA -> evento.evento()
+                    ? "Sua inscrição em " + o + " foi confirmada!"
+                    : "Boa notícia! Sua candidatura em " + o + " foi aprovada.";
+            case RECUSADA -> evento.evento()
+                    ? "Sua inscrição em " + o + " não pôde ser confirmada."
+                    : "Sua candidatura em " + o + " não seguiu adiante desta vez. Continue tentando!";
+            case ENVIADA -> "Sua " + tipo + " em " + o + " voltou para a fila de análise.";
+        };
+
+        notificacoes.notificar(evento.destinatario(), "Atualização da sua " + tipo, mensagem);
     }
 }

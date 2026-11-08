@@ -6,7 +6,9 @@ import com.techmentor.api.model.Usuario;
 import com.techmentor.api.dto.OportunidadeDtos.*;
 import com.techmentor.api.repository.InscricaoOportunidadeRepository;
 import com.techmentor.api.repository.OportunidadeRepository;
+import com.techmentor.api.evento.EventosDeNotificacao;
 import com.techmentor.api.exceptions.ApiException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -18,22 +20,38 @@ public class OportunidadeService {
     private final OportunidadeRepository oportunidades;
     private final InscricaoOportunidadeRepository inscricoes;
     private final ConquistaService conquistas;
+    private final ApplicationEventPublisher eventos;
 
     public OportunidadeService(OportunidadeRepository oportunidades,
                                InscricaoOportunidadeRepository inscricoes,
-                               ConquistaService conquistas) {
+                               ConquistaService conquistas,
+                               ApplicationEventPublisher eventos) {
         this.oportunidades = oportunidades;
         this.inscricoes = inscricoes;
         this.conquistas = conquistas;
+        this.eventos = eventos;
     }
 
     /** Oportunidades ativas e com prazo em aberto, pelo prazo mais próximo; filtros opcionais por tipo e por área. */
     @Transactional(readOnly = true)
     public List<OportunidadeResponse> listar(Oportunidade.Tipo tipo, String area) {
+        return listar(tipo, area, null);
+    }
+
+    /** Igual à lista acima, e a busca (opcional) procura no título, na organização, na área e na descrição. */
+    @Transactional(readOnly = true)
+    public List<OportunidadeResponse> listar(Oportunidade.Tipo tipo, String area, String busca) {
+        String termo = busca == null ? "" : busca.trim().toLowerCase();
         return oportunidades.listarAbertas(LocalDate.now()).stream()
                 .filter(o -> tipo == null || o.getTipo() == tipo)
                 .filter(o -> area == null || area.isBlank() || area.trim().equalsIgnoreCase(o.getArea()))
+                .filter(o -> termo.isEmpty() || contem(o, termo))
                 .map(this::toResponse).toList();
+    }
+
+    private static boolean contem(Oportunidade o, String termo) {
+        return java.util.stream.Stream.of(o.getTitulo(), o.getOrganizacao(), o.getArea(), o.getDescricao())
+                .anyMatch(texto -> texto != null && texto.toLowerCase().contains(termo));
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +122,44 @@ public class OportunidadeService {
         return toResponse(inscricao);
     }
 
+    /** Só a admin: quem se candidatou a esta oportunidade, da mais nova para a mais antiga. */
+    @Transactional(readOnly = true)
+    public List<CandidaturaAdminResponse> candidaturasDaOportunidade(Usuario actor, Long oportunidadeId) {
+        RegraAcesso.exigirAdmin(actor);
+        buscar(oportunidadeId);
+        return inscricoes.findByOportunidadeIdOrderByCriadaEmDesc(oportunidadeId).stream()
+                .map(this::toAdminResponse).toList();
+    }
+
+    /** Só a admin: muda a situação (ENVIADA, EM_ANALISE, APROVADA ou RECUSADA) e avisa quem se candidatou. */
+    public CandidaturaAdminResponse atualizarStatus(Usuario actor, Long id, InscricaoOportunidade.Status novo) {
+        RegraAcesso.exigirAdmin(actor);
+        if (novo == null) throw ApiException.badRequest("Informe a nova situação.");
+
+        InscricaoOportunidade inscricao = inscricoes.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Candidatura não encontrada."));
+
+        if (inscricao.getStatus() != novo) {
+            inscricao.setStatus(novo);
+            Oportunidade oportunidade = inscricao.getOportunidade();
+            eventos.publishEvent(new EventosDeNotificacao.CandidaturaAtualizada(
+                    inscricao.getUsuario(), oportunidade.getTitulo(),
+                    oportunidade.getTipo() == Oportunidade.Tipo.EVENTO, novo));
+        }
+        return toAdminResponse(inscricao);
+    }
+
+    /** A própria usuária retira a candidatura (ou a inscrição), enquanto a equipe ainda não respondeu. */
+    public void desistir(Usuario actor, Long id) {
+        InscricaoOportunidade inscricao = inscricoes.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Candidatura não encontrada."));
+        if (!inscricao.getUsuario().getId().equals(actor.getId())) throw ApiException.forbidden();
+        if (inscricao.getStatus() == InscricaoOportunidade.Status.APROVADA
+                || inscricao.getStatus() == InscricaoOportunidade.Status.RECUSADA)
+            throw ApiException.conflict("Esta candidatura já foi respondida e não pode ser retirada.");
+        inscricoes.delete(inscricao);
+    }
+
     private Oportunidade buscar(Long id) {
         return oportunidades.findById(id).orElseThrow(() -> ApiException.notFound("Oportunidade não encontrada."));
     }
@@ -137,6 +193,13 @@ public class OportunidadeService {
                 oportunidade.getOrganizacao(), oportunidade.getDescricao(), oportunidade.getRequisitos(),
                 oportunidade.getLocalidade(), oportunidade.getLinkExterno(), oportunidade.getPrazoInscricao(),
                 oportunidade.isAtiva(), oportunidade.getBeneficios(), oportunidade.getArea(), oportunidade.getNivel());
+    }
+
+    private CandidaturaAdminResponse toAdminResponse(InscricaoOportunidade inscricao) {
+        Usuario usuario = inscricao.getUsuario();
+        return new CandidaturaAdminResponse(inscricao.getId(), usuario.getId(), usuario.getNome(), usuario.getEmail(),
+                inscricao.getOportunidade().getId(), inscricao.getOportunidade().getTitulo(),
+                inscricao.getStatus(), inscricao.getCriadaEm());
     }
 
     private InscricaoResponse toResponse(InscricaoOportunidade inscricao) {

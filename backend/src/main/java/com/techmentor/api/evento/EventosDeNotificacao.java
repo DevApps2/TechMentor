@@ -69,4 +69,8 @@ public final class EventosDeNotificacao {
     // destinatarioEhMentora = quem recebeu foi a mentora (avaliação pública); senão foi a aluna (feedback privado).
     public record AvaliacaoRecebida(Usuario destinatario, String nomeDoDestinatario, String emailDoDestinatario,
                                     String quemAvaliou, boolean destinatarioEhMentora, int nota, String comentario) { }
+
+    // A equipe mudou a situacao de uma candidatura (ou inscricao em evento): avisa quem se candidatou
+    public record CandidaturaAtualizada(Usuario destinatario, String tituloDaOportunidade, boolean evento,
+                                        com.techmentor.api.model.InscricaoOportunidade.Status novoStatus) { }
 }

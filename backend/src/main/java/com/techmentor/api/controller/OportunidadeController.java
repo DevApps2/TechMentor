@@ -28,8 +28,9 @@ public class OportunidadeController {
     @GetMapping("/oportunidades")
     public List<OportunidadeResponse> listar(
             @Parameter(description = "Tipo: ESTAGIO, EMPREGO, BOLSA ou EVENTO (opcional)") @RequestParam(required = false) Oportunidade.Tipo tipo,
-            @Parameter(description = "Área, por exemplo Programação (opcional)") @RequestParam(required = false) String area) {
-        return oportunidades.listar(tipo, area);
+            @Parameter(description = "Área, por exemplo Programação (opcional)") @RequestParam(required = false) String area,
+            @Parameter(description = "Texto para buscar no título, na organização, na área e na descrição (opcional)") @RequestParam(required = false) String busca) {
+        return oportunidades.listar(tipo, area, busca);
     }
 
     @Operation(summary = "Obter oportunidade por ID")
@@ -87,5 +88,29 @@ public class OportunidadeController {
     @GetMapping("/candidaturas/{id}")
     public InscricaoResponse obterCandidatura(@Parameter(description = "ID da candidatura") @PathVariable Long id) {
         return oportunidades.obterCandidatura(usuarios.buscarAtual(), id);
+    }
+
+    @Operation(summary = "Retirar candidatura ou inscrição",
+            description = "A própria usuária desiste enquanto a equipe ainda não respondeu. Retorna 409 se já foi aprovada ou recusada.")
+    @DeleteMapping("/candidaturas/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desistir(@Parameter(description = "ID da candidatura ou inscrição") @PathVariable Long id) {
+        oportunidades.desistir(usuarios.buscarAtual(), id);
+    }
+
+    @Operation(summary = "Candidaturas de uma oportunidade", description = "Só para administradoras.")
+    @GetMapping("/admin/oportunidades/{id}/candidaturas")
+    public List<CandidaturaAdminResponse> candidaturasDaOportunidade(
+            @Parameter(description = "ID da oportunidade") @PathVariable Long id) {
+        return oportunidades.candidaturasDaOportunidade(usuarios.buscarAtual(), id);
+    }
+
+    @Operation(summary = "Mudar a situação de uma candidatura",
+            description = "Só para administradoras. ENVIADA, EM_ANALISE, APROVADA ou RECUSADA; avisa quem se candidatou por notificação.")
+    @PatchMapping("/admin/candidaturas/{id}/status")
+    public CandidaturaAdminResponse atualizarStatusDaCandidatura(
+            @Parameter(description = "ID da candidatura") @PathVariable Long id,
+            @Valid @RequestBody CandidaturaStatusRequest request) {
+        return oportunidades.atualizarStatus(usuarios.buscarAtual(), id, request.status());
     }
 }
