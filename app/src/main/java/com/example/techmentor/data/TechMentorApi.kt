@@ -113,7 +113,9 @@ interface TechMentorApi {
     @GET("api/oportunidades")
     suspend fun listarOportunidades(
         @Query("tipo") tipo: String?,
-        @Query("area") area: String?
+        @Query("area") area: String?,
+        // texto para buscar no título, na organização, na área e na descrição
+        @Query("busca") busca: String? = null
     ): List<OportunidadeResponse>
 
     // ---- Segurança ----
@@ -172,6 +174,13 @@ interface TechMentorApi {
 
     @GET("api/inscricoes/minhas")
     suspend fun minhasInscricoes(@Header("X-Usuario-Id") usuarioId: Long): List<InscricaoResponse>
+
+    // retira a candidatura/inscrição enquanto a equipe ainda não respondeu (409 se já foi aprovada ou recusada)
+    @DELETE("api/candidaturas/{id}")
+    suspend fun desistirDaCandidatura(
+        @Header("X-Usuario-Id") usuarioId: Long,
+        @Path("id") inscricaoId: Long
+    )
 
     @GET("conquistas/usuarios/{id}")
     suspend fun listarConquistasDoUsuario(@Path("id") id: Long): List<UsuarioConquistaResponse>

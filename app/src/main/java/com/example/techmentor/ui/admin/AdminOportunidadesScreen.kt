@@ -127,7 +127,8 @@ fun AdminOportunidadesScreen(
                         ListaDeOportunidades(
                             oportunidades = oportunidades,
                             filtro = estado.filtro,
-                            onAbrir = { id -> navController.navigate("admin/oportunidades/$id") }
+                            onAbrir = { id -> navController.navigate("admin/oportunidades/$id") },
+                            onVerCandidaturas = { id -> navController.navigate("admin/oportunidades/$id/candidaturas") }
                         )
                     }
                 }
@@ -176,7 +177,8 @@ private fun FiltrosDeTipo(
 private fun ListaDeOportunidades(
     oportunidades: List<AdminOportunidade>,
     filtro: String?,
-    onAbrir: (Long) -> Unit
+    onAbrir: (Long) -> Unit,
+    onVerCandidaturas: (Long) -> Unit
 ) {
 
     val visiveis = oportunidades.filter { filtro == null || it.tipo == filtro }
@@ -225,7 +227,8 @@ private fun ListaDeOportunidades(
             ) { oportunidade ->
                 OportunidadeCard(
                     oportunidade = oportunidade,
-                    onClick = { onAbrir(oportunidade.id) }
+                    onClick = { onAbrir(oportunidade.id) },
+                    onVerCandidaturas = { onVerCandidaturas(oportunidade.id) }
                 )
             }
         }
@@ -235,7 +238,8 @@ private fun ListaDeOportunidades(
 @Composable
 private fun OportunidadeCard(
     oportunidade: AdminOportunidade,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onVerCandidaturas: () -> Unit
 ) {
 
     val forma = RoundedCornerShape(17.dp)
@@ -308,6 +312,18 @@ private fun OportunidadeCard(
             text = if (oportunidade.prazoInscricao.isNullOrBlank()) "Sem prazo definido" else "Prazo: ${formatarData(oportunidade.prazoInscricao)}",
             fontSize = 11.sp,
             color = Color(0xFF8A8691)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Ver candidaturas  ›",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MentoriaCores.Roxo,
+            modifier = Modifier
+                .clickable(role = Role.Button, onClick = onVerCandidaturas)
+                .padding(vertical = 4.dp)
         )
     }
 }

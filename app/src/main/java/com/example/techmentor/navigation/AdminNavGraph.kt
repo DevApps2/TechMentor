@@ -9,6 +9,7 @@ import com.example.techmentor.ui.admin.AdminDenunciaDetalheScreen
 import com.example.techmentor.ui.admin.AdminDenunciasScreen
 import com.example.techmentor.ui.admin.AdminMentoraFormScreen
 import com.example.techmentor.ui.admin.AdminMentorasScreen
+import com.example.techmentor.ui.admin.AdminCandidaturasScreen
 import com.example.techmentor.ui.admin.AdminOportunidadeFormScreen
 import com.example.techmentor.ui.admin.AdminOportunidadesScreen
 import com.example.techmentor.ui.admin.AdminPainelScreen
@@ -57,6 +58,16 @@ fun NavGraphBuilder.adminNavGraph(navController: NavController) {
         AdminOportunidadeFormScreen(
             navController = navController,
             oportunidadeId = entrada.arguments?.getLong("oportunidadeId")
+        )
+    }
+
+    composable(
+        route = "admin/oportunidades/{oportunidadeId}/candidaturas",
+        arguments = listOf(navArgument("oportunidadeId") { type = NavType.LongType })
+    ) { entrada ->
+        AdminCandidaturasScreen(
+            navController = navController,
+            oportunidadeId = entrada.arguments?.getLong("oportunidadeId") ?: 0L
         )
     }
 

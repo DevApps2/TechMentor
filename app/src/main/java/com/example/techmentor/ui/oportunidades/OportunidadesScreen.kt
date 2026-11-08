@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -171,6 +172,27 @@ private fun ListagemOportunidades(
         FiltrosPorTipo(
             selecionado = estado.filtro,
             onSelecionar = { viewModel.selecionarFiltro(it) }
+        )
+
+        OutlinedTextField(
+            value = estado.busca,
+            onValueChange = { viewModel.digitarBusca(it) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            singleLine = true,
+            placeholder = { Text("Buscar por vaga, empresa ou área") },
+            shape = RoundedCornerShape(14.dp)
+        )
+
+        Text(
+            text = "Minhas candidaturas e inscrições  ›",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MentoriaCores.Roxo,
+            modifier = Modifier
+                .clickable { navController.navigate("opportunities/minhas") }
+                .padding(horizontal = 20.dp, vertical = 8.dp)
         )
 
         Box(

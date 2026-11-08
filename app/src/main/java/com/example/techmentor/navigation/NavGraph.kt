@@ -28,6 +28,7 @@ import com.example.techmentor.ui.mentora.MentoraHomeScreen
 import com.example.techmentor.ui.mentora.MentoraPerfilFormScreen
 import com.example.techmentor.ui.mentoria.ReagendarScreen
 import com.example.techmentor.ui.notificacoes.NotificacoesScreen
+import com.example.techmentor.ui.oportunidades.MinhasCandidaturasScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.profile.TrocarSenhaScreen
@@ -183,6 +184,10 @@ fun NavGraph() {
 
         composable("trocar-senha") {
             TrocarSenhaScreen(navController = navController)
+        }
+
+        composable("opportunities/minhas") {
+            MinhasCandidaturasScreen(navController = navController)
         }
 
     }
