@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -176,6 +177,18 @@ public class UsuarioService {
             throw ApiException.badRequest("Use uma imagem JPG, PNG ou WEBP.");
         }
 
+        // O tipo que o app informa pode ser falso: confere os primeiros bytes do arquivo
+        byte[] inicioDoArquivo;
+        try (InputStream entrada = arquivo.getInputStream()) {
+            inicioDoArquivo = entrada.readNBytes(12);
+        } catch (IOException e) {
+            throw ApiException.badRequest("Não foi possível ler a imagem.");
+        }
+        extensao = extensaoPeloConteudo(inicioDoArquivo);
+        if (extensao == null) {
+            throw ApiException.badRequest("O arquivo não é uma imagem JPG, PNG ou WEBP válida.");
+        }
+
         try {
             Path pasta = Path.of(pastaFotos).toAbsolutePath();
             Files.createDirectories(pasta);
@@ -189,6 +202,22 @@ public class UsuarioService {
         }
 
         return Response.from(usuario);
+    }
+
+    /** "jpg", "png" ou "webp" se os primeiros bytes são mesmo de uma dessas imagens; senão, null. */
+    static String extensaoPeloConteudo(byte[] b) {
+        if (b.length >= 3 && (b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) {
+            return "jpg";
+        }
+        if (b.length >= 8 && (b[0] & 0xFF) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G'
+                && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A) {
+            return "png";
+        }
+        if (b.length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+                && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') {
+            return "webp";
+        }
+        return null;
     }
 
     /**
@@ -215,5 +244,6 @@ public class UsuarioService {
 
         limiteDeLogin.limpar(chave);
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuario.invalidarTokens();
     }
 }

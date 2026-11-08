@@ -25,3 +25,9 @@ WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
 -- Usuários criados antes da coluna "ativo" ficam com ativo = 0 no MySQL; reativa todos.
 -- (Confira antes se existe algum usuário que foi desativado de propósito.)
 -- UPDATE usuarios SET ativo = 1;
+
+-- Colunas novas desta versão. Com ddl-auto=update (desenvolvimento) o Hibernate as cria sozinho.
+-- Em produção, com o perfil "prod" (ddl-auto=validate), rode antes de subir a API (só se ainda não existirem):
+--   ALTER TABLE usuarios  ADD COLUMN token_versao INT NULL;
+--   ALTER TABLE denuncias ADD COLUMN avaliacao_id BIGINT NULL,
+--                         ADD CONSTRAINT fk_denuncias_avaliacao FOREIGN KEY (avaliacao_id) REFERENCES avaliacoes (id);
