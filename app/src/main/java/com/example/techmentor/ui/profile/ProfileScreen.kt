@@ -156,6 +156,7 @@ fun ProfileScreen(
                         onSalvar = viewModel::salvar,
                         onEnviarFoto = viewModel::enviarFoto,
                         onLimparErro = { viewModel.limparErroEdicao() },
+                        onCancelarMentoria = viewModel::cancelarMentoria,
                         onSair = {
                             Sessao.sair()
                             navController.navigate("login") {
@@ -194,6 +195,7 @@ private fun ProfileContent(
     onSalvar: (String, String, String, List<String>, () -> Unit) -> Unit,
     onEnviarFoto: (ByteArray) -> Unit,
     onLimparErro: () -> Unit,
+    onCancelarMentoria: (Long) -> Unit,
     onSair: () -> Unit
 ) {
 
@@ -278,7 +280,11 @@ private fun ProfileContent(
 
         HistoricoDeMentorias(
             lista = estado.historicoMentorias,
-            onAbrirAvaliacao = { navController.navigate("avaliar/${it.id}") }
+            cancelandoId = estado.cancelandoId,
+            erro = estado.erroAoCancelar,
+            onAbrirAvaliacao = { navController.navigate("avaliar/${it.id}") },
+            onReagendar = { navController.navigate("reagendar/${it.id}/${it.mentoraId}") },
+            onCancelar = { onCancelarMentoria(it.id) }
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -849,10 +855,40 @@ private fun DivisorHorizontal() {
 @Composable
 private fun HistoricoDeMentorias(
     lista: List<AgendamentoResponse>,
-    onAbrirAvaliacao: (AgendamentoResponse) -> Unit
+    cancelandoId: Long?,
+    erro: String?,
+    onAbrirAvaliacao: (AgendamentoResponse) -> Unit,
+    onReagendar: (AgendamentoResponse) -> Unit,
+    onCancelar: (AgendamentoResponse) -> Unit
 ) {
 
+    // a mentoria que a aluna tocou em "Cancelar" e ainda precisa confirmar
+    var aCancelar by remember { mutableStateOf<AgendamentoResponse?>(null) }
+
+    val paraCancelar = aCancelar
+    if (paraCancelar != null) {
+        AlertDialog(
+            onDismissRequest = { aCancelar = null },
+            title = { Text("Cancelar esta mentoria?") },
+            text = { Text("${paraCancelar.mentoraNome} será avisada e o horário volta a ficar livre.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onCancelar(paraCancelar)
+                    aCancelar = null
+                }) { Text("Cancelar mentoria", color = Color(0xFFDC2626)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { aCancelar = null }) { Text("Voltar") }
+            }
+        )
+    }
+
     SecaoBranca(titulo = "Histórico de mentorias") {
+
+        if (erro != null) {
+            Text(text = erro, fontSize = 11.sp, color = Color(0xFFDC2626))
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         if (lista.isEmpty()) {
 
@@ -875,8 +911,80 @@ private fun HistoricoDeMentorias(
                     // só as concluídas abrem a tela de avaliação (avaliar ou ver o que já foi avaliado)
                     onClick = if (agendamento.status == "CONCLUIDA") ({ onAbrirAvaliacao(agendamento) }) else null
                 )
+
+                AcoesDaMentoriaNoHistorico(
+                    agendamento = agendamento,
+                    cancelando = cancelandoId == agendamento.id,
+                    ocupada = cancelandoId != null,
+                    onReagendar = { onReagendar(agendamento) },
+                    onCancelar = { aCancelar = agendamento }
+                )
             }
         }
+    }
+}
+
+/** Reagendar e Cancelar, só para mentoria agendada ou confirmada que ainda não começou. */
+@Composable
+private fun AcoesDaMentoriaNoHistorico(
+    agendamento: AgendamentoResponse,
+    cancelando: Boolean,
+    ocupada: Boolean,
+    onReagendar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+
+    if (agendamento.status != "AGENDADA" && agendamento.status != "CONFIRMADA") return
+
+    val comeco = parseDataHora(agendamento.inicio) ?: return
+    if (comeco.time <= System.currentTimeMillis()) return
+
+    Row(
+        modifier = Modifier.padding(start = 51.dp, bottom = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+
+        AcaoDoHistorico(
+            texto = "Reagendar",
+            cor = RoxoEscuro,
+            habilitado = !ocupada,
+            onClick = onReagendar
+        )
+
+        AcaoDoHistorico(
+            texto = if (cancelando) "Cancelando..." else "Cancelar",
+            cor = Color(0xFFDC2626),
+            habilitado = !ocupada,
+            onClick = onCancelar
+        )
+    }
+}
+
+@Composable
+private fun AcaoDoHistorico(
+    texto: String,
+    cor: Color,
+    habilitado: Boolean,
+    onClick: () -> Unit
+) {
+
+    val forma = RoundedCornerShape(10.dp)
+
+    Box(
+        modifier = Modifier
+            .clip(forma)
+            .background(Color.White)
+            .border(1.dp, cor, forma)
+            .clickable(enabled = habilitado, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = texto,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = cor
+        )
     }
 }
 
@@ -935,12 +1043,6 @@ private fun LinhaDeMentoria(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Text(
-                text = formatarDataLonga(agendamento.inicio),
-                fontSize = 10.sp,
-                color = Color(0xFFA19CA5)
-            )
 
             Text(
                 text = formatarDataLonga(agendamento.inicio),
