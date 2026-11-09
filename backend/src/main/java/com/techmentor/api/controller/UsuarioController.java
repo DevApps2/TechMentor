@@ -6,7 +6,6 @@ import com.techmentor.api.dto.UsuarioDtos.LoginRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
 import com.techmentor.api.dto.UsuarioDtos.Resumo;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
-import com.techmentor.api.service.EmailService;
 import com.techmentor.api.service.LimiteDeCadastro;
 import com.techmentor.api.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +32,6 @@ public class UsuarioController {
 
     private final UsuarioService service;
     private final JwtService jwtService;
-    private final EmailService emailService;
     private final UsuarioAtualService usuarios;
     private final LimiteDeCadastro limiteDeCadastro;
 
