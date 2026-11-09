@@ -73,20 +73,6 @@ public class JwtService {
         return versao instanceof Number numero ? numero.intValue() : 0;
     }
 
-    public boolean validarToken(String token, String subjectEsperado) {
-
-        try {
-            String subject = extrairSubject(token);
-
-            return subject.equals(subjectEsperado);
-
-        } catch (io.jsonwebtoken.JwtException |
-                 IllegalArgumentException e) {
-
-            return false;
-        }
-    }
-
     public long getExpirationSeconds() {
         return expirationMs / 1000;
     }

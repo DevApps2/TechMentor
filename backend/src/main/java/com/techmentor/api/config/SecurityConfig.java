@@ -3,6 +3,8 @@ package com.techmentor.api.config;
 import com.techmentor.api.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -121,6 +123,18 @@ public class SecurityConfig {
                     && (String.valueOf(usuario.getId()).equals(contexto.getVariables().get(variavel))
                     || (adminTambem && usuario.getTipo() == Usuario.Tipo.ADMIN));
             return new AuthorizationDecision(permitido);
+        };
+    }
+
+    /**
+     * O login é feito por UsuarioService + JWT, não pelo mecanismo de usuário/senha do Spring Security.
+     * Declarar este serviço (que nunca acha ninguém) impede o Spring de criar um usuário padrão com senha
+     * gerada, e tira o aviso "Using generated security password" do console.
+     */
+    @Bean
+    public UserDetailsService semUsuariosDoSpring() {
+        return username -> {
+            throw new UsernameNotFoundException("O login é feito pelo UsuarioService, com JWT.");
         };
     }
 
