@@ -40,6 +40,9 @@ data class ProfileUiState(
     val salvando: Boolean = false,
     val erroEdicao: String? = null,
     val enviandoFoto: Boolean = false,
+    // cancelamento de uma mentoria do histórico
+    val cancelandoId: Long? = null,
+    val erroAoCancelar: String? = null,
 )
 
 class ProfileViewModel : ViewModel() {
@@ -198,6 +201,31 @@ class ProfileViewModel : ViewModel() {
                 _estado.update { it.copy(enviandoFoto = false, erroEdicao = ERRO_CONEXAO) }
             }
         }
+    }
+
+    /** A aluna cancela uma mentoria do histórico: a mentora é avisada e o horário volta a ficar livre. */
+    fun cancelarMentoria(agendamentoId: Long) {
+        if (_estado.value.cancelandoId != null) return
+
+        _estado.update { it.copy(cancelandoId = agendamentoId, erroAoCancelar = null) }
+
+        viewModelScope.launch {
+            try {
+                ApiClient.api.cancelarAgendamento(agendamentoId)
+
+                _estado.update { it.copy(cancelandoId = null) }
+                carregar()
+
+            } catch (e: HttpException) {
+                _estado.update { it.copy(cancelandoId = null, erroAoCancelar = mensagemDaApi(e) ?: ERRO_CONEXAO) }
+            } catch (e: IOException) {
+                _estado.update { it.copy(cancelandoId = null, erroAoCancelar = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    fun limparErroAoCancelar() {
+        _estado.update { it.copy(erroAoCancelar = null) }
     }
 
     fun limparErroEdicao() {
