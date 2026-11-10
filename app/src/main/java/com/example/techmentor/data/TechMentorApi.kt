@@ -252,5 +252,23 @@ interface TechMentorApi {
     @PATCH("usuarios/{id}/senha")
     suspend fun trocarSenha(@Path("id") usuarioId: Long, @Body body: TrocarSenhaRequest)
 
+    // lista os cursos ativos; categoria é opcional
+    @GET("cursos")
+    suspend fun listarCursos(@Query("categoria") categoria: String? = null): List<CursoResponse>
 
+    // cada aula do curso com a situação dela para esta usuária
+    @GET("progresso/{titulo}/usuarios/{usuarioId}/aulas")
+    suspend fun listarAulasComProgresso(
+        @Path("titulo") titulo: String,
+        @Path("usuarioId") usuarioId: Long
+    ): List<AulaProgressoResponse>
+
+    // conclui a aula (a anterior precisa estar concluída; matricula no curso se ainda não estiver) e dá o XP
+    @POST("progresso/{titulo}/{ordemModulo}/{ordemAula}/usuarios/{usuarioId}")
+    suspend fun concluirAula(
+        @Path("titulo") titulo: String,
+        @Path("ordemModulo") ordemModulo: Int,
+        @Path("ordemAula") ordemAula: Int,
+        @Path("usuarioId") usuarioId: Long
+    ): ProgressoAulaResponse
 }

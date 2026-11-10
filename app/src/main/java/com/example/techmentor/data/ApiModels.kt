@@ -327,4 +327,57 @@ data class TrocarSenhaRequest(
     val novaSenha: String
 )
 
+data class CursoResponse(
+    val id: Long,
+    val titulo: String,
+    val descricao: String?,
+    val categoria: String,
+    val nivel: String,
+    val iconeUrl: String?,
+    val ativo: Boolean,
+    val totalAulas: Long,
+    val duracaoTotalMinutos: Int,
+    val xpTotal: Int,
+    val modulos: List<ModuloResponse>
+)
+
+data class ModuloResponse(
+    val id: Long,
+    val titulo: String,
+    val ordem: Int,
+    val aulas: List<AulaResponse>
+)
+
+data class AulaResponse(
+    val id: Long,
+    val titulo: String,
+    val ordem: Int,
+    val duracaoMinutos: Int,
+    val xpRecompensa: Int,
+    val conteudoUrl: String?
+)
+
+// status: CONCLUIDA, ATUAL ou BLOQUEADA
+data class AulaProgressoResponse(
+    val aulaId: Long,
+    val ordemModulo: Int,
+    val tituloModulo: String,
+    val ordemAula: Int,
+    val titulo: String,
+    val duracaoMinutos: Int,
+    val xpRecompensa: Int,
+    val status: String,
+    val concluidaEm: String?
+)
+
+data class ProgressoAulaResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val aulaId: Long,
+    val tituloAula: String,
+    val concluidaEm: String?
+)
+
+
+
 

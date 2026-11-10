@@ -30,7 +30,6 @@ import androidx.navigation.NavController
 import com.example.techmentor.data.OportunidadeResponse
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.GradientButton
-import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.mentoria.CabecalhoVoltar
 import com.example.techmentor.ui.mentoria.MentoriaCores
@@ -195,10 +194,6 @@ private fun DetalheDaOportunidade(
                 }
             }
 
-            AvisoDemo(
-                texto = "Vaga e organização fictícias, sem parceria real. Sua participação fica registrada apenas aqui, no TechMentor."
-            )
-
             BlocoDeTexto(titulo = "Sobre a oportunidade", texto = oportunidade.descricao)
             BlocoDeTexto(titulo = "Requisitos", texto = oportunidade.requisitos)
             BlocoDeTexto(titulo = "Benefícios", texto = oportunidade.beneficios)
@@ -341,8 +336,7 @@ private fun ConfirmacaoEnvio(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Registramos ${if (ehEvento) "sua inscrição" else "sua candidatura"} em ${oportunidade.titulo}. " +
-                    "A organização é fictícia, então nenhuma mensagem é enviada a ela.",
+                text = "Registramos ${if (ehEvento) "sua inscrição" else "sua candidatura"} em ${oportunidade.titulo}.",
                 fontSize = 13.sp,
                 lineHeight = 19.sp,
                 textAlign = TextAlign.Center,
