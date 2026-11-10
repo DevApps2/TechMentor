@@ -14,9 +14,9 @@ import com.example.techmentor.ui.register.RegisterScreen
 import androidx.compose.runtime.remember
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.techmentor.data.CursosRepository
 import com.example.techmentor.data.Sessao
-import com.example.techmentor.ui.cursos.CursoScreen
+import com.example.techmentor.ui.cursos.CursosScreen
+import com.example.techmentor.ui.cursos.CursoDetalheScreen
 import com.example.techmentor.ui.seguranca.SegurancaScreen
 import com.example.techmentor.ui.esquecisenha.EsqueciSenhaScreen
 import com.example.techmentor.ui.esquecisenha.RedefinirSenhaScreen
@@ -62,8 +62,16 @@ fun NavGraph() {
         }
 
         composable("learning") {
-            CursoScreen(
-                curso = CursosRepository.cursoPython
+            CursosScreen(navController = navController)
+        }
+
+        composable(
+            route = "learning/{cursoId}",
+            arguments = listOf(navArgument("cursoId") { type = NavType.LongType })
+        ) { entrada ->
+            CursoDetalheScreen(
+                navController = navController,
+                cursoId = entrada.arguments?.getLong("cursoId") ?: 0L
             )
         }
 
@@ -127,10 +135,6 @@ fun NavGraph() {
 
         composable("mentora/agenda") {
             AgendaMentoraScreen(navController = navController)
-        }
-
-        composable("mentora/perfil") {
-            PlaceholderScreen("Perfil da mentora")
         }
 
         composable("mentora/completar-perfil") {
