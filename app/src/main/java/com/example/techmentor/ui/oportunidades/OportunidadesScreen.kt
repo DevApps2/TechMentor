@@ -1,5 +1,11 @@
 package com.example.techmentor.ui.oportunidades
 
+import com.example.techmentor.ui.auth.AuthField
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,7 +33,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -55,7 +60,6 @@ import com.example.techmentor.data.OportunidadeResponse
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.components.AbaExplorar
 import com.example.techmentor.ui.components.AtualizarAutomaticamente
-import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.components.ExplorarCabecalho
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
@@ -146,6 +150,10 @@ private fun ListagemOportunidades(
 ) {
 
     val estado by viewModel.estado.collectAsState()
+    val foco = LocalFocusManager.current
+
+    // Começa com o que o ViewModel já tem (ao voltar do detalhe a busca continua lá)
+    var texto by remember { mutableStateOf(estado.busca) }
 
     // Carrega ao abrir e ao voltar para a tela; fora isso, só puxando para atualizar ou filtrando
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -169,20 +177,34 @@ private fun ListagemOportunidades(
             aba = AbaExplorar.OPORTUNIDADES
         )
 
+        // A mesma caixa de busca da tela de Mentoria
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, top = 14.dp)
+        ) {
+
+            AuthField(
+                label = "Buscar oportunidade",
+                value = texto,
+                onValueChange = {
+                    texto = it
+                    viewModel.digitarBusca(it)
+                },
+                placeholder = "Vaga, empresa ou área",
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        viewModel.buscarAgora()
+                        foco.clearFocus()
+                    }
+                )
+            )
+        }
+
         FiltrosPorTipo(
             selecionado = estado.filtro,
             onSelecionar = { viewModel.selecionarFiltro(it) }
-        )
-
-        OutlinedTextField(
-            value = estado.busca,
-            onValueChange = { viewModel.digitarBusca(it) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            singleLine = true,
-            placeholder = { Text("Buscar por vaga, empresa ou área") },
-            shape = RoundedCornerShape(14.dp)
         )
 
         Text(
@@ -278,8 +300,6 @@ private fun ListaDeOportunidades(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
-        item { AvisoDemo(texto = "Vagas e organizações fictícias, sem parcerias reais ou inscrições externas.") }
 
         if (oportunidades.isEmpty()) {
 

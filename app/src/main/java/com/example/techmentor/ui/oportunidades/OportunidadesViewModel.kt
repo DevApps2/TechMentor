@@ -141,6 +141,12 @@ class OportunidadesViewModel : ViewModel() {
         }
     }
 
+    /** A pessoa tocou em "buscar" no teclado: busca já, sem esperar o instante da digitação. */
+    fun buscarAgora() {
+        tarefaDaBusca?.cancel()
+        carregar()
+    }
+
     fun selecionarFiltro(filtro: FiltroTipo) {
         if (filtro == _estado.value.filtro) return
 

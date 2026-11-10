@@ -10,19 +10,24 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 
+// O roxo do TechMentor é a cor primária: cursor, seleção de texto, ripple e foco dos componentes usam ela
+private val RoxoTechMentor = Color(0xFF7C3AED)
+
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Color(0xFFA78BFA),
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = RoxoTechMentor,
+    onPrimary = Color.White,
+    secondary = Color(0xFF6D28D9),
+    tertiary = Color(0xFF2563EB)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -38,8 +43,9 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun TechMentorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Desligado de propósito: com as cores dinâmicas (Android 12+) o app herdava a cor do papel de parede,
+    // e o foco, a seleção de texto e o toque ficavam verdes (ou de outra cor) em vez do roxo do TechMentor
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
