@@ -79,7 +79,8 @@ public class UsuarioController {
                 Response.from(usuario),
                 token,
                 "Bearer",
-                jwtService.getExpirationSeconds()
+                jwtService.getExpirationSeconds(),
+                usuario.senhaEhProvisoria()
         );
 
         return ResponseEntity.ok(resposta);

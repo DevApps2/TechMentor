@@ -23,7 +23,9 @@ data class LoginResponse(
     val usuario: UsuarioResponse,
     val accessToken: String,
     val tokenType: String,
-    val expiresIn: Long
+    val expiresIn: Long,
+    // true = entrou com a senha provisória que a administradora cadastrou: precisa trocá-la antes de seguir
+    val precisaTrocarSenha: Boolean = false
 )
 
 data class CadastroRequest(val nome: String, val email: String, val senha: String)

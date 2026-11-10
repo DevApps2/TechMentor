@@ -142,6 +142,7 @@ O final do `data.sql` monta um **cenário de teste com datas relativas a "agora"
 - **Login com JWT.** O servidor identifica a pessoa só pelo token (`Authorization: Bearer ...`); nenhuma rota confia em um id enviado pelo app.
 - **Papéis** `ALUNA`, `MENTORA` e `ADMIN`. As regras por rota ficam em `SecurityConfig`: gestão de conteúdo só para a administradora; notificações, progresso, matrículas e outros dados pessoais só da própria dona; regras que dependem do dado (por exemplo, "esse agendamento é seu?") ficam nos serviços.
 - **Senhas** com BCrypt. Trocar ou redefinir a senha **derruba os tokens antigos**.
+- **Senha provisória.** A mentora cadastrada pela administradora entra com a senha que ela definiu; o login devolve `precisaTrocarSenha: true` e o app leva a mentora direto para a troca de senha (sem voltar) antes de qualquer outra tela. A marca cai quando ela troca ou redefine a senha.
 - **Limites** contra abuso: tentativas de login e de código de recuperação, cadastros por endereço e denúncias.
 - **Fotos de perfil** validadas pelo conteúdo do arquivo (JPG, PNG ou WEBP de verdade).
 - **Erros** sempre no formato `{"erro": "mensagem"}`, sem detalhes internos.

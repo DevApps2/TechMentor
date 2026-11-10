@@ -186,6 +186,11 @@ fun NavGraph() {
             TrocarSenhaScreen(navController = navController)
         }
 
+        // Primeiro acesso com a senha provisória: a mesma tela, mas sem voltar até escolher a própria senha
+        composable(Sessao.ROTA_TROCA_DE_SENHA) {
+            TrocarSenhaScreen(navController = navController, obrigatoria = true)
+        }
+
         composable("opportunities/minhas") {
             MinhasCandidaturasScreen(navController = navController)
         }

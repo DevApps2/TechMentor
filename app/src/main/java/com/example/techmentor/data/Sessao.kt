@@ -12,6 +12,11 @@ object Sessao {
     private const val CHAVE_USUARIO_ID = "usuario_id"
     private const val CHAVE_TIPO = "tipo"
     private const val CHAVE_TOKEN = "access_token"
+    private const val CHAVE_EMAIL = "email"
+    private const val CHAVE_TROCAR_SENHA = "precisa_trocar_senha"
+
+    /** Tela de troca de senha do primeiro acesso (senha provisória). */
+    const val ROTA_TROCA_DE_SENHA = "trocar-senha-obrigatoria"
 
     private var prefs: SharedPreferences? = null
 
@@ -33,18 +38,38 @@ object Sessao {
 
     val ehMentora: Boolean get() = tipo == "MENTORA"
 
-    /** A primeira tela de cada tipo de usuário. */
-    fun rotaInicial(): String = when (tipo) {
-        "ADMIN" -> "admin"
-        "MENTORA" -> "mentora"
+    /** O e-mail com que entrou; serve para o login reabrir já preenchido depois da troca de senha. */
+    val email: String?
+        get() = prefs?.getString(CHAVE_EMAIL, null)
+
+    /**
+     * true = entrou com a senha provisória e ainda não escolheu a sua. Fica guardado: se fechar o app antes de trocar,
+     * ao reabrir ela continua sendo levada para a troca.
+     */
+    val precisaTrocarSenha: Boolean
+        get() = prefs?.getBoolean(CHAVE_TROCAR_SENHA, false) ?: false
+
+    /** A primeira tela de cada tipo de usuário (com senha provisória, antes de tudo vem a troca de senha). */
+    fun rotaInicial(): String = when {
+        precisaTrocarSenha -> ROTA_TROCA_DE_SENHA
+        tipo == "ADMIN" -> "admin"
+        tipo == "MENTORA" -> "mentora"
         else -> "home"
     }
 
-    fun entrar(usuarioId: Long, tipo: String, token: String) {
+    fun entrar(
+        usuarioId: Long,
+        tipo: String,
+        token: String,
+        email: String? = null,
+        precisaTrocarSenha: Boolean = false
+    ) {
         prefs?.edit()
             ?.putLong(CHAVE_USUARIO_ID, usuarioId)
             ?.putString(CHAVE_TIPO, tipo)
             ?.putString(CHAVE_TOKEN, token)
+            ?.putString(CHAVE_EMAIL, email)
+            ?.putBoolean(CHAVE_TROCAR_SENHA, precisaTrocarSenha)
             ?.apply()
     }
 
