@@ -130,8 +130,6 @@ internal fun DenunciarUsuarioTela(
 
         TituloDeSecao("Conte o que aconteceu")
 
-        AvisoDemo(texto = "A denúncia fica registrada só no TechMentor: não existe equipe de moderação conectada.")
-
         if (escolhidoNome != null) {
 
             UsuarioEscolhido(
@@ -382,8 +380,6 @@ internal fun UsuariosBloqueadosTela(
 
         TituloDeSecao("Usuários bloqueados")
 
-        AvisoDemo(texto = "A lista fica salva na sua conta do TechMentor.")
-
         if (estado.bloqueados.isEmpty()) {
 
             CaixaTracejada(texto = "Você ainda não bloqueou ninguém.")
@@ -547,7 +543,7 @@ internal fun CanaisDeAjudaTela(
             onTentarDeNovo = onTentarDeNovo
         )
 
-        AvisoDemo(texto = "O TechMentor não oferece atendimento de emergência nem moderação.")
+        AvisoDemo(texto = "O TechMentor não oferece atendimento de emergência. Em perigo imediato, ligue 190.")
     }
 }
 

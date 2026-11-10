@@ -1,5 +1,9 @@
 package com.example.techmentor.ui.mentora
 
+import com.example.techmentor.ui.auth.LegendaDeObrigatorio
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -203,6 +207,10 @@ fun MentoraPerfilFormScreen(
                         fontSize = 13.sp,
                         color = Color(0xFF797486)
                     )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    LegendaDeObrigatorio()
                 }
 
                 FotoDePerfil(
@@ -219,6 +227,7 @@ fun MentoraPerfilFormScreen(
 
                 AuthField(
                     label = "Cargo",
+                    obrigatorio = true,
                     value = cargo,
                     onValueChange = { cargo = it },
                     placeholder = "Ex.: Engenheira de software",
@@ -232,6 +241,7 @@ fun MentoraPerfilFormScreen(
 
                 AuthField(
                     label = "Empresa",
+                    obrigatorio = true,
                     value = empresa,
                     onValueChange = { empresa = it },
                     placeholder = "Ex.: Acme Tecnologia",
@@ -257,6 +267,7 @@ fun MentoraPerfilFormScreen(
 
                 AuthField(
                     label = "Apresentação",
+                    obrigatorio = true,
                     value = bio,
                     onValueChange = { if (it.length <= LIMITE_BIO) bio = it },
                     placeholder = "Conte sua trajetória e como pode ajudar",
@@ -269,7 +280,10 @@ fun MentoraPerfilFormScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 
                     Text(
-                        text = "Áreas de atuação",
+                        text = buildAnnotatedString {
+                            append("Áreas de atuação")
+                            withStyle(SpanStyle(color = AuthColors.Error)) { append(" *") }
+                        },
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF514C58)

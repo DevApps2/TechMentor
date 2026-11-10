@@ -209,8 +209,3 @@ fun NavGraph() {
 
     }
 }
-
-@Composable
-fun PlaceholderScreen(title: String) {
-    Text(text = title)
-}

@@ -1,5 +1,6 @@
 package com.example.techmentor.ui.admin
 
+import com.example.techmentor.ui.auth.LegendaDeObrigatorio
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -204,8 +205,11 @@ fun AdminMentoraFormScreen(
                             color = MentoriaCores.TextoMudo
                         )
 
+                        LegendaDeObrigatorio()
+
                         CampoDeTexto(
                             rotulo = "Nome completo",
+                            obrigatorio = true,
                             valor = nome,
                             aoMudar = { nome = it },
                             dica = "Ex.: Maria Silva"
@@ -213,6 +217,7 @@ fun AdminMentoraFormScreen(
 
                         CampoDeTexto(
                             rotulo = "E-mail",
+                            obrigatorio = true,
                             valor = email,
                             aoMudar = { email = it },
                             dica = "mentora@email.com",
@@ -222,6 +227,7 @@ fun AdminMentoraFormScreen(
 
                         CampoDeTexto(
                             rotulo = "Senha provisória",
+                            obrigatorio = true,
                             valor = senha,
                             aoMudar = { senha = it },
                             dica = "Mínimo de 8 caracteres",

@@ -284,7 +284,9 @@ internal fun AuthField(
     // Campo de senha: esconde o texto e mostra o olhinho para revelar/ocultar
     isPassword: Boolean = false,
     // NOVO: campo de texto longo (ex.: "Apresentação"): bloco maior e Enter quebra a linha
-    multilinha: Boolean = false
+    multilinha: Boolean = false,
+    // true = mostra um asterisco vermelho ao lado do rótulo (campo obrigatório)
+    obrigatorio: Boolean = false
 ) {
 
     var mostrarSenha by remember { mutableStateOf(false) }
@@ -301,7 +303,12 @@ internal fun AuthField(
     Column {
 
         Text(
-            text = label,
+            text = buildAnnotatedString {
+                append(label)
+                if (obrigatorio) {
+                    withStyle(SpanStyle(color = AuthColors.Error)) { append(" *") }
+                }
+            },
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = AuthColors.TextLabel
@@ -558,4 +565,17 @@ internal fun OrDivider() {
                 .background(AuthColors.Divider)
         )
     }
+}
+
+/** "* Campo obrigatório": a legenda dos formulários que marcam os campos obrigatórios com asterisco. */
+@Composable
+fun LegendaDeObrigatorio() {
+    Text(
+        text = buildAnnotatedString {
+            withStyle(SpanStyle(color = AuthColors.Error, fontWeight = FontWeight.Bold)) { append("*") }
+            append(" Campo obrigatório")
+        },
+        fontSize = 11.sp,
+        color = Color(0xFF797486)
+    )
 }
