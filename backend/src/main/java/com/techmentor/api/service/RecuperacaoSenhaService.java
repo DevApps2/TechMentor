@@ -108,6 +108,7 @@ public class RecuperacaoSenhaService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuario.setSenhaProvisoria(false); // escolheu a própria senha: não é mais a provisória
         usuario.invalidarTokens();
         pedido.setUsado(true);
     }

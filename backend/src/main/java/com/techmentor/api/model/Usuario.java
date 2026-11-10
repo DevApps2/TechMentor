@@ -65,5 +65,14 @@ public class Usuario {
         this.tokenVersao = versaoDoToken() + 1;
     }
 
+    // true = a senha atual foi dada por outra pessoa (a admin, ao cadastrar a mentora) e precisa ser trocada no primeiro acesso.
+    // Volta a false quando a própria dona troca ou redefine a senha (null conta como false)
+    @JsonIgnore
+    private Boolean senhaProvisoria = false;
+
+    public boolean senhaEhProvisoria() {
+        return Boolean.TRUE.equals(senhaProvisoria);
+    }
+
     @Column(updatable = false) private LocalDateTime criadoEm = LocalDateTime.now();
 }

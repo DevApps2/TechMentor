@@ -48,6 +48,7 @@ public class AdminService {
         conta.setEmail(email);
         conta.setSenhaHash(passwordEncoder.encode(request.senha()));
         conta.setTipo(Usuario.Tipo.MENTORA);
+        conta.setSenhaProvisoria(true); // a admin sabe esta senha: a mentora troca no primeiro acesso
         conta = usuarios.save(conta);
 
         return mentoras.criarMentora(conta, new MentoraRequest(request.bio(), request.cargo(),

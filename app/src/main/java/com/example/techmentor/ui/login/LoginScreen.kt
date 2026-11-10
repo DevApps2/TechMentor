@@ -109,7 +109,14 @@ fun LoginScreen(
         scope.launch {
             try {
                 val resposta = ApiClient.api.login(LoginRequest(emailLimpo, password))
-                Sessao.entrar(resposta.usuario.id, resposta.usuario.tipo, resposta.accessToken)
+                Sessao.entrar(
+                    usuarioId = resposta.usuario.id,
+                    tipo = resposta.usuario.tipo,
+                    token = resposta.accessToken,
+                    email = emailLimpo,
+                    precisaTrocarSenha = resposta.precisaTrocarSenha
+                )
+                // rotaInicial() já leva à troca de senha quando a senha é provisória
                 navController.navigate(Sessao.rotaInicial()) {
                     popUpTo("login") { inclusive = true }
                 }

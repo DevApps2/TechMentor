@@ -141,6 +141,9 @@ public final class UsuarioDtos {
             String tokenType,
 
             @Schema(description = "Tempo de validade do token em segundos")
-            long expiresIn
+            long expiresIn,
+
+            @Schema(description = "true se a pessoa entrou com uma senha provisória (a que a administradora cadastrou): o app deve levá-la a trocar a senha antes de seguir", example = "false")
+            boolean precisaTrocarSenha
     ) { }
 }

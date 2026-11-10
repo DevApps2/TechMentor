@@ -2,6 +2,7 @@ package com.techmentor.api;
 
 import com.techmentor.api.dto.AdminDtos.MentoraCadastroRequest;
 import com.techmentor.api.dto.MentoriaDtos.MentoraResponse;
+import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
 import com.techmentor.api.exceptions.ApiException;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
@@ -18,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -80,6 +82,33 @@ class AdminCadastroDeMentoraTest {
         Usuario entrou = usuarioService.loginUsuario(email, SENHA_PROVISORIA);
 
         assertEquals(Usuario.Tipo.MENTORA, entrou.getTipo());
+    }
+
+    @Test
+    void aSenhaDaMentoraCadastradaPelaAdminNasceProvisoria() {
+        String email = "m" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com";
+        admin.cadastrarMentora(administradora, pedido(email));
+
+        assertTrue(usuarios.findByEmail(email).orElseThrow().senhaEhProvisoria());
+    }
+
+    @Test
+    void trocarASenhaTiraAMarcaDeProvisoria() {
+        String email = "m" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com";
+        admin.cadastrarMentora(administradora, pedido(email));
+        Usuario conta = usuarios.findByEmail(email).orElseThrow();
+
+        usuarioService.trocarSenha(conta.getId(), SENHA_PROVISORIA, "senhaEscolhida456");
+
+        assertFalse(usuarios.findByEmail(email).orElseThrow().senhaEhProvisoria());
+    }
+
+    @Test
+    void quemSeCadastraSozinhaNaoTemSenhaProvisoria() {
+        String email = "a" + UUID.randomUUID().toString().substring(0, 8) + "@teste.com";
+        usuarioService.criarUsuario(new CreateRequest("Aluna Teste", email, "senhaSegura123"));
+
+        assertFalse(usuarios.findByEmail(email).orElseThrow().senhaEhProvisoria());
     }
 
     @Test

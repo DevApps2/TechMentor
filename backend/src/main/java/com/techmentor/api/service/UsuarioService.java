@@ -244,6 +244,7 @@ public class UsuarioService {
 
         limiteDeLogin.limpar(chave);
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuario.setSenhaProvisoria(false);
         usuario.invalidarTokens();
     }
 }
