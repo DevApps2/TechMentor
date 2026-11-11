@@ -2,14 +2,17 @@ package com.example.techmentor.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -22,25 +25,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.techmentor.data.AgendamentoResponse
 import com.example.techmentor.ui.components.BotaoEntrarNaSala
+import com.example.techmentor.ui.components.BotaoSecundario
+import com.example.techmentor.ui.components.SeloDeStatus
 
 
-private val RoxoDasAcoes = Color(0xFF7C3AED)
-private val VermelhoDasAcoes = Color(0xFFDC2626)
+private val RoxoDoCartao = Color(0xFF7C3AED)
+private val AzulDoCartao = Color(0xFF2563EB)
+private val VermelhoDoCartao = Color(0xFFDC2626)
 
 /**
- * Logo abaixo do card da próxima mentoria: a situação (aguardando ou confirmada)
- * e os botões Reagendar e Cancelar. Se não há mentoria, não mostra nada.
+ * O cartão da próxima mentoria da aluna, tudo num lugar só: quem é a mentora, quando é, a situação
+ * (aguardando ou confirmada), o botão da sala e as ações Reagendar e Cancelar. Sem mentoria, não mostra nada.
  */
 @Composable
-fun AcoesDaProximaMentoria(
+fun CartaoDaProximaMentoria(
     proxima: AgendamentoResponse?,
     cancelando: Boolean,
     erro: String?,
@@ -62,7 +69,7 @@ fun AcoesDaProximaMentoria(
                 TextButton(onClick = {
                     onCancelar(proxima.id)
                     confirmando = false
-                }) { Text("Cancelar mentoria", color = VermelhoDasAcoes) }
+                }) { Text("Cancelar mentoria", color = VermelhoDoCartao) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmando = false }) { Text("Voltar") }
@@ -70,87 +77,124 @@ fun AcoesDaProximaMentoria(
         )
     }
 
-    Spacer(modifier = Modifier.height(8.dp))
+    val forma = RoundedCornerShape(18.dp)
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(forma)
+            .background(Color.White)
+            .border(1.dp, Color(0xFFECE9F1), forma)
+            .padding(14.dp)
+    ) {
 
-        // Situação: a mentora ainda vai confirmar, ou já confirmou
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(7.dp))
-                .background(if (aguardando) Color(0xFFFEF3C7) else Color(0xFFDCFCE7))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
+        // QUEM E QUANDO
+        Row(verticalAlignment = Alignment.CenterVertically) {
 
-            Text(
-                text = if (aguardando) "Aguardando confirmação da mentora" else "Confirmada",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
-            )
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Color(0xFF8B5CF6), AzulDoCartao))),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = iniciais(proxima.mentoraNome),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+
+                Text(
+                    text = "Mentoria com ${proxima.mentoraNome}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF20202A),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = descricaoDaMentoria(proxima),
+                    fontSize = 11.sp,
+                    color = Color(0xFF625D6C)
+                )
+            }
         }
 
-    }
+        Spacer(modifier = Modifier.height(12.dp))
 
-    BotaoEntrarNaSala(
-        status = proxima.status,
-        inicio = proxima.inicio,
-        fim = proxima.fim,
-        linkSala = proxima.linkSala,
-        minutosAntes = proxima.minutosParaAbrirSala
-    )
+        // SITUAÇÃO
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SeloDeStatus(
+                texto = if (aguardando) "Aguardando confirmação da mentora" else "Confirmada",
+                fundo = if (aguardando) Color(0xFFFEF3C7) else Color(0xFFDCFCE7),
+                cor = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
+            )
 
+            if (!proxima.linkSala.isNullOrBlank()) {
+                SeloDeStatus(
+                    texto = "Google Meet",
+                    fundo = Color(0xFFEDE9FE),
+                    cor = Color(0xFF6D28D9)
+                )
+            }
+        }
+
+        // SALA (só aparece com a mentoria confirmada)
+        BotaoEntrarNaSala(
+            status = proxima.status,
+            inicio = proxima.inicio,
+            fim = proxima.fim,
+            linkSala = proxima.linkSala,
+            minutosAntes = proxima.minutosParaAbrirSala
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // AÇÕES
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-            AcaoPequena(
+            BotaoSecundario(
                 texto = "Reagendar",
-                cor = RoxoDasAcoes,
+                cor = RoxoDoCartao,
                 habilitado = !cancelando,
+                modifier = Modifier.weight(1f),
                 onClick = { navController.navigate("reagendar/${proxima.id}/${proxima.mentoraId}") }
             )
 
-            AcaoPequena(
+            BotaoSecundario(
                 texto = if (cancelando) "Cancelando..." else "Cancelar",
-                cor = VermelhoDasAcoes,
+                cor = VermelhoDoCartao,
                 habilitado = !cancelando,
+                modifier = Modifier.weight(1f),
                 onClick = { confirmando = true }
             )
         }
 
         if (erro != null) {
-            Text(text = erro, fontSize = 11.sp, color = VermelhoDasAcoes)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = erro, fontSize = 11.sp, color = VermelhoDoCartao)
         }
     }
 }
 
-@Composable
-private fun AcaoPequena(
-    texto: String,
-    cor: Color,
-    habilitado: Boolean,
-    onClick: () -> Unit
-) {
-
-    val forma = RoundedCornerShape(10.dp)
-
-    Box(
-        modifier = Modifier
-            .clip(forma)
-            .background(Color.White)
-            .border(1.dp, cor, forma)
-            .clickable(enabled = habilitado, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-
-        Text(
-            text = texto,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = cor
-        )
+/** "Maria Silva" -> "MS"; um nome só -> as duas primeiras letras. */
+private fun iniciais(nome: String): String {
+    val partes = nome.trim().split(" ").filter { it.isNotBlank() }
+    return when {
+        partes.isEmpty() -> "?"
+        partes.size == 1 -> partes[0].take(2).uppercase()
+        else -> "${partes.first().first()}${partes.last().first()}".uppercase()
     }
-
 }

@@ -130,7 +130,7 @@ fun HomeScreen(
                         proximaMentoria = estado.proximaMentoria,
                         navController = navController,
                         acoesDaMentoria = {
-                            AcoesDaProximaMentoria(
+                            CartaoDaProximaMentoria(
                                 proxima = estado.proximaMentoria,
                                 cancelando = estado.cancelando,
                                 erro = estado.erroCancelamento,
@@ -198,15 +198,16 @@ private fun HomeContent(
             onAction = { navController.navigate("mentorship") }
         )
 
-        NextActionCard(
-            titulo = proximaMentoria?.let { "Mentoria com ${it.mentoraNome}" }
-                ?: "Converse com uma mentora",
-            descricao = proximaMentoria?.let { descricaoDaMentoria(it) }
-                ?: "Explore horários e agende uma conversa.",
-            onClick = { navController.navigate("mentorship") }
-        )
-
-        acoesDaMentoria()
+        if (proximaMentoria != null) {
+            // O cartão completo: mentora, horário, situação, sala, reagendar e cancelar
+            acoesDaMentoria()
+        } else {
+            NextActionCard(
+                titulo = "Converse com uma mentora",
+                descricao = "Explore horários e agende uma conversa.",
+                onClick = { navController.navigate("mentorship") }
+            )
+        }
 
         AvaliacoesPendentes(navController = navController)
 
@@ -635,103 +636,34 @@ fun SectionHeader(
 }
 
 
-// ======================================================
-// PRÓXIMO PASSO
+/// ======================================================
+// CARTÕES DE AÇÃO (PRÓXIMO PASSO E CONTINUE APRENDENDO)
 // ======================================================
 
+private val FormaDoCartaoDeAcao = RoundedCornerShape(18.dp)
+
+/**
+ * O cartão das duas ações da Home. Os dois usam este mesmo desenho, então têm sempre a mesma forma,
+ * borda, margem, ícone, botão e altura mínima. Só muda o conteúdo.
+ */
 @Composable
-fun NextActionCard(
+private fun CartaoDeAcao(
+    icone: Icone,
     titulo: String,
-    descricao: String,
-    onClick: () -> Unit
+    detalhe: String,
+    iconeDoBotao: Icone,
+    onClick: () -> Unit,
+    rotulo: String? = null,
+    fracao: Float? = null
 ) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            IconTile(
-                icone = Icone.USUARIOS,
-                background = Color(0xFFEDE9FE),
-                iconColor = RoxoEscuro
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
-                Text(
-                    text = titulo,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF20202A),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(3.dp))
-
-                Text(
-                    text = descricao,
-                    fontSize = 12.sp,
-                    color = Color(0xFF625D6C)
-                )
-            }
-
-            Text(
-                text = "›",
-                fontSize = 26.sp,
-                color = Color(0xFF797486)
-            )
-        }
-    }
-}
-
-
-// ======================================================
-// CONTINUE APRENDENDO
-// ======================================================
-
-@Composable
-fun ContinueLearningCard(
-    curso: MatriculaResponse?,
-    onClick: () -> Unit
-) {
-
-    val categoria = if (curso != null) rotuloCategoria(curso.categoria) else "COMECE AGORA"
-    val titulo = curso?.tituloCurso ?: "Escolha sua primeira trilha"
-    val detalhe = if (curso != null) {
-        "${curso.aulasConcluidas} de ${curso.totalAulas} aulas"
-    } else {
-        "Aulas curtas e XP a cada passo"
-    }
-    val fracao: Float? = if (curso != null && curso.totalAulas > 0) {
-        curso.aulasConcluidas.toFloat() / curso.totalAulas
-    } else {
-        null
-    }
-
-    val forma = RoundedCornerShape(18.dp)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(forma)
+            .heightIn(min = 88.dp)
+            .clip(FormaDoCartaoDeAcao)
             .background(Color.White)
-            .border(1.dp, Color(0xFFECE9F1), forma)
+            .border(1.dp, Color(0xFFECE9F1), FormaDoCartaoDeAcao)
             .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -739,7 +671,7 @@ fun ContinueLearningCard(
 
         Box(
             modifier = Modifier
-                .size(width = 58.dp, height = 63.dp)
+                .size(52.dp)
                 .clip(RoundedCornerShape(15.dp))
                 .background(
                     Brush.linearGradient(
@@ -750,9 +682,9 @@ fun ContinueLearningCard(
         ) {
 
             IconeLinha(
-                icone = Icone.CODIGO,
+                icone = icone,
                 cor = RoxoEscuro,
-                tamanho = 27.dp
+                tamanho = 26.dp
             )
         }
 
@@ -762,19 +694,22 @@ fun ContinueLearningCard(
             modifier = Modifier.weight(1f)
         ) {
 
-            Text(
-                text = categoria,
-                fontSize = 8.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 0.7.sp,
-                color = Roxo
-            )
+            if (rotulo != null) {
 
-            Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = rotulo,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.7.sp,
+                    color = Roxo
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+            }
 
             Text(
                 text = titulo,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextoEscuro,
                 maxLines = 1,
@@ -785,8 +720,10 @@ fun ContinueLearningCard(
 
             Text(
                 text = detalhe,
-                fontSize = 9.sp,
-                color = Color(0xFF85808C)
+                fontSize = 11.sp,
+                color = Color(0xFF625D6C),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
 
             if (fracao != null) {
@@ -821,12 +758,13 @@ fun ContinueLearningCard(
                 .size(34.dp)
                 .clip(CircleShape)
                 .background(Roxo)
-                .padding(start = 2.dp),
+                // o triângulo do play parece deslocado para a esquerda: este respiro o centraliza
+                .padding(start = if (iconeDoBotao == Icone.PLAY) 2.dp else 0.dp),
             contentAlignment = Alignment.Center
         ) {
 
             IconeLinha(
-                icone = Icone.PLAY,
+                icone = iconeDoBotao,
                 cor = Color.White,
                 tamanho = 17.dp
             )
@@ -835,9 +773,52 @@ fun ContinueLearningCard(
 }
 
 
-// ======================================================
-// EXPLORE O TECHMENTOR
-// ======================================================
+@Composable
+fun NextActionCard(
+    titulo: String,
+    descricao: String,
+    onClick: () -> Unit
+) {
+
+    CartaoDeAcao(
+        icone = Icone.USUARIOS,
+        titulo = titulo,
+        detalhe = descricao,
+        iconeDoBotao = Icone.SETA,
+        onClick = onClick
+    )
+}
+
+
+@Composable
+fun ContinueLearningCard(
+    curso: MatriculaResponse?,
+    onClick: () -> Unit
+) {
+
+    val categoria = if (curso != null) rotuloCategoria(curso.categoria) else "COMECE AGORA"
+    val titulo = curso?.tituloCurso ?: "Escolha sua primeira trilha"
+    val detalhe = if (curso != null) {
+        "${curso.aulasConcluidas} de ${curso.totalAulas} aulas"
+    } else {
+        "Aulas curtas e XP a cada passo"
+    }
+    val fracao: Float? = if (curso != null && curso.totalAulas > 0) {
+        curso.aulasConcluidas.toFloat() / curso.totalAulas
+    } else {
+        null
+    }
+
+    CartaoDeAcao(
+        icone = Icone.CODIGO,
+        rotulo = categoria,
+        titulo = titulo,
+        detalhe = detalhe,
+        fracao = fracao,
+        iconeDoBotao = Icone.PLAY,
+        onClick = onClick
+    )
+}
 
 @Composable
 fun ExploreCard(

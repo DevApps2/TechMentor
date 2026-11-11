@@ -15,14 +15,22 @@ object Sessao {
     private const val CHAVE_EMAIL = "email"
     private const val CHAVE_TROCAR_SENHA = "precisa_trocar_senha"
 
+    // As boas-vindas ficam em OUTRO arquivo: sair() apaga a sessão inteira, mas não pode esquecer quem já as viu
+    private const val ARQUIVO_ONBOARDING = "onboarding"
+
     /** Tela de troca de senha do primeiro acesso (senha provisória). */
     const val ROTA_TROCA_DE_SENHA = "trocar-senha-obrigatoria"
 
+    /** Tela de boas-vindas, mostrada uma vez por conta, entre o login e a Home da aluna. */
+    const val ROTA_ONBOARDING = "onboarding"
+
     private var prefs: SharedPreferences? = null
+    private var prefsOnboarding: SharedPreferences? = null
 
     /** Chamar uma vez, na MainActivity, antes de montar as telas. */
     fun iniciar(context: Context) {
         prefs = context.applicationContext.getSharedPreferences(ARQUIVO, Context.MODE_PRIVATE)
+        prefsOnboarding = context.applicationContext.getSharedPreferences(ARQUIVO_ONBOARDING, Context.MODE_PRIVATE)
     }
 
     val usuarioId: Long?
@@ -49,11 +57,27 @@ object Sessao {
     val precisaTrocarSenha: Boolean
         get() = prefs?.getBoolean(CHAVE_TROCAR_SENHA, false) ?: false
 
-    /** A primeira tela de cada tipo de usuário (com senha provisória, antes de tudo vem a troca de senha). */
+    /** true = esta conta já viu (ou pulou) as boas-vindas. Sem ninguém logado, não há o que mostrar. */
+    val onboardingVisto: Boolean
+        get() {
+            val id = usuarioId ?: return true
+            return prefsOnboarding?.getBoolean("visto_$id", false) ?: true
+        }
+
+    fun marcarOnboardingVisto() {
+        val id = usuarioId ?: return
+        prefsOnboarding?.edit()?.putBoolean("visto_$id", true)?.apply()
+    }
+
+    /**
+     * A primeira tela de cada tipo de usuário (com senha provisória, antes de tudo vem a troca de senha).
+     * A aluna que ainda não viu as boas-vindas passa por elas antes da Home.
+     */
     fun rotaInicial(): String = when {
         precisaTrocarSenha -> ROTA_TROCA_DE_SENHA
         tipo == "ADMIN" -> "admin"
         tipo == "MENTORA" -> "mentora"
+        !onboardingVisto -> ROTA_ONBOARDING
         else -> "home"
     }
 
