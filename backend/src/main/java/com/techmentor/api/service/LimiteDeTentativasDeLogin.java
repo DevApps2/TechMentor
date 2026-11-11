@@ -1,6 +1,6 @@
 package com.techmentor.api.service;
 
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.TooManyRequestsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -60,7 +60,7 @@ public class LimiteDeTentativasDeLogin {
         if (agora.isBefore(registro.bloqueadoAte())) {
             long segundos = Duration.between(agora, registro.bloqueadoAte()).toSeconds();
             long minutos = Math.max(1, (segundos + 59) / 60);
-            throw ApiException.tooManyRequests("Muitas tentativas de entrada. Tente de novo em "
+            throw new TooManyRequestsException("Muitas tentativas de entrada. Tente de novo em "
                     + minutos + (minutos == 1 ? " minuto." : " minutos."));
         }
 

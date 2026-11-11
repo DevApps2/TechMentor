@@ -2,6 +2,7 @@ package com.techmentor.api.service;
 
 import com.techmentor.api.email.ModeloDeEmail;
 import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
 import com.techmentor.api.model.RedefinicaoSenha;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.RedefinicaoSenhaRepository;
@@ -86,25 +87,25 @@ public class RecuperacaoSenhaService {
 
         Usuario usuario = usuarioRepository.findByEmail(Emails.normalizar(email))
                 .filter(Usuario::isAtivo)
-                .orElseThrow(() -> ApiException.badRequest(CODIGO_INVALIDO));
+                .orElseThrow(() -> new BadRequestException(CODIGO_INVALIDO));
 
         RedefinicaoSenha pedido = redefinicaoRepository
                 .findFirstByUsuarioAndUsadoFalseOrderByCriadoEmDesc(usuario)
-                .orElseThrow(() -> ApiException.badRequest(CODIGO_INVALIDO));
+                .orElseThrow(() -> new BadRequestException(CODIGO_INVALIDO));
 
         if (pedido.getExpiraEm().isBefore(LocalDateTime.now())) {
             pedido.setUsado(true);
-            throw ApiException.badRequest(CODIGO_INVALIDO);
+            throw new BadRequestException(CODIGO_INVALIDO);
         }
 
         if (pedido.getTentativas() >= MAXIMO_TENTATIVAS) {
             pedido.setUsado(true);
-            throw ApiException.badRequest("Muitas tentativas. Peça um novo código.");
+            throw new BadRequestException("Muitas tentativas. Peça um novo código.");
         }
 
         if (!passwordEncoder.matches(codigo.trim(), pedido.getCodigoHash())) {
             pedido.setTentativas(pedido.getTentativas() + 1);
-            throw ApiException.badRequest(CODIGO_INVALIDO);
+            throw new BadRequestException(CODIGO_INVALIDO);
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));

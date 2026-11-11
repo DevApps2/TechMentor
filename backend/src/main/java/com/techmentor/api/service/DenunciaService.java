@@ -8,10 +8,13 @@ import com.techmentor.api.dto.SegurancaDtos.DenunciaRequest;
 import com.techmentor.api.dto.SegurancaDtos.DenunciaResponse;
 import com.techmentor.api.repository.AvaliacaoRepository;
 import com.techmentor.api.repository.DenunciaRepository;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.ForbiddenException;
+import com.techmentor.api.exceptions.NotFoundException;
+import com.techmentor.api.exceptions.TooManyRequestsException;
 import com.techmentor.api.repository.UsuarioRepository;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -40,33 +43,32 @@ public class DenunciaService {
 
     public DenunciaResponse criar(Usuario actor, DenunciaRequest request) {
         if (request == null || request.motivo() == null)
-            throw ApiException.badRequest("Motivo da denúncia é obrigatório.");
+            throw new BadRequestException("Motivo da denúncia é obrigatório.");
 
         Avaliacao avaliacao = null;
         Usuario alvo;
         if (request.avaliacaoId() != null) {
             avaliacao = avaliacoes.findById(request.avaliacaoId())
-                    .orElseThrow(() -> ApiException.notFound("Avaliação não encontrada."));
+                    .orElseThrow(() -> new NotFoundException("Avaliação não encontrada."));
             // Só quem foi avaliada denuncia o comentário: quem escreveu ou terceiros não
-            if (!avaliacao.getAvaliado().getId().equals(actor.getId())) throw ApiException.forbidden();
+            if (!avaliacao.getAvaliado().getId().equals(actor.getId())) throw new ForbiddenException();
             if (avaliacao.getComentario() == null || avaliacao.getComentario().isBlank())
-                throw ApiException.badRequest("Esta avaliação não tem comentário para denunciar.");
+                throw new BadRequestException("Esta avaliação não tem comentário para denunciar.");
             if (denuncias.existsByDenuncianteIdAndAvaliacaoId(actor.getId(), avaliacao.getId()))
-                throw ApiException.conflict("Você já denunciou este comentário.");
+                throw new ConflictException("Você já denunciou este comentário.");
             alvo = avaliacao.getAvaliador(); // o denunciado é quem escreveu, não o que o app mandar
         } else {
             alvo = request.usuarioDenunciadoId() == null ? null : buscarUsuario(request.usuarioDenunciadoId());
         }
         if (alvo != null && alvo.getId().equals(actor.getId()))
-            throw ApiException.badRequest("Não é possível denunciar a si mesmo.");
+            throw new BadRequestException("Não é possível denunciar a si mesmo.");
 
         LocalDateTime agora = LocalDateTime.now();
         if (denuncias.countByDenuncianteIdAndCriadaEmAfter(actor.getId(), agora.minusHours(1)) >= MAXIMO_POR_HORA)
-            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Você enviou muitas denúncias em pouco tempo. Tente de novo mais tarde.");
+            throw new TooManyRequestsException("Você enviou muitas denúncias em pouco tempo. Tente de novo mais tarde.");
         if (alvo != null && avaliacao == null && denuncias.existsByDenuncianteIdAndDenunciadoIdAndCriadaEmAfter(
                 actor.getId(), alvo.getId(), agora.minusHours(HORAS_ENTRE_DENUNCIAS_DA_MESMA_PESSOA)))
-            throw ApiException.conflict("Você já denunciou esta pessoa nas últimas 24 horas.");
+            throw new ConflictException("Você já denunciou esta pessoa nas últimas 24 horas.");
 
         Denuncia denuncia = new Denuncia();
         denuncia.setDenunciante(actor);
@@ -98,18 +100,18 @@ public class DenunciaService {
 
     @Transactional(readOnly = true)
     public DenunciaResponse obter(Usuario actor, Long id) {
-        Denuncia denuncia = denuncias.findById(id).orElseThrow(() -> ApiException.notFound("Denúncia não encontrada."));
+        Denuncia denuncia = denuncias.findById(id).orElseThrow(() -> new NotFoundException("Denúncia não encontrada."));
         if (actor.getTipo() != Usuario.Tipo.ADMIN && !denuncia.getDenunciante().getId().equals(actor.getId()))
-            throw ApiException.forbidden();
+            throw new ForbiddenException();
         return toResponse(denuncia);
     }
 
     /** Só administradores. Muda a situação e, se ela mudou de fato, avisa quem denunciou por notificação. */
     public DenunciaResponse atualizarStatus(Usuario actor, Long id, Denuncia.Status novo) {
         RegraAcesso.exigirAdmin(actor);
-        if (novo == null) throw ApiException.badRequest("Informe a nova situação da denúncia.");
+        if (novo == null) throw new BadRequestException("Informe a nova situação da denúncia.");
 
-        Denuncia denuncia = denuncias.findById(id).orElseThrow(() -> ApiException.notFound("Denúncia não encontrada."));
+        Denuncia denuncia = denuncias.findById(id).orElseThrow(() -> new NotFoundException("Denúncia não encontrada."));
 
         Denuncia.Status anterior = denuncia.getStatus();
         denuncia.setStatus(novo);
@@ -132,7 +134,7 @@ public class DenunciaService {
     }
 
     private Usuario buscarUsuario(Long id) {
-        return usuarios.findById(id).orElseThrow(() -> ApiException.notFound("Usuário não encontrado."));
+        return usuarios.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
     }
 
     private DenunciaResponse toResponse(Denuncia denuncia) {

@@ -9,7 +9,10 @@ import com.techmentor.api.model.HorarioDisponivel;
 import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.BloqueioUsuarioRepository;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.ForbiddenException;
+import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.sala.GeradorDeSala;
 import com.techmentor.api.sala.GeradorDeSala.DadosDaSala;
 import org.springframework.context.ApplicationEventPublisher;
@@ -66,21 +69,21 @@ public class AgendamentoService {
         Mentoria mentoria = buscar(id);
         boolean participante = mentoria.getAluna().getId().equals(actor.getId())
                 || mentoria.getHorario().getMentora().getUsuario().getId().equals(actor.getId());
-        if (actor.getTipo() != Usuario.Tipo.ADMIN && !participante) throw ApiException.forbidden();
+        if (actor.getTipo() != Usuario.Tipo.ADMIN && !participante) throw new ForbiddenException();
         return toResponse(mentoria);
     }
 
     public AgendamentoResponse criar(Usuario actor, AgendamentoRequest request) {
-        if (actor.getTipo() != Usuario.Tipo.ALUNA) throw ApiException.forbidden();
+        if (actor.getTipo() != Usuario.Tipo.ALUNA) throw new ForbiddenException();
         if (request == null || request.horarioId() == null)
-            throw ApiException.badRequest("Horário é obrigatório.");
+            throw new BadRequestException("Horário é obrigatório.");
         HorarioDisponivel horario = horarios.findByIdForUpdate(request.horarioId())
-                .orElseThrow(() -> ApiException.notFound("Horário não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Horário não encontrado."));
         if (horario.isReservado() || !horario.getInicio().isAfter(LocalDateTime.now()))
-            throw ApiException.conflict("Horário indisponível.");
+            throw new ConflictException("Horário indisponível.");
         Long mentoraUsuarioId = horario.getMentora().getUsuario().getId();
         if (actor.getId().equals(mentoraUsuarioId) || estaBloqueado(actor.getId(), mentoraUsuarioId))
-            throw ApiException.conflict("Não é possível agendar com este usuário.");
+            throw new ConflictException("Não é possível agendar com este usuário.");
 
         horario.setReservado(true);
         Mentoria mentoria = new Mentoria();
@@ -123,11 +126,11 @@ public class AgendamentoService {
         Usuario mentora = mentoria.getHorario().getMentora().getUsuario();
 
         if (!actor.getId().equals(mentora.getId()) && actor.getTipo() != Usuario.Tipo.ADMIN)
-            throw ApiException.forbidden();
+            throw new ForbiddenException();
         if (mentoria.getStatus() != Mentoria.Status.AGENDADA)
-            throw ApiException.conflict("Só mentorias aguardando confirmação podem ser confirmadas.");
+            throw new ConflictException("Só mentorias aguardando confirmação podem ser confirmadas.");
         if (!mentoria.getHorario().getInicio().isAfter(LocalDateTime.now()))
-            throw ApiException.conflict("Esta mentoria já passou do horário.");
+            throw new ConflictException("Esta mentoria já passou do horário.");
 
         mentoria.setStatus(Mentoria.Status.CONFIRMADA);
         garantirSala(mentoria);
@@ -153,25 +156,25 @@ public class AgendamentoService {
 
         boolean ehAluna = actor.getId().equals(aluna.getId());
         boolean ehMentora = actor.getId().equals(mentora.getId());
-        if (!ehAluna && !ehMentora && actor.getTipo() != Usuario.Tipo.ADMIN) throw ApiException.forbidden();
+        if (!ehAluna && !ehMentora && actor.getTipo() != Usuario.Tipo.ADMIN) throw new ForbiddenException();
 
-        if (novoHorarioId == null) throw ApiException.badRequest("Horário é obrigatório.");
+        if (novoHorarioId == null) throw new BadRequestException("Horário é obrigatório.");
         if (mentoria.getStatus() != Mentoria.Status.AGENDADA && mentoria.getStatus() != Mentoria.Status.CONFIRMADA)
-            throw ApiException.conflict("Só mentorias agendadas ou confirmadas podem ser reagendadas.");
+            throw new ConflictException("Só mentorias agendadas ou confirmadas podem ser reagendadas.");
 
         HorarioDisponivel antigo = mentoria.getHorario();
         if (!antigo.getInicio().isAfter(LocalDateTime.now()))
-            throw ApiException.conflict("Esta mentoria já começou e não pode ser reagendada.");
+            throw new ConflictException("Esta mentoria já começou e não pode ser reagendada.");
         if (antigo.getId().equals(novoHorarioId))
-            throw ApiException.badRequest("Escolha um horário diferente do atual.");
+            throw new BadRequestException("Escolha um horário diferente do atual.");
 
         // Mesmo bloqueio do agendar: duas pessoas não reservam o mesmo horário ao mesmo tempo
         HorarioDisponivel novo = horarios.findByIdForUpdate(novoHorarioId)
-                .orElseThrow(() -> ApiException.notFound("Horário não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Horário não encontrado."));
         if (!novo.getMentora().getId().equals(antigo.getMentora().getId()))
-            throw ApiException.badRequest("O novo horário precisa ser da mesma mentora.");
+            throw new BadRequestException("O novo horário precisa ser da mesma mentora.");
         if (novo.isReservado() || !novo.getInicio().isAfter(LocalDateTime.now()))
-            throw ApiException.conflict("Horário indisponível.");
+            throw new ConflictException("Horário indisponível.");
 
         antigo.setReservado(false);
         novo.setReservado(true);
@@ -198,11 +201,11 @@ public class AgendamentoService {
         Mentoria mentoria = buscar(id);
         boolean participante = mentoria.getAluna().getId().equals(actor.getId())
                 || mentoria.getHorario().getMentora().getUsuario().getId().equals(actor.getId());
-        if (!participante && actor.getTipo() != Usuario.Tipo.ADMIN) throw ApiException.forbidden();
+        if (!participante && actor.getTipo() != Usuario.Tipo.ADMIN) throw new ForbiddenException();
         if (mentoria.getStatus() == Mentoria.Status.CANCELADA)
-            throw ApiException.conflict("Agendamento já cancelado.");
+            throw new ConflictException("Agendamento já cancelado.");
         if (mentoria.getStatus() == Mentoria.Status.CONCLUIDA)
-            throw ApiException.conflict("Agendamento concluído não pode ser cancelado.");
+            throw new ConflictException("Agendamento concluído não pode ser cancelado.");
         mentoria.setStatus(Mentoria.Status.CANCELADA);
         mentoria.getHorario().setReservado(false);
         apagarSala(mentoria);
@@ -281,7 +284,7 @@ public class AgendamentoService {
     }
 
     private Mentoria buscar(Long id) {
-        return mentorias.findById(id).orElseThrow(() -> ApiException.notFound("Agendamento não encontrado."));
+        return mentorias.findById(id).orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
     }
 
     private AgendamentoResponse toResponse(Mentoria mentoria) {

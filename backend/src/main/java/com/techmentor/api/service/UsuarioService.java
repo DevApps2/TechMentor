@@ -4,7 +4,7 @@ import com.techmentor.api.dto.UsuarioDtos.CreateRequest;
 import com.techmentor.api.dto.UsuarioDtos.Response;
 import com.techmentor.api.dto.UsuarioDtos.Resumo;
 import com.techmentor.api.dto.UsuarioDtos.UpdateRequest;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.NotAuthorizedException;
 import com.techmentor.api.exceptions.NotFoundException;
@@ -52,7 +52,7 @@ public class UsuarioService {
     public List<Resumo> buscarPorNome(String nome, Long solicitanteId) {
         String termo = nome == null ? "" : nome.trim();
         if (termo.length() < 2) {
-            throw ApiException.badRequest("Digite pelo menos 2 letras para buscar.");
+            throw new BadRequestException("Digite pelo menos 2 letras para buscar.");
         }
         return repository.findTop20ByAtivoTrueAndNomeContainingIgnoreCaseOrderByNomeAsc(termo).stream()
                 .filter(u -> !u.getId().equals(solicitanteId))
@@ -164,7 +164,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
 
         if (arquivo == null || arquivo.isEmpty()) {
-            throw ApiException.badRequest("Envie uma imagem.");
+            throw new BadRequestException("Envie uma imagem.");
         }
 
         String extensao = switch (arquivo.getContentType() == null ? "" : arquivo.getContentType()) {
@@ -174,7 +174,7 @@ public class UsuarioService {
             default -> null;
         };
         if (extensao == null) {
-            throw ApiException.badRequest("Use uma imagem JPG, PNG ou WEBP.");
+            throw new BadRequestException("Use uma imagem JPG, PNG ou WEBP.");
         }
 
         // O tipo que o app informa pode ser falso: confere os primeiros bytes do arquivo
@@ -182,11 +182,11 @@ public class UsuarioService {
         try (InputStream entrada = arquivo.getInputStream()) {
             inicioDoArquivo = entrada.readNBytes(12);
         } catch (IOException e) {
-            throw ApiException.badRequest("Não foi possível ler a imagem.");
+            throw new BadRequestException("Não foi possível ler a imagem.");
         }
         extensao = extensaoPeloConteudo(inicioDoArquivo);
         if (extensao == null) {
-            throw ApiException.badRequest("O arquivo não é uma imagem JPG, PNG ou WEBP válida.");
+            throw new BadRequestException("O arquivo não é uma imagem JPG, PNG ou WEBP válida.");
         }
 
         try {
@@ -198,7 +198,7 @@ public class UsuarioService {
 
             usuario.setFotoUrl("/fotos/" + nome);
         } catch (IOException e) {
-            throw ApiException.badRequest("Não foi possível salvar a imagem.");
+            throw new BadRequestException("Não foi possível salvar a imagem.");
         }
 
         return Response.from(usuario);
@@ -235,11 +235,11 @@ public class UsuarioService {
 
         if (!passwordEncoder.matches(senhaAtual, usuario.getSenhaHash())) {
             limiteDeLogin.registrarFalha(chave);
-            throw ApiException.badRequest("A senha atual está incorreta.");
+            throw new BadRequestException("A senha atual está incorreta.");
         }
 
         if (passwordEncoder.matches(novaSenha, usuario.getSenhaHash())) {
-            throw ApiException.badRequest("A nova senha deve ser diferente da atual.");
+            throw new BadRequestException("A nova senha deve ser diferente da atual.");
         }
 
         limiteDeLogin.limpar(chave);

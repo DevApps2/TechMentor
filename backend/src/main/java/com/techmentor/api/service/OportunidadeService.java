@@ -7,7 +7,10 @@ import com.techmentor.api.dto.OportunidadeDtos.*;
 import com.techmentor.api.repository.InscricaoOportunidadeRepository;
 import com.techmentor.api.repository.OportunidadeRepository;
 import com.techmentor.api.evento.EventosDeNotificacao;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.ForbiddenException;
+import com.techmentor.api.exceptions.NotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +60,7 @@ public class OportunidadeService {
     @Transactional(readOnly = true)
     public OportunidadeResponse obter(Long id) {
         Oportunidade oportunidade = buscar(id);
-        if (!oportunidade.isAtiva()) throw ApiException.notFound("Oportunidade não encontrada.");
+        if (!oportunidade.isAtiva()) throw new NotFoundException("Oportunidade não encontrada.");
         return toResponse(oportunidade);
     }
 
@@ -71,7 +74,7 @@ public class OportunidadeService {
         RegraAcesso.exigirAdmin(actor);
         validar(request);
         Oportunidade oportunidade = buscar(id);
-        if (!oportunidade.isAtiva()) throw ApiException.notFound("Oportunidade não encontrada.");
+        if (!oportunidade.isAtiva()) throw new NotFoundException("Oportunidade não encontrada.");
         return toResponse(aplicar(oportunidade, request));
     }
 
@@ -92,13 +95,13 @@ public class OportunidadeService {
         Oportunidade oportunidade = buscar(id);
         if (!oportunidade.isAtiva() || (oportunidade.getPrazoInscricao() != null
                 && oportunidade.getPrazoInscricao().isBefore(LocalDate.now())))
-            throw ApiException.conflict("Oportunidade encerrada.");
+            throw new ConflictException("Oportunidade encerrada.");
         if ((oportunidade.getTipo() == Oportunidade.Tipo.EVENTO) != evento)
-            throw ApiException.badRequest(evento
+            throw new BadRequestException(evento
                     ? "Inscrições são permitidas apenas para eventos."
                     : "Candidaturas são permitidas apenas para vagas e bolsas.");
         if (inscricoes.findByUsuarioIdAndOportunidadeId(actor.getId(), id).isPresent())
-            throw ApiException.conflict("Usuário já possui inscrição nesta oportunidade.");
+            throw new ConflictException("Usuário já possui inscrição nesta oportunidade.");
         InscricaoOportunidade inscricao = new InscricaoOportunidade();
         inscricao.setUsuario(actor);
         inscricao.setOportunidade(oportunidade);
@@ -117,7 +120,7 @@ public class OportunidadeService {
     @Transactional(readOnly = true)
     public InscricaoResponse obterCandidatura(Usuario actor, Long id) {
         InscricaoOportunidade inscricao = inscricoes.findById(id)
-                .orElseThrow(() -> ApiException.notFound("Candidatura não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
         RegraAcesso.exigirProprietarioOuAdmin(actor, inscricao.getUsuario().getId());
         return toResponse(inscricao);
     }
@@ -134,10 +137,10 @@ public class OportunidadeService {
     /** Só a admin: muda a situação (ENVIADA, EM_ANALISE, APROVADA ou RECUSADA) e avisa quem se candidatou. */
     public CandidaturaAdminResponse atualizarStatus(Usuario actor, Long id, InscricaoOportunidade.Status novo) {
         RegraAcesso.exigirAdmin(actor);
-        if (novo == null) throw ApiException.badRequest("Informe a nova situação.");
+        if (novo == null) throw new BadRequestException("Informe a nova situação.");
 
         InscricaoOportunidade inscricao = inscricoes.findById(id)
-                .orElseThrow(() -> ApiException.notFound("Candidatura não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
 
         if (inscricao.getStatus() != novo) {
             inscricao.setStatus(novo);
@@ -152,24 +155,24 @@ public class OportunidadeService {
     /** A própria usuária retira a candidatura (ou a inscrição), enquanto a equipe ainda não respondeu. */
     public void desistir(Usuario actor, Long id) {
         InscricaoOportunidade inscricao = inscricoes.findById(id)
-                .orElseThrow(() -> ApiException.notFound("Candidatura não encontrada."));
-        if (!inscricao.getUsuario().getId().equals(actor.getId())) throw ApiException.forbidden();
+                .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
+        if (!inscricao.getUsuario().getId().equals(actor.getId())) throw new ForbiddenException();
         if (inscricao.getStatus() == InscricaoOportunidade.Status.APROVADA
                 || inscricao.getStatus() == InscricaoOportunidade.Status.RECUSADA)
-            throw ApiException.conflict("Esta candidatura já foi respondida e não pode ser retirada.");
+            throw new ConflictException("Esta candidatura já foi respondida e não pode ser retirada.");
         inscricoes.delete(inscricao);
     }
 
     private Oportunidade buscar(Long id) {
-        return oportunidades.findById(id).orElseThrow(() -> ApiException.notFound("Oportunidade não encontrada."));
+        return oportunidades.findById(id).orElseThrow(() -> new NotFoundException("Oportunidade não encontrada."));
     }
 
     private void validar(OportunidadeRequest request) {
-        if (request == null) throw ApiException.badRequest("Dados da oportunidade são obrigatórios.");
+        if (request == null) throw new BadRequestException("Dados da oportunidade são obrigatórios.");
         if (request.tipo() == null || request.titulo() == null || request.titulo().isBlank())
-            throw ApiException.badRequest("Tipo e título são obrigatórios.");
+            throw new BadRequestException("Tipo e título são obrigatórios.");
         if (request.prazoInscricao() != null && request.prazoInscricao().isBefore(LocalDate.now()))
-            throw ApiException.badRequest("Prazo não pode estar no passado.");
+            throw new BadRequestException("Prazo não pode estar no passado.");
     }
 
     private Oportunidade aplicar(Oportunidade oportunidade, OportunidadeRequest request) {

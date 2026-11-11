@@ -1,5 +1,6 @@
 package com.techmentor.api.config;
 
+import com.techmentor.api.exceptions.ErroApi;
 import com.techmentor.api.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,7 +45,7 @@ public class SecurityConfig {
                 )
 
                 // Sem token (ou token inválido/vencido): 401. Token válido mas sem permissão: 403.
-                // Os dois no mesmo formato do resto da API: {"erro": "..."}
+                // Os dois no mesmo formato do resto da API (ErroApi: erro + codigo)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, ex) ->
                                 escreverErro(response, HttpStatus.UNAUTHORIZED, "Autenticação necessária."))
@@ -142,6 +143,6 @@ public class SecurityConfig {
         response.setStatus(status.value());
         response.setCharacterEncoding("UTF-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write("{\"erro\": \"" + mensagem + "\"}");
+        response.getWriter().write(ErroApi.de(status, mensagem).paraJson());
     }
 }

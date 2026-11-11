@@ -4,7 +4,9 @@ import com.techmentor.api.model.BloqueioUsuario;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.dto.SegurancaDtos.BloqueioResponse;
 import com.techmentor.api.repository.BloqueioUsuarioRepository;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,12 +31,12 @@ public class BloqueioService {
     }
 
     public BloqueioResponse bloquear(Usuario actor, Long usuarioId) {
-        if (usuarioId == null) throw ApiException.badRequest("Usuário que será bloqueado é obrigatório.");
+        if (usuarioId == null) throw new BadRequestException("Usuário que será bloqueado é obrigatório.");
         Usuario alvo = usuarios.findById(usuarioId)
-                .orElseThrow(() -> ApiException.notFound("Usuário não encontrado."));
-        if (alvo.getId().equals(actor.getId())) throw ApiException.badRequest("Não é possível bloquear a si mesmo.");
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+        if (alvo.getId().equals(actor.getId())) throw new BadRequestException("Não é possível bloquear a si mesmo.");
         if (bloqueios.existsByBloqueadorIdAndBloqueadoId(actor.getId(), alvo.getId()))
-            throw ApiException.conflict("Usuário já está bloqueado.");
+            throw new ConflictException("Usuário já está bloqueado.");
         BloqueioUsuario bloqueio = new BloqueioUsuario();
         bloqueio.setBloqueador(actor);
         bloqueio.setBloqueado(alvo);
@@ -44,7 +46,7 @@ public class BloqueioService {
 
     public void desbloquear(Usuario actor, Long usuarioId) {
         BloqueioUsuario bloqueio = bloqueios.findByBloqueadorIdAndBloqueadoId(actor.getId(), usuarioId)
-                .orElseThrow(() -> ApiException.notFound("Bloqueio não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Bloqueio não encontrado."));
         bloqueios.delete(bloqueio);
     }
 }
