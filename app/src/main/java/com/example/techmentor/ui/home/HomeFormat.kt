@@ -9,10 +9,23 @@ import java.util.Locale
 
 private val LOCALE_BR: Locale = Locale.forLanguageTag("pt-BR")
 
-/** A API manda datas como "2026-11-10T14:00:00" (às vezes com frações de segundo). */
+/** O fuso no fim do texto: "-03:00", "+05:30" ou "Z". */
+private val TERMINA_COM_FUSO = Regex("(Z|[+-]\\d{2}:\\d{2})$")
+
+/**
+ * A API manda datas com o fuso: "2026-11-10T14:00:00-03:00". Aqui viram o instante certo,
+ * que depois é mostrado no relógio do celular (quem viaja ou mora em outro fuso vê a hora local).
+ * Texto sem fuso ("2026-11-10T14:00:00") vale como a hora do relógio do celular.
+ */
 fun parseDataHora(texto: String?): Date? =
     runCatching {
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(texto!!.take(19))
+        val limpo = texto!!.trim().replace(Regex("\\.\\d+"), "") // sem frações de segundo
+        if (TERMINA_COM_FUSO.containsMatchIn(limpo)) {
+            val ajustado = if (limpo.endsWith("Z")) limpo.dropLast(1) + "+00:00" else limpo
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).parse(ajustado)
+        } else {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(limpo.take(19))
+        }
     }.getOrNull()
 
 /**

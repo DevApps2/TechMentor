@@ -102,6 +102,7 @@ A API fica em `http://localhost:8080/techmentor/api` e a documentação interati
 | `MODERACAO_EMAIL` | Para onde vai o aviso de nova denúncia |
 | `SQL_VISIVEL` | `true` mostra o SQL no console |
 | `CADASTRO_MAX_POR_HORA` | Limite de cadastros por hora por endereço (padrão 10) |
+| `APP_FUSO` | Fuso horário do TechMentor (padrão `America/Sao_Paulo`). O servidor passa a usar esse relógio e as datas da API saem com o deslocamento, por exemplo `2026-11-10T14:00:00-03:00` |
 | `PROXY_CONFIAVEL` | `true` quando a API está atrás de um proxy (ngrok, nginx); `false` se estiver exposta direto |
 
 > **Nunca coloque senhas, tokens ou chaves no código nem no GitHub.** Tudo isso vem de variáveis de ambiente.

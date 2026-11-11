@@ -1,5 +1,6 @@
 package com.example.techmentor.ui.admin
 
+import com.example.techmentor.ui.avaliacao.diaMesEAno
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -291,6 +292,5 @@ private fun estiloDaCandidatura(status: String): EstiloDaCandidatura = when (sta
 
 /** "2026-11-07T22:30:00" -> "07/11/2026". Se vier num formato inesperado, devolve como chegou. */
 private fun dataDaCandidatura(iso: String?): String {
-    val partes = iso?.take(10)?.split("-")
-    return if (partes != null && partes.size == 3) "${partes[2]}/${partes[1]}/${partes[0]}" else iso ?: "-"
+    return diaMesEAno(iso).ifEmpty { iso ?: "-" }
 }

@@ -501,7 +501,7 @@ private fun formatarDataEscolhida(utcMillis: Long): String =
         .format(Date(utcMillis))
         .replaceFirstChar { it.uppercase() }
 
-/** Junta a data (do seletor), a hora e a duração nos dois textos que a API espera: "2026-11-10T14:00:00". */
+/** Junta a data (do seletor), a hora e a duração nos dois textos que a API espera: "2026-11-10T14:00:00-03:00". */
 private fun montarIntervalo(dataUtcMillis: Long, hora: Int, minuto: Int, duracaoEmMinutos: Int): Pair<String, String> {
 
     val dia = Calendar.getInstance(UTC).apply { timeInMillis = dataUtcMillis }
@@ -511,7 +511,8 @@ private fun montarIntervalo(dataUtcMillis: Long, hora: Int, minuto: Int, duracao
         set(dia.get(Calendar.YEAR), dia.get(Calendar.MONTH), dia.get(Calendar.DAY_OF_MONTH), hora, minuto, 0)
     }
 
-    val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+    // XXX = o fuso do celular ("-03:00"): a API converte para o fuso do TechMentor
+    val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
 
     val inicio = formato.format(calendario.time)
     calendario.add(Calendar.MINUTE, duracaoEmMinutos)

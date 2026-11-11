@@ -41,7 +41,7 @@ public class GoogleMeetGerador implements GeradorDeSala {
     @Value("${app.google.refresh-token:}")
     private String refreshToken;
 
-    @Value("${app.google.fuso:America/Sao_Paulo}")
+    @Value("${app.fuso:America/Sao_Paulo}")
     private String fuso;
 
     @Value("${app.google.convidar:true}")
