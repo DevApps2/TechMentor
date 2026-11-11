@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -18,7 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.techmentor.ui.home.parseDataHora
@@ -71,7 +72,7 @@ fun BotaoEntrarNaSala(
         else -> "Libera às " + SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR")).format(Date(liberaEm))
     }
 
-    Column(modifier = Modifier.padding(top = 8.dp)) {
+    Column(modifier = Modifier.padding(top = 12.dp)) {
 
         if (linkSala.isNullOrBlank()) {
 
@@ -84,36 +85,22 @@ fun BotaoEntrarNaSala(
 
         } else {
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            BotaoPrimario(
+                texto = "Entrar na sala",
+                habilitado = liberada,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { runCatching { uriHandler.openUri(linkSala) } }
+            )
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (liberada) Color(0xFF7C3AED) else Color(0xFFEDEBF1))
-                        .clickable(enabled = liberada, role = Role.Button) {
-                            runCatching { uriHandler.openUri(linkSala) }
-                        }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-
-                    Text(
-                        text = "Entrar na sala",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (liberada) Color.White else Color(0xFF9A96A3)
-                    )
-                }
-
-                Text(
-                    text = legenda,
-                    fontSize = 10.sp,
-                    color = Color(0xFF85808C)
-                )
-            }
+            Text(
+                text = legenda,
+                fontSize = 10.sp,
+                color = Color(0xFF85808C),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 5.dp)
+            )
         }
     }
 }

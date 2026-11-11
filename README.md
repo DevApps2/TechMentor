@@ -10,12 +10,12 @@ Aplicativo Android com uma API própria para **conectar mulheres que estão entr
 
 | Área | O que a usuária consegue fazer |
 |---|---|
-| **Aprendizado** | Cursos com módulos e aulas, progresso por aula, XP, níveis, sequência de dias, conquistas e desafios |
+| **Aprendizado** | Catálogo de cursos por categoria, trilha com módulos e aulas (concluir a aula libera a próxima), progresso por curso, XP, níveis, sequência de dias, conquistas e desafios |
 | **Mentoria** | Ver mentoras por área, agendar horário, confirmar, reagendar e cancelar; sala do **Google Meet** que abre 30 minutos antes; lembretes e e-mails; pedidos não confirmados expiram sozinhos |
 | **Avaliações** | Aluna e mentora se avaliam de 1 a 5 estrelas em até 14 dias; nota média pública da mentora; comentários podem ser denunciados |
 | **Oportunidades** | Estágios, empregos, bolsas e eventos; busca e filtros; candidatura ou inscrição, retirada da candidatura e acompanhamento da situação (enviada, em análise, aprovada, recusada) |
 | **Segurança** | Denúncia de usuárias e de comentários, bloqueio, orientações e canais de ajuda |
-| **Conta** | Cadastro, login, recuperação de senha por código no e-mail, troca de senha, foto e perfil |
+| **Conta** | Cadastro, login, recuperação de senha por código no e-mail, troca de senha, foto e perfil; a mentora cadastrada pela administradora entra com uma senha provisória e é levada a escolher a própria no primeiro acesso |
 | **Notificações** | Sininho dentro do app e e-mails padronizados |
 | **Administração** | Painel para denúncias (inclusive esconder comentários), mentoras, oportunidades e candidaturas |
 
@@ -102,6 +102,7 @@ A API fica em `http://localhost:8080/techmentor/api` e a documentação interati
 | `MODERACAO_EMAIL` | Para onde vai o aviso de nova denúncia |
 | `SQL_VISIVEL` | `true` mostra o SQL no console |
 | `CADASTRO_MAX_POR_HORA` | Limite de cadastros por hora por endereço (padrão 10) |
+| `APP_FUSO` | Fuso horário do TechMentor (padrão `America/Sao_Paulo`). O servidor passa a usar esse relógio e as datas da API saem com o deslocamento, por exemplo `2026-11-10T14:00:00-03:00` |
 | `PROXY_CONFIAVEL` | `true` quando a API está atrás de um proxy (ngrok, nginx); `false` se estiver exposta direto |
 
 > **Nunca coloque senhas, tokens ou chaves no código nem no GitHub.** Tudo isso vem de variáveis de ambiente.

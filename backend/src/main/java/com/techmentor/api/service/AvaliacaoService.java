@@ -6,7 +6,9 @@ import com.techmentor.api.dto.AvaliacaoDtos.AvaliacaoPublicaResponse;
 import com.techmentor.api.dto.AvaliacaoDtos.AvaliacaoRequest;
 import com.techmentor.api.dto.AvaliacaoDtos.AvaliacaoResponse;
 import com.techmentor.api.dto.AvaliacaoDtos.AvaliacoesDaMentoraResponse;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.ForbiddenException;
+import com.techmentor.api.exceptions.NotFoundException;
 import com.techmentor.api.model.Avaliacao;
 import com.techmentor.api.model.Mentoria;
 import com.techmentor.api.model.PerfilMentora;
@@ -56,7 +58,7 @@ public class AvaliacaoService {
         Avaliacao.Autor autor = autorDe(actor, aluna, mentora);
 
         String impedimento = motivoDeNaoPoder(mentoria, actor.getId());
-        if (impedimento != null) throw ApiException.conflict(impedimento);
+        if (impedimento != null) throw new ConflictException(impedimento);
 
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setMentoria(mentoria);
@@ -70,7 +72,7 @@ public class AvaliacaoService {
             // flush já: se duas chamadas chegarem juntas, a restrição única recusa a segunda aqui
             avaliacao = avaliacoes.saveAndFlush(avaliacao);
         } catch (DataIntegrityViolationException e) {
-            throw ApiException.conflict("Você já avaliou esta mentoria.");
+            throw new ConflictException("Você já avaliou esta mentoria.");
         }
 
         if (autor == Avaliacao.Autor.ALUNA) {
@@ -148,7 +150,7 @@ public class AvaliacaoService {
     public void ocultar(Usuario actor, Long id, boolean oculta) {
         RegraAcesso.exigirAdmin(actor);
         Avaliacao avaliacao = avaliacoes.findById(id)
-                .orElseThrow(() -> ApiException.notFound("Avaliação não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Avaliação não encontrada."));
         avaliacao.setOculta(oculta);
     }
 
@@ -156,7 +158,7 @@ public class AvaliacaoService {
     @Transactional(readOnly = true)
     public AvaliacoesDaMentoraResponse daMentora(Long mentoraPerfilId, int limite) {
         PerfilMentora perfil = perfis.findById(mentoraPerfilId)
-                .orElseThrow(() -> ApiException.notFound("Mentora não encontrada."));
+                .orElseThrow(() -> new NotFoundException("Mentora não encontrada."));
         Long usuarioId = perfil.getUsuario().getId();
 
         int quantidade = Math.max(1, Math.min(limite, LIMITE_MAXIMO_DA_LISTA));
@@ -204,7 +206,7 @@ public class AvaliacaoService {
     private Avaliacao.Autor autorDe(Usuario actor, Usuario aluna, Usuario mentora) {
         if (actor.getId().equals(aluna.getId())) return Avaliacao.Autor.ALUNA;
         if (actor.getId().equals(mentora.getId())) return Avaliacao.Autor.MENTORA;
-        throw ApiException.forbidden();
+        throw new ForbiddenException();
     }
 
     /**
@@ -213,7 +215,7 @@ public class AvaliacaoService {
      */
     private void registrarNaMedia(Long mentoraUsuarioId, int nota) {
         PerfilMentora perfil = perfis.findByUsuarioIdForUpdate(mentoraUsuarioId)
-                .orElseThrow(() -> ApiException.notFound("Perfil de mentora não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Perfil de mentora não encontrado."));
 
         int total = perfil.getTotalAvaliacoes();
         double soma = perfil.getNotaMedia() * total + nota;
@@ -236,7 +238,7 @@ public class AvaliacaoService {
     }
 
     private Mentoria buscar(Long id) {
-        return mentorias.findById(id).orElseThrow(() -> ApiException.notFound("Agendamento não encontrado."));
+        return mentorias.findById(id).orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
     }
 
     private AvaliacaoResponse toResponse(Avaliacao a) {

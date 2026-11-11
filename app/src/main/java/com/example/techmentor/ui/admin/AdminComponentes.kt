@@ -472,11 +472,13 @@ fun CampoDeTexto(
     multilinha: Boolean = false,
     senha: Boolean = false,
     teclado: KeyboardType = KeyboardType.Text,
-    maiusculaNoInicio: Boolean = true
+    maiusculaNoInicio: Boolean = true,
+    obrigatorio: Boolean = false
 ) {
 
     AuthField(
         label = rotulo,
+        obrigatorio = obrigatorio,
         value = valor,
         onValueChange = aoMudar,
         placeholder = dica,

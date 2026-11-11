@@ -30,7 +30,15 @@ data class LoginResponse(
 
 data class CadastroRequest(val nome: String, val email: String, val senha: String)
 
-data class ErroResponse(val erro: String?)
+/**
+ * Todo erro da API: erro = mensagem para mostrar; codigo = para o app decidir (ex.: "CONFLITO", "DADOS_INVALIDOS");
+ * campos = só na validação, campo -> mensagem (ex.: "email" -> "E-mail inválido").
+ */
+data class ErroResponse(
+    val erro: String?,
+    val codigo: String? = null,
+    val campos: Map<String, String>? = null
+)
 
 // Curso em que a usuária está matriculada, já com o progresso (GET /matriculas/usuarios/{id})
 data class MatriculaResponse(

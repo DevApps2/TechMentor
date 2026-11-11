@@ -75,6 +75,7 @@ import com.example.techmentor.ui.components.IconeLinha
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.fracaoDoNivel
+import com.example.techmentor.ui.home.parseDataHora
 import com.example.techmentor.ui.home.formatarNumero
 import com.example.techmentor.ui.theme.ManropeFamily
 import java.io.File
@@ -881,8 +882,7 @@ private fun formatarDataCurta(valor: String): String = runCatching {
 
 private fun formatarDataDesbloqueio(valor: String?): String {
     if (valor.isNullOrBlank()) return "Desbloqueada"
-    val data = runCatching { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(valor.take(19)) }
-        .getOrNull() ?: return "Desbloqueada"
+    val data = parseDataHora(valor) ?: return "Desbloqueada"
     return "Em " + SimpleDateFormat("dd/MM/yy", LocaleConquistas).format(data)
 }
 

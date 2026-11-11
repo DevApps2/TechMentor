@@ -2,18 +2,18 @@ package com.techmentor.api.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class ApiException extends RuntimeException {
+/**
+ * Base de todos os erros "esperados" da API (400, 401, 403, 404, 409, 429...).
+ * Não se lança direto: use a exceção do caso (NotFoundException, ConflictException, BadRequestException...).
+ * Ela só guarda o status HTTP; o ApiExceptionHandler transforma qualquer filha na resposta de erro padrão.
+ */
+public abstract class ApiException extends RuntimeException {
     private final HttpStatus status;
 
-    public ApiException(HttpStatus status, String message) {
+    protected ApiException(HttpStatus status, String message) {
         super(message);
         this.status = status;
     }
 
     public HttpStatus getStatus() { return status; }
-    public static ApiException notFound(String message) { return new ApiException(HttpStatus.NOT_FOUND, message); }
-    public static ApiException badRequest(String message) { return new ApiException(HttpStatus.BAD_REQUEST, message); }
-    public static ApiException conflict(String message) { return new ApiException(HttpStatus.CONFLICT, message); }
-    public static ApiException forbidden() { return new ApiException(HttpStatus.FORBIDDEN, "Acesso não permitido."); }
-    public static ApiException tooManyRequests(String message) { return new ApiException(HttpStatus.TOO_MANY_REQUESTS, message); }
 }

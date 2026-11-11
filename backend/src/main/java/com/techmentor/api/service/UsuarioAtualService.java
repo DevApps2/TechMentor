@@ -1,9 +1,8 @@
 package com.techmentor.api.service;
 
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.NotAuthorizedException;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,11 +26,11 @@ public class UsuarioAtualService {
         if (autenticacao == null
                 || !autenticacao.isAuthenticated()
                 || !(autenticacao.getPrincipal() instanceof Usuario usuario)) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Autenticação necessária.");
+            throw new NotAuthorizedException("Autenticação necessária.");
         }
 
         // Recarrega do banco: se a conta foi desativada depois do login, deixa de valer na hora
         return usuarios.findByIdAndAtivoTrue(usuario.getId())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Autenticação necessária."));
+                .orElseThrow(() -> new NotAuthorizedException("Autenticação necessária."));
     }
 }

@@ -1,20 +1,20 @@
 package com.techmentor.api.service;
 
 import com.techmentor.api.model.Usuario;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.ForbiddenException;
 
 public final class RegraAcesso {
     private RegraAcesso() { }
 
     public static void exigirAdmin(Usuario actor) {
-        if (actor.getTipo() != Usuario.Tipo.ADMIN) throw ApiException.forbidden();
+        if (actor.getTipo() != Usuario.Tipo.ADMIN) throw new ForbiddenException();
     }
 
     public static void exigirProprietarioOuAdmin(Usuario actor, Long ownerId) {
-        if (!actor.getId().equals(ownerId) && actor.getTipo() != Usuario.Tipo.ADMIN) throw ApiException.forbidden();
+        if (!actor.getId().equals(ownerId) && actor.getTipo() != Usuario.Tipo.ADMIN) throw new ForbiddenException();
     }
 
     public static void exigirMentora(Usuario actor) {
-        if (actor.getTipo() != Usuario.Tipo.MENTORA) throw ApiException.forbidden();
+        if (actor.getTipo() != Usuario.Tipo.MENTORA) throw new ForbiddenException();
     }
 }

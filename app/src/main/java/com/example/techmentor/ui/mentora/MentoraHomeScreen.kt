@@ -50,6 +50,9 @@ import com.example.techmentor.ui.auth.OutlinedAuthButton
 import com.example.techmentor.ui.avaliacao.AvaliacoesPendentes
 import com.example.techmentor.ui.components.AtualizarAutomaticamente
 import com.example.techmentor.ui.components.BotaoEntrarNaSala
+import com.example.techmentor.ui.components.BotaoPrimario
+import com.example.techmentor.ui.components.BotaoSecundario
+import com.example.techmentor.ui.components.SeloDeStatus
 import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.descricaoDaMentoria
 import com.example.techmentor.ui.home.parseDataHora
@@ -437,20 +440,11 @@ private fun CartaoDeMentoria(
         Spacer(modifier = Modifier.height(10.dp))
 
         // Situação: aguardando a confirmação da mentora ou já confirmada
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(7.dp))
-                .background(if (aguardando) Color(0xFFFEF3C7) else Color(0xFFDCFCE7))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-
-            Text(
-                text = if (aguardando) "Aguardando sua confirmação" else "Confirmada",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
-            )
-        }
+        SeloDeStatus(
+            texto = if (aguardando) "Aguardando sua confirmação" else "Confirmada",
+            fundo = if (aguardando) Color(0xFFFEF3C7) else Color(0xFFDCFCE7),
+            cor = if (aguardando) Color(0xFFB45309) else Color(0xFF15803D)
+        )
 
         BotaoEntrarNaSala(
             status = mentoria.status,
@@ -460,66 +454,38 @@ private fun CartaoDeMentoria(
             minutosAntes = mentoria.minutosParaAbrirSala
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (aguardando) {
+
+            BotaoPrimario(
+                texto = if (ocupado) "Aguarde..." else "Confirmar",
+                habilitado = !ocupado,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onConfirmar
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-            if (aguardando) {
-                BotaoPequeno(
-                    texto = if (ocupado) "Aguarde..." else "Confirmar",
-                    preenchido = true,
-                    cor = MentoriaCores.Roxo,
-                    habilitado = !ocupado,
-                    onClick = onConfirmar
-                )
-            }
-
-            BotaoPequeno(
+            BotaoSecundario(
                 texto = "Reagendar",
-                preenchido = false,
                 cor = MentoriaCores.Roxo,
                 habilitado = !ocupado,
+                modifier = Modifier.weight(1f),
                 onClick = onReagendar
             )
 
-            BotaoPequeno(
+            BotaoSecundario(
                 texto = "Cancelar",
-                preenchido = false,
                 cor = Color(0xFFDC2626),
                 habilitado = !ocupado,
+                modifier = Modifier.weight(1f),
                 onClick = onCancelar
             )
         }
-    }
-}
-
-@Composable
-private fun BotaoPequeno(
-    texto: String,
-    preenchido: Boolean,
-    cor: Color,
-    habilitado: Boolean,
-    onClick: () -> Unit
-) {
-
-    val forma = RoundedCornerShape(10.dp)
-
-    Box(
-        modifier = Modifier
-            .clip(forma)
-            .background(if (preenchido) cor else Color.White)
-            .border(1.dp, cor, forma)
-            .clickable(enabled = habilitado, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-
-        Text(
-            text = texto,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (preenchido) Color.White else cor
-        )
     }
 }
 

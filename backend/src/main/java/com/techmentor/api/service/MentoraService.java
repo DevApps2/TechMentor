@@ -3,7 +3,9 @@ package com.techmentor.api.service;
 import com.techmentor.api.dto.MentoriaDtos.*;
 import com.techmentor.api.repository.*;
 import com.techmentor.api.model.*;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
+import com.techmentor.api.exceptions.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -35,9 +37,9 @@ public class MentoraService {
     public AreaResponse criarArea(Usuario actor, String nome) {
         RegraAcesso.exigirAdmin(actor);
         if (nome == null || nome.isBlank() || nome.trim().length() > 80)
-            throw ApiException.badRequest("Nome da área deve ter entre 1 e 80 caracteres.");
+            throw new BadRequestException("Nome da área deve ter entre 1 e 80 caracteres.");
         if (areas.findAll().stream().anyMatch(area -> area.getNome().equalsIgnoreCase(nome.trim())))
-            throw ApiException.conflict("Área já cadastrada.");
+            throw new ConflictException("Área já cadastrada.");
         AreaAtuacao area = new AreaAtuacao();
         area.setNome(nome.trim());
         area = areas.save(area);
@@ -68,7 +70,7 @@ public class MentoraService {
         RegraAcesso.exigirMentora(actor);
         validarPerfil(request);
         if (mentoras.findByUsuarioId(actor.getId()).isPresent())
-            throw ApiException.conflict("Este usuário já possui perfil de mentora.");
+            throw new ConflictException("Este usuário já possui perfil de mentora.");
         PerfilMentora mentora = new PerfilMentora();
         mentora.setUsuario(actor);
         aplicarDados(mentora, request);
@@ -80,7 +82,7 @@ public class MentoraService {
     public MentoraResponse minhaMentora(Usuario actor) {
         RegraAcesso.exigirMentora(actor);
         PerfilMentora mentora = mentoras.findByUsuarioId(actor.getId())
-                .orElseThrow(() -> ApiException.notFound("Você ainda não preencheu o perfil de mentora."));
+                .orElseThrow(() -> new NotFoundException("Você ainda não preencheu o perfil de mentora."));
         return toResponse(mentora);
     }
 
@@ -96,7 +98,7 @@ public class MentoraService {
         PerfilMentora mentora = buscarMentora(id);
         RegraAcesso.exigirProprietarioOuAdmin(actor, mentora.getUsuario().getId());
         if (mentorias.existsByHorarioMentoraId(id))
-            throw ApiException.conflict("Não é possível excluir mentora com agendamentos registrados.");
+            throw new ConflictException("Não é possível excluir mentora com agendamentos registrados.");
         mentoras.delete(mentora);
     }
 
@@ -112,10 +114,10 @@ public class MentoraService {
         RegraAcesso.exigirProprietarioOuAdmin(actor, mentora.getUsuario().getId());
         if (request == null || request.inicio() == null || request.fim() == null
                 || !request.inicio().isAfter(LocalDateTime.now()) || !request.fim().isAfter(request.inicio()))
-            throw ApiException.badRequest("Informe início futuro e fim posterior ao início.");
+            throw new BadRequestException("Informe início futuro e fim posterior ao início.");
         boolean sobreposto = horarios.findByMentoraId(mentoraId).stream()
                 .anyMatch(h -> request.inicio().isBefore(h.getFim()) && request.fim().isAfter(h.getInicio()));
-        if (sobreposto) throw ApiException.conflict("O horário sobrepõe outra disponibilidade.");
+        if (sobreposto) throw new ConflictException("O horário sobrepõe outra disponibilidade.");
         HorarioDisponivel horario = new HorarioDisponivel();
         horario.setMentora(mentora);
         horario.setInicio(request.inicio());
@@ -125,25 +127,25 @@ public class MentoraService {
 
     public void excluirHorario(Usuario actor, Long id) {
         HorarioDisponivel horario = horarios.findById(id)
-                .orElseThrow(() -> ApiException.notFound("Horário não encontrado."));
+                .orElseThrow(() -> new NotFoundException("Horário não encontrado."));
         RegraAcesso.exigirProprietarioOuAdmin(actor, horario.getMentora().getUsuario().getId());
-        if (horario.isReservado()) throw ApiException.conflict("Horário reservado não pode ser excluído.");
+        if (horario.isReservado()) throw new ConflictException("Horário reservado não pode ser excluído.");
         horarios.delete(horario);
     }
 
     private PerfilMentora buscarMentora(Long id) {
-        return mentoras.findById(id).orElseThrow(() -> ApiException.notFound("Mentora não encontrada."));
+        return mentoras.findById(id).orElseThrow(() -> new NotFoundException("Mentora não encontrada."));
     }
 
     private void validarPerfil(MentoraRequest request) {
-        if (request == null) throw ApiException.badRequest("Dados do perfil são obrigatórios.");
+        if (request == null) throw new BadRequestException("Dados do perfil são obrigatórios.");
         if (request.anosExperiencia() != null && request.anosExperiencia() < 0)
-            throw ApiException.badRequest("Anos de experiência não pode ser negativo.");
+            throw new BadRequestException("Anos de experiência não pode ser negativo.");
     }
 
     private void aplicarDados(PerfilMentora mentora, MentoraRequest request) {
         if (request.bio() != null && request.bio().length() > 2000)
-            throw ApiException.badRequest("Bio excede 2000 caracteres.");
+            throw new BadRequestException("Bio excede 2000 caracteres.");
         mentora.setBio(request.bio());
         mentora.setCargo(request.cargo());
         mentora.setEmpresa(request.empresa());
@@ -151,7 +153,7 @@ public class MentoraService {
         if (request.areasIds() != null) {
             Set<AreaAtuacao> selecionadas = new HashSet<>(areas.findAllById(request.areasIds()));
             if (selecionadas.size() != request.areasIds().size())
-                throw ApiException.badRequest("Uma ou mais áreas de atuação não existem.");
+                throw new BadRequestException("Uma ou mais áreas de atuação não existem.");
             mentora.setAreas(selecionadas);
         }
     }

@@ -46,7 +46,6 @@ import com.example.techmentor.data.Sessao
 import com.example.techmentor.ui.auth.OutlinedAuthButton
 import com.example.techmentor.ui.components.AbaExplorar
 import com.example.techmentor.ui.components.AtualizarAutomaticamente
-import com.example.techmentor.ui.components.AvisoDemo
 import com.example.techmentor.ui.components.ExplorarCabecalho
 import com.example.techmentor.ui.components.Icone
 import com.example.techmentor.ui.components.IconeLinha
@@ -207,8 +206,6 @@ private fun SegurancaInicio(
             ) {
 
                 CartaoDestaque()
-
-                AvisoDemo(texto = "Denúncias e bloqueios ficam salvos no TechMentor, mas não há equipe de moderação conectada.")
 
                 LinhaDeAcao(
                     titulo = "Denunciar usuário",

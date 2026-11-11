@@ -4,7 +4,8 @@ import com.techmentor.api.dto.AdminDtos.MentoraCadastroRequest;
 import com.techmentor.api.dto.MentoriaDtos.MentoraRequest;
 import com.techmentor.api.dto.MentoriaDtos.MentoraResponse;
 import com.techmentor.api.dto.SegurancaDtos.DenunciaResponse;
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.BadRequestException;
+import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.model.Denuncia;
 import com.techmentor.api.model.Usuario;
 import com.techmentor.api.repository.UsuarioRepository;
@@ -38,10 +39,10 @@ public class AdminService {
      */
     public MentoraResponse cadastrarMentora(Usuario actor, MentoraCadastroRequest request) {
         RegraAcesso.exigirAdmin(actor);
-        if (request == null) throw ApiException.badRequest("Dados da mentora são obrigatórios.");
+        if (request == null) throw new BadRequestException("Dados da mentora são obrigatórios.");
 
         String email = Emails.normalizar(request.email());
-        if (usuarios.existsByEmail(email)) throw ApiException.conflict("E-mail já cadastrado.");
+        if (usuarios.existsByEmail(email)) throw new ConflictException("E-mail já cadastrado.");
 
         Usuario conta = new Usuario();
         conta.setNome(request.nome().trim());

@@ -1,6 +1,6 @@
 package com.techmentor.api.service;
 
-import com.techmentor.api.exceptions.ApiException;
+import com.techmentor.api.exceptions.TooManyRequestsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -68,7 +68,7 @@ public class LimiteDeCadastro {
         }
 
         if (estourou[0]) {
-            throw ApiException.tooManyRequests("Muitos cadastros deste dispositivo. Tente de novo mais tarde.");
+            throw new TooManyRequestsException("Muitos cadastros deste dispositivo. Tente de novo mais tarde.");
         }
     }
 }

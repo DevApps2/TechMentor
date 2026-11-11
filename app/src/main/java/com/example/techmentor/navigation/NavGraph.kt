@@ -34,6 +34,7 @@ import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.profile.TrocarSenhaScreen
 import com.example.techmentor.ui.cursos.CursoDetalheScreen
 import com.example.techmentor.ui.cursos.CursosScreen
+import com.example.techmentor.ui.onboarding.OnboardingScreen
 import com.example.techmentor.ui.splash.SplashScreen
 
 @Composable
@@ -77,6 +78,19 @@ fun NavGraph() {
 
         composable("register") {
             RegisterScreen(navController = navController)
+        }
+
+        composable(Sessao.ROTA_ONBOARDING) {
+            OnboardingScreen(
+                onConcluir = { destino ->
+                    Sessao.marcarOnboardingVisto()
+                    // A Home entra primeiro no histórico: o "voltar" de qualquer atalho leva a ela
+                    navController.navigate("home") {
+                        popUpTo(Sessao.ROTA_ONBOARDING) { inclusive = true }
+                    }
+                    if (destino != "home") navController.navigate(destino)
+                }
+            )
         }
 
         composable("home") {
@@ -208,9 +222,4 @@ fun NavGraph() {
         }
 
     }
-}
-
-@Composable
-fun PlaceholderScreen(title: String) {
-    Text(text = title)
 }
