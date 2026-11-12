@@ -66,7 +66,6 @@ data class CursoDetalheUiState(
     val carregando: Boolean = true,
     val curso: CursoResponse? = null,
     val aulas: List<AulaProgressoResponse> = emptyList(),
-    val salvandoAula: Boolean = false,
     val erro: String? = null
 ) {
     val aulasConcluidas: Int get() = aulas.count { it.status == "CONCLUIDA" }
@@ -96,24 +95,6 @@ class CursoDetalheViewModel : ViewModel() {
                 _estado.update { it.copy(carregando = false, erro = ERRO_CONEXAO) }
             } catch (_: IllegalStateException) {
                 _estado.update { it.copy(carregando = false, erro = "Não foi possível encontrar este curso.") }
-            }
-        }
-    }
-
-    fun concluirAula(aula: AulaProgressoResponse) {
-        val usuarioId = Sessao.usuarioId ?: return
-        val curso = _estado.value.curso ?: return
-        if (_estado.value.salvandoAula || aula.status != "ATUAL") return
-        viewModelScope.launch {
-            _estado.update { it.copy(salvandoAula = true, erro = null) }
-            try {
-                ApiClient.api.concluirAula(curso.titulo, aula.ordemModulo, aula.ordemAula, usuarioId)
-                val aulas = ApiClient.api.listarAulasComProgresso(curso.titulo, usuarioId)
-                _estado.update { it.copy(salvandoAula = false, aulas = aulas, erro = null) }
-            } catch (_: HttpException) {
-                _estado.update { it.copy(salvandoAula = false, erro = ERRO_CONEXAO) }
-            } catch (_: IOException) {
-                _estado.update { it.copy(salvandoAula = false, erro = ERRO_CONEXAO) }
             }
         }
     }
