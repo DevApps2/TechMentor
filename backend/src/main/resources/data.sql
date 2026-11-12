@@ -156,42 +156,45 @@ WHERE NOT EXISTS (SELECT 1 FROM avaliacoes a WHERE a.mentoria_id = m.id AND a.av
 INSERT INTO cursos (titulo, descricao, categoria, nivel, icone_url, ativo)
 SELECT v.titulo, v.descricao, v.categoria, v.nivel, v.icone_url, 1
 FROM (
-    SELECT 'Java para iniciantes' AS titulo, 'Aprenda os fundamentos de Java do zero.' AS descricao,
+    SELECT 'Java para iniciantes' AS titulo, 'Aprenda os fundamentos de Java do zero, com o Curso em Vídeo.' AS descricao,
            'PROGRAMACAO' AS categoria, 'INICIANTE' AS nivel, 'https://cdn.techmentor.com/icones/java.png' AS icone_url
-    UNION ALL SELECT 'Python para Análise de Dados', 'Manipule e visualize dados com Python, pandas e matplotlib.',
-           'DADOS', 'INICIANTE', 'https://cdn.techmentor.com/icones/python.png'
-    UNION ALL SELECT 'Fundamentos de UX Design', 'Pesquisa com usuárias, wireframes e prototipação de interfaces.',
-           'DESIGN', 'INICIANTE', 'https://cdn.techmentor.com/icones/ux.png'
-    UNION ALL SELECT 'Carreira em Tecnologia', 'Currículo, LinkedIn, entrevistas e planejamento de carreira.',
-           'CARREIRA', 'INICIANTE', 'https://cdn.techmentor.com/icones/carreira.png'
+    UNION ALL SELECT 'Python para iniciantes', 'Seu primeiro contato com programação, do zero, com o Python 3.',
+           'PROGRAMACAO', 'INICIANTE', 'https://cdn.techmentor.com/icones/python.png'
+    UNION ALL SELECT 'Lógica de Programação', 'Algoritmos e lógica de programação, passo a passo, para quem está começando.',
+           'PROGRAMACAO', 'INICIANTE', 'https://cdn.techmentor.com/icones/ux.png'
+    UNION ALL SELECT 'Git e GitHub', 'Controle de versão na prática: do primeiro repositório ao GitHub, com o Curso em Vídeo.',
+           'PROGRAMACAO', 'INICIANTE', 'https://cdn.techmentor.com/icones/carreira.png'
     UNION ALL SELECT 'Cibersegurança Essencial', 'Conceitos de segurança da informação, ameaças comuns e boas práticas.',
            'SEGURANCA', 'INTERMEDIARIO', 'https://cdn.techmentor.com/icones/ciberseguranca.png'
     UNION ALL SELECT 'Redes de Computadores', 'Como funcionam redes, protocolos, endereçamento e a internet.',
            'REDES', 'INICIANTE', 'https://cdn.techmentor.com/icones/redes.png'
-    UNION ALL SELECT 'UX/UI na prática', 'Projeto de interfaces do briefing ao protótipo, com estudos de caso.',
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 'Crie suas primeiras páginas web com HTML5 e CSS3, do zero.',
            'DESIGN', 'INICIANTE', 'https://cdn.techmentor.com/icones/uxui.png'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM cursos c WHERE c.titulo = v.titulo);
 
 -- Cursos que já existiam no banco antes da coluna "nivel"
 UPDATE cursos SET nivel = 'INICIANTE'
-WHERE nivel IS NULL AND titulo IN ('Java para iniciantes', 'Python para Análise de Dados',
-                                   'Fundamentos de UX Design', 'Carreira em Tecnologia');
+WHERE nivel IS NULL AND titulo IN ('Java para iniciantes', 'Python para iniciantes',
+                                   'Lógica de Programação', 'Git e GitHub');
 
 INSERT INTO modulos (curso_id, titulo, ordem)
 SELECT c.id, v.titulo, v.ordem
 FROM (
     SELECT 'Java para iniciantes' AS curso, 'Introdução ao Java' AS titulo, 1 AS ordem
-    UNION ALL SELECT 'Java para iniciantes',           'Orientação a Objetos', 2
-    UNION ALL SELECT 'Python para Análise de Dados',   'Primeiros passos com Python', 1
-    UNION ALL SELECT 'Python para Análise de Dados',   'Análise com pandas', 2
-    UNION ALL SELECT 'Fundamentos de UX Design',       'Entendendo a usuária', 1
-    UNION ALL SELECT 'Fundamentos de UX Design',       'Do wireframe ao protótipo', 2
-    UNION ALL SELECT 'Carreira em Tecnologia',         'Currículo e LinkedIn', 1
-    UNION ALL SELECT 'Carreira em Tecnologia',         'Entrevistas técnicas e comportamentais', 2
-    UNION ALL SELECT 'Cibersegurança Essencial',       'Fundamentos de segurança', 1
-    UNION ALL SELECT 'Redes de Computadores',          'Como a internet funciona', 1
-    UNION ALL SELECT 'UX/UI na prática',               'Do briefing ao protótipo', 1
+    UNION ALL SELECT 'Java para iniciantes', 'Dados e operadores', 2
+    UNION ALL SELECT 'Python para iniciantes', 'Primeiros passos com Python', 1
+    UNION ALL SELECT 'Python para iniciantes', 'Variáveis, operadores e módulos', 2
+    UNION ALL SELECT 'Lógica de Programação', 'Introdução a algoritmos', 1
+    UNION ALL SELECT 'Lógica de Programação', 'Scratch e estruturas condicionais', 2
+    UNION ALL SELECT 'Git e GitHub', 'Entendendo o Git e o GitHub', 1
+    UNION ALL SELECT 'Git e GitHub', 'Colocando a mão na massa', 2
+    UNION ALL SELECT 'Cibersegurança Essencial', 'Fundamentos de segurança', 1
+    UNION ALL SELECT 'Cibersegurança Essencial', 'Redes sociais, senhas e phishing', 2
+    UNION ALL SELECT 'Redes de Computadores', 'Como a internet funciona', 1
+    UNION ALL SELECT 'Redes de Computadores', 'O mundo da web', 2
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 'Primeiros passos em HTML5', 1
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 'Texto, listas, links e imagens', 2
 ) v
 JOIN cursos c ON c.titulo = v.curso
 WHERE NOT EXISTS (SELECT 1 FROM modulos m WHERE m.curso_id = c.id AND m.ordem = v.ordem);
@@ -199,32 +202,65 @@ WHERE NOT EXISTS (SELECT 1 FROM modulos m WHERE m.curso_id = c.id AND m.ordem = 
 INSERT INTO aulas (modulo_id, titulo, ordem, duracao_minutos, xp_recompensa, conteudo_url)
 SELECT m.id, v.titulo, v.ordem, v.duracao, 20, v.url
 FROM (
-    SELECT 'Java para iniciantes' AS curso, 1 AS modulo, 'O que é Java e como instalar' AS titulo, 1 AS ordem, 15 AS duracao, 'https://cdn.techmentor.com/aulas/java-01.mp4' AS url
-    UNION ALL SELECT 'Java para iniciantes', 1, 'Variáveis e tipos de dados',       2, 20, 'https://cdn.techmentor.com/aulas/java-02.mp4'
-    UNION ALL SELECT 'Java para iniciantes', 2, 'Classes e objetos',                1, 25, 'https://cdn.techmentor.com/aulas/java-03.mp4'
-    UNION ALL SELECT 'Java para iniciantes', 2, 'Herança e polimorfismo',           2, 30, 'https://cdn.techmentor.com/aulas/java-04.mp4'
-    UNION ALL SELECT 'Python para Análise de Dados', 1, 'Instalando o ambiente Python',   1, 12, 'https://cdn.techmentor.com/aulas/python-01.mp4'
-    UNION ALL SELECT 'Python para Análise de Dados', 1, 'Listas, dicionários e funções',  2, 22, 'https://cdn.techmentor.com/aulas/python-02.mp4'
-    UNION ALL SELECT 'Python para Análise de Dados', 2, 'Lendo arquivos CSV com pandas',  1, 20, 'https://cdn.techmentor.com/aulas/python-03.mp4'
-    UNION ALL SELECT 'Python para Análise de Dados', 2, 'Limpeza e visualização de dados',2, 28, 'https://cdn.techmentor.com/aulas/python-04.mp4'
-    UNION ALL SELECT 'Fundamentos de UX Design', 1, 'O que é UX e por que importa',     1, 10, 'https://cdn.techmentor.com/aulas/ux-01.mp4'
-    UNION ALL SELECT 'Fundamentos de UX Design', 1, 'Entrevistas e personas',           2, 18, 'https://cdn.techmentor.com/aulas/ux-02.mp4'
-    UNION ALL SELECT 'Fundamentos de UX Design', 2, 'Wireframes de baixa fidelidade',   1, 20, 'https://cdn.techmentor.com/aulas/ux-03.mp4'
-    UNION ALL SELECT 'Fundamentos de UX Design', 2, 'Protótipos navegáveis no Figma',   2, 25, 'https://cdn.techmentor.com/aulas/ux-04.mp4'
-    UNION ALL SELECT 'Carreira em Tecnologia', 1, 'Montando um currículo que se destaca', 1, 15, 'https://cdn.techmentor.com/aulas/carreira-01.mp4'
-    UNION ALL SELECT 'Carreira em Tecnologia', 1, 'Otimizando seu LinkedIn',              2, 12, 'https://cdn.techmentor.com/aulas/carreira-02.mp4'
-    UNION ALL SELECT 'Carreira em Tecnologia', 2, 'Como se preparar para entrevistas técnicas', 1, 22, 'https://cdn.techmentor.com/aulas/carreira-03.mp4'
-    UNION ALL SELECT 'Carreira em Tecnologia', 2, 'Perguntas comportamentais',           2, 18, 'https://cdn.techmentor.com/aulas/carreira-04.mp4'
-    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Ameaças e vulnerabilidades',       1, 20, 'https://cdn.techmentor.com/aulas/ciber-01.mp4'
-    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Senhas e autenticação',            2, 18, 'https://cdn.techmentor.com/aulas/ciber-02.mp4'
-    UNION ALL SELECT 'Redes de Computadores', 1, 'O que é uma rede',                    1, 15, 'https://cdn.techmentor.com/aulas/redes-01.mp4'
-    UNION ALL SELECT 'Redes de Computadores', 1, 'IP, DNS e HTTP',                      2, 22, 'https://cdn.techmentor.com/aulas/redes-02.mp4'
-    UNION ALL SELECT 'UX/UI na prática', 1, 'Lendo um briefing',                        1, 12, 'https://cdn.techmentor.com/aulas/uxui-01.mp4'
-    UNION ALL SELECT 'UX/UI na prática', 1, 'Primeiras telas no Figma',                 2, 25, 'https://cdn.techmentor.com/aulas/uxui-02.mp4'
+    SELECT 'Java para iniciantes' AS curso, 1 AS modulo, 'História do Java' AS titulo, 1 AS ordem, 36 AS duracao, 'https://www.youtube.com/watch?v=sTX0UEplF54' AS url
+    UNION ALL SELECT 'Java para iniciantes', 1, 'Como funciona o Java', 2, 19, 'https://www.youtube.com/watch?v=v_ZCtgwbS3o'
+    UNION ALL SELECT 'Java para iniciantes', 1, 'Instalando o JDK no seu computador', 3, 21, 'https://www.youtube.com/watch?v=yWU5bm_pZzY'
+    UNION ALL SELECT 'Java para iniciantes', 1, 'Seu primeiro programa em Java', 4, 24, 'https://www.youtube.com/watch?v=ijXXaIYsVx4'
+    UNION ALL SELECT 'Java para iniciantes', 2, 'Introdução ao Swing e JavaFX', 1, 42, 'https://www.youtube.com/watch?v=cYMruFKwqf0'
+    UNION ALL SELECT 'Java para iniciantes', 2, 'Tipos primitivos e manipulação de dados', 2, 48, 'https://www.youtube.com/watch?v=JEAQeT7YGs4'
+    UNION ALL SELECT 'Java para iniciantes', 2, 'Operadores aritméticos e classe Math', 3, 40, 'https://www.youtube.com/watch?v=W9V5wtOOZHs'
+    UNION ALL SELECT 'Java para iniciantes', 2, 'Operadores lógicos e relacionais', 4, 37, 'https://www.youtube.com/watch?v=xHgnlic7fj8'
+    UNION ALL SELECT 'Python para iniciantes', 1, 'Seja um programador', 1, 29, 'https://www.youtube.com/watch?v=S9uPNppGsGo'
+    UNION ALL SELECT 'Python para iniciantes', 1, 'Para que serve o Python?', 2, 22, 'https://www.youtube.com/watch?v=Mp0vhMDI7fA'
+    UNION ALL SELECT 'Python para iniciantes', 1, 'Instalando o Python 3 e o IDLE', 3, 18, 'https://www.youtube.com/watch?v=VuKvR1J2LQE'
+    UNION ALL SELECT 'Python para iniciantes', 1, 'Primeiros comandos em Python 3', 4, 28, 'https://www.youtube.com/watch?v=31llNGKWDdo'
+    UNION ALL SELECT 'Python para iniciantes', 2, 'Instalando o PyCharm e o QPython3', 1, 32, 'https://www.youtube.com/watch?v=ElRd0cbXIv4'
+    UNION ALL SELECT 'Python para iniciantes', 2, 'Tipos primitivos e saída de dados', 2, 30, 'https://www.youtube.com/watch?v=hdDHg1p3YVc'
+    UNION ALL SELECT 'Python para iniciantes', 2, 'Operadores aritméticos', 3, 40, 'https://www.youtube.com/watch?v=Vw6gLypRKmY'
+    UNION ALL SELECT 'Python para iniciantes', 2, 'Utilizando módulos', 4, 33, 'https://www.youtube.com/watch?v=oOUyhGNib2Q'
+    UNION ALL SELECT 'Lógica de Programação', 1, 'Introdução a algoritmos', 1, 14, 'https://www.youtube.com/watch?v=8mei6uVttho'
+    UNION ALL SELECT 'Lógica de Programação', 1, 'Primeiro algoritmo', 2, 36, 'https://www.youtube.com/watch?v=M2Af7gkbbro'
+    UNION ALL SELECT 'Lógica de Programação', 1, 'Comando de entrada e operadores', 3, 32, 'https://www.youtube.com/watch?v=RDrfZ-7WE8c'
+    UNION ALL SELECT 'Lógica de Programação', 1, 'Operadores lógicos e relacionais', 4, 27, 'https://www.youtube.com/watch?v=Ig4QZNpVZYs'
+    UNION ALL SELECT 'Lógica de Programação', 2, 'Introdução ao Scratch', 1, 25, 'https://www.youtube.com/watch?v=GrPkuk1ezyo'
+    UNION ALL SELECT 'Lógica de Programação', 2, 'Exercícios de algoritmo resolvidos', 2, 27, 'https://www.youtube.com/watch?v=v2nCgGSVCeE'
+    UNION ALL SELECT 'Lógica de Programação', 2, 'Estruturas condicionais 1', 3, 28, 'https://www.youtube.com/watch?v=_g05aHdBAEY'
+    UNION ALL SELECT 'Lógica de Programação', 2, 'Estruturas condicionais 2', 4, 24, 'https://www.youtube.com/watch?v=7gGFHzqh4d8'
+    UNION ALL SELECT 'Git e GitHub', 1, 'O que é Git? O que é versionamento?', 1, 30, 'https://www.youtube.com/watch?v=xEKo29OWILE'
+    UNION ALL SELECT 'Git e GitHub', 1, 'O que é GitHub? Para que ele serve?', 2, 38, 'https://www.youtube.com/watch?v=hcZ0qtwvN1w'
+    UNION ALL SELECT 'Git e GitHub', 1, 'A evolução do Git e GitHub', 3, 43, 'https://www.youtube.com/watch?v=CJtrNuTTs4Q'
+    UNION ALL SELECT 'Git e GitHub', 1, 'Instalações e configurações importantes', 4, 34, 'https://www.youtube.com/watch?v=gMh6lrXibWY'
+    UNION ALL SELECT 'Git e GitHub', 2, 'Criando o primeiro repositório', 1, 34, 'https://www.youtube.com/watch?v=5BYm7UdCrX0'
+    UNION ALL SELECT 'Git e GitHub', 2, 'Clonando um repositório', 2, 28, 'https://www.youtube.com/watch?v=OlArEishhQg'
+    UNION ALL SELECT 'Git e GitHub', 2, 'Versionando seus projetos antigos', 3, 27, 'https://www.youtube.com/watch?v=065NQCDSMb0'
+    UNION ALL SELECT 'Git e GitHub', 2, 'Você sabe usar Issues?', 4, 41, 'https://www.youtube.com/watch?v=mUZOySyVcuQ'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Os pilares da Segurança da Informação', 1, 18, 'https://www.youtube.com/watch?v=Y0beKLRf-fI'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Termos de Segurança da Informação', 2, 20, 'https://www.youtube.com/watch?v=mJCbnSrlQhs'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Segurança em computadores', 3, 21, 'https://www.youtube.com/watch?v=4aPVdQtYQTg'
+    UNION ALL SELECT 'Cibersegurança Essencial', 1, 'Contas e senhas nos computadores', 4, 15, 'https://www.youtube.com/watch?v=M97Ne4Jumf8'
+    UNION ALL SELECT 'Cibersegurança Essencial', 2, 'Redes sociais', 1, 11, 'https://www.youtube.com/watch?v=UMJgG-hp0f8'
+    UNION ALL SELECT 'Cibersegurança Essencial', 2, 'Cuidados com as redes sociais', 2, 19, 'https://www.youtube.com/watch?v=61VwUROh1Xo'
+    UNION ALL SELECT 'Cibersegurança Essencial', 2, 'Senhas', 3, 16, 'https://www.youtube.com/watch?v=BO6wZ-cTPFA'
+    UNION ALL SELECT 'Cibersegurança Essencial', 2, 'Phishing e códigos maliciosos', 4, 17, 'https://www.youtube.com/watch?v=EihZ8WFBGKA'
+    UNION ALL SELECT 'Redes de Computadores', 1, 'Como a Internet chega na minha casa?', 1, 27, 'https://www.youtube.com/watch?v=F74GKCLXUWM'
+    UNION ALL SELECT 'Redes de Computadores', 1, 'Como a Internet funciona?', 2, 22, 'https://www.youtube.com/watch?v=nlO5hySqJFA'
+    UNION ALL SELECT 'Redes de Computadores', 1, 'O que é domínio e hospedagem?', 3, 20, 'https://www.youtube.com/watch?v=RFHSt1PCy0k'
+    UNION ALL SELECT 'Redes de Computadores', 2, 'A diferença entre HTML, CSS e JavaScript', 1, 27, 'https://www.youtube.com/watch?v=B4FU3NFRTDw'
+    UNION ALL SELECT 'Redes de Computadores', 2, 'Front-end, Back-end e Full stack', 2, 19, 'https://www.youtube.com/watch?v=iSqf2iPqJNM'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 1, 'Instalando todas as ferramentas', 1, 14, 'https://www.youtube.com/watch?v=UForX7ehChM'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 1, 'Seu primeiro código HTML', 2, 18, 'https://www.youtube.com/watch?v=E6CdIawPTh0'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 1, 'Parágrafos e quebras', 3, 10, 'https://www.youtube.com/watch?v=f6NTJdtEFOc'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 1, 'Hierarquia de títulos', 4, 16, 'https://www.youtube.com/watch?v=aiOEBhozEOg'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 2, 'Semântica na HTML5', 1, 15, 'https://www.youtube.com/watch?v=HaSgt1hK2Fs'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 2, 'Listas OL e UL', 2, 13, 'https://www.youtube.com/watch?v=JlE0pzESf5g'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 2, 'Links e âncoras em HTML5', 3, 13, 'https://www.youtube.com/watch?v=LeOVXQDsAIY'
+    UNION ALL SELECT 'HTML5 e CSS3 para iniciantes', 2, 'A tag img em HTML5', 4, 18, 'https://www.youtube.com/watch?v=CwOmEetWMnU'
 ) v
 JOIN cursos c ON c.titulo = v.curso
 JOIN modulos m ON m.curso_id = c.id AND m.ordem = v.modulo
 WHERE NOT EXISTS (SELECT 1 FROM aulas a WHERE a.modulo_id = m.id AND a.ordem = v.ordem);
+
+
 
 -- ---------------------------------------------------------------------
 -- Matrículas e progresso nas aulas
@@ -234,10 +270,10 @@ SELECT u.id, c.id, v.matriculada_em, v.concluido_em
 FROM (
     SELECT 'beatriz.santos@email.com' AS email, 'Java para iniciantes' AS curso, '2026-10-18 10:00:00' AS matriculada_em, NULL AS concluido_em
     UNION ALL SELECT 'camila.rocha@email.com',    'Java para iniciantes',         '2026-10-19 11:00:00', NULL
-    UNION ALL SELECT 'camila.rocha@email.com',    'Python para Análise de Dados', '2026-10-21 09:30:00', NULL
+    UNION ALL SELECT 'camila.rocha@email.com',    'Python para iniciantes', '2026-10-21 09:30:00', NULL
     UNION ALL SELECT 'daniela.martins@email.com', 'Java para iniciantes',         '2026-10-19 08:00:00', '2026-10-24 21:00:00'
-    UNION ALL SELECT 'daniela.martins@email.com', 'Fundamentos de UX Design',     '2026-10-24 21:30:00', NULL
-    UNION ALL SELECT 'elisa.ferreira@email.com',  'Carreira em Tecnologia',       '2026-10-25 15:00:00', NULL
+    UNION ALL SELECT 'daniela.martins@email.com', 'Lógica de Programação',     '2026-10-24 21:30:00', NULL
+    UNION ALL SELECT 'elisa.ferreira@email.com',  'Git e GitHub',       '2026-10-25 15:00:00', NULL
 ) v
 JOIN usuarios u ON u.email = v.email
 JOIN cursos c ON c.titulo = v.curso
@@ -248,13 +284,17 @@ SELECT u.id, a.id, v.concluida_em
 FROM (
     SELECT 'beatriz.santos@email.com' AS email, 'Java para iniciantes' AS curso, 1 AS modulo, 1 AS aula, '2026-10-21 10:00:00' AS concluida_em
     UNION ALL SELECT 'beatriz.santos@email.com', 'Java para iniciantes', 1, 2, '2026-10-23 10:00:00'
-    UNION ALL SELECT 'beatriz.santos@email.com', 'Java para iniciantes', 2, 1, '2026-10-25 10:00:00'
+    UNION ALL SELECT 'beatriz.santos@email.com', 'Java para iniciantes', 1, 3, '2026-10-25 10:00:00'
     UNION ALL SELECT 'camila.rocha@email.com',   'Java para iniciantes', 1, 1, '2026-10-22 19:00:00'
-    UNION ALL SELECT 'camila.rocha@email.com',   'Python para Análise de Dados', 1, 1, '2026-10-24 19:00:00'
+    UNION ALL SELECT 'camila.rocha@email.com',   'Python para iniciantes', 1, 1, '2026-10-24 19:00:00'
     UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 1, 1, '2026-10-20 08:30:00'
     UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 1, 2, '2026-10-21 08:30:00'
     UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 2, 1, '2026-10-23 08:30:00'
+    UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 1, 3, '2026-10-22 08:30:00'
+    UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 1, 4, '2026-10-22 20:30:00'
     UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 2, 2, '2026-10-24 20:30:00'
+    UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 2, 3, '2026-10-24 20:40:00'
+    UNION ALL SELECT 'daniela.martins@email.com','Java para iniciantes', 2, 4, '2026-10-24 20:50:00'
 ) v
 JOIN usuarios u ON u.email = v.email
 JOIN cursos c ON c.titulo = v.curso
@@ -306,7 +346,7 @@ SELECT v.titulo, v.descricao, v.xp, v.inicio, v.fim, v.meta, v.tipo
 FROM (
     SELECT 'Primeiros passos em Java' AS titulo, 'Conclua 4 aulas de Java até o fim do mês.' AS descricao,
            100 AS xp, '2026-10-19' AS inicio, '2026-10-31' AS fim, 4 AS meta, 'AULAS' AS tipo
-    UNION ALL SELECT 'Semana de Dados', 'Conclua 3 aulas de Python para Análise de Dados em uma semana.',
+    UNION ALL SELECT 'Semana de Dados', 'Conclua 3 aulas de Python para iniciantes em uma semana.',
            80, '2026-11-09', '2026-11-15', 3, 'AULAS'
     UNION ALL SELECT 'Desafio UX 5 dias', 'Conclua 2 aulas de UX Design antes do fim do mês.',
            60, '2026-10-20', '2026-10-31', 2, 'AULAS'
@@ -701,7 +741,7 @@ FROM (
                           'Monitoramento de alertas e resposta a incidentes.',
                           'Noções de redes e Linux.', 'Plano de carreira.', 'Segurança', 'Júnior',
                           'Remoto', 'https://example.com/teste/4', 3
-         UNION ALL SELECT 'EVENTO', 'Meetup de Carreira em Tecnologia', 'TechMentor',
+         UNION ALL SELECT 'EVENTO', 'Meetup de Git e GitHub', 'TechMentor',
                           'Conversa aberta com profissionais sobre como começar na área.',
                           'Aberto ao público.', 'Networking e dicas de carreira.', 'Carreira', 'Todos os níveis',
                           'Online', 'https://example.com/teste/5', 6

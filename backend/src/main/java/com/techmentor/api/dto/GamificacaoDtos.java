@@ -265,6 +265,9 @@ public final class GamificacaoDtos {
             @Schema(description = "Situação da aula para a usuária", example = "ATUAL")
             StatusAula status,
             @Schema(description = "Quando a usuária concluiu a aula; nulo se ainda não concluiu", nullable = true)
-            LocalDateTime concluidaEm
+            LocalDateTime concluidaEm,
+            @Schema(description = "Link do vídeo da aula (https); nulo se a aula ainda não tem vídeo",
+                    example = "https://cdn.techmentor.com/aulas/variaveis.mp4", nullable = true)
+            String conteudoUrl
     ) { }
 }
