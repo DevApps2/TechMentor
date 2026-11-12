@@ -10,7 +10,7 @@ Aplicativo Android com uma API própria para **conectar mulheres que estão entr
 
 | Área | O que a usuária consegue fazer |
 |---|---|
-| **Aprendizado** | Catálogo de cursos por categoria, trilha com módulos e aulas (concluir a aula libera a próxima), progresso por curso, XP, níveis, sequência de dias, conquistas e desafios |
+| **Aprendizado** | Catálogo de cursos por categoria, trilha com módulos e aulas em vídeo (vídeos do YouTube e de arquivo) (a aula só pode ser concluída depois de assistida, e concluir libera a próxima), progresso por curso, XP, níveis, sequência de dias, conquistas e desafios |
 | **Mentoria** | Ver mentoras por área, agendar horário, confirmar, reagendar e cancelar; sala do **Google Meet** que abre 30 minutos antes; lembretes e e-mails; pedidos não confirmados expiram sozinhos |
 | **Avaliações** | Aluna e mentora se avaliam de 1 a 5 estrelas em até 14 dias; nota média pública da mentora; comentários podem ser denunciados |
 | **Oportunidades** | Estágios, empregos, bolsas e eventos; busca e filtros; candidatura ou inscrição, retirada da candidatura e acompanhamento da situação (enviada, em análise, aprovada, recusada) |
@@ -176,3 +176,9 @@ O perfil `prod` (`application-prod.properties`) desliga o Swagger, só confere o
 ## Documentação da API
 
 Com a API rodando, o Swagger lista todas as rotas, os campos de cada uma e permite testá-las. Para chamar uma rota protegida, faça `POST /usuarios/login`, copie o `accessToken` e informe-o no botão **Authorize**.
+
+---
+
+## Créditos
+
+As aulas de **Java**, **Python**, **Lógica de Programação**, **Cibersegurança**, **Redes** e **Git e GitHub** e **HTML5 e CSS3** exibem, pelo player oficial incorporado do YouTube, vídeos gratuitos do canal **[Curso em Vídeo](https://www.youtube.com/@cursoemvideo)**, do professor Gustavo Guanabara. Os vídeos pertencem ao canal; o TechMentor apenas os exibe, sem baixá-los. Todas as aulas do seed são vídeos dele. Para trocar o vídeo de uma aula, altere a coluna `conteudo_url` (link `https://www.youtube.com/watch?v=...` ou um arquivo `.mp4` em https).
