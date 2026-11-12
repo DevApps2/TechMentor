@@ -32,3 +32,7 @@ WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
 --   ALTER TABLE usuarios  ADD COLUMN senha_provisoria BOOLEAN NULL;   -- null conta como "não é provisória"
 --   ALTER TABLE denuncias ADD COLUMN avaliacao_id BIGINT NULL,
 --                         ADD CONSTRAINT fk_denuncias_avaliacao FOREIGN KEY (avaliacao_id) REFERENCES avaliacoes (id);
+
+-- Vídeos das aulas: o data.sql traz 53 aulas com vídeos do YouTube (Curso em Vídeo). Um banco que já tinha aulas
+-- com os links antigos (inventados ou clipes de teste) não é corrigido pelo data.sql, que só insere o que falta.
+-- Para recomeçar só o conteúdo dos cursos, apague aulas, módulos, matrículas e progresso e rode o data.sql de novo.

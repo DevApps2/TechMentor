@@ -7,6 +7,7 @@ import com.techmentor.api.model.Modulo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -130,7 +131,9 @@ public final class CursoDtos {
             @Schema(description = "XP concedido ao concluir a aula; se omitido, usa o valor padrão", example = "10")
             @PositiveOrZero Integer xpRecompensa,
             @Schema(description = "URL do conteúdo da aula", example = "https://cdn.techmentor.com/aulas/variaveis.mp4")
-            @Size(max = 255) String conteudoUrl
+            @Size(max = 255)
+            @Pattern(regexp = "^https://\\S+$", message = "O link do vídeo deve começar com https://")
+            String conteudoUrl
     ) {
         public Aula toEntity() {
             Aula aula = new Aula();

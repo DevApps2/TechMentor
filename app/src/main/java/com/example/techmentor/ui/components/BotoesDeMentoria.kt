@@ -102,6 +102,7 @@ fun SeloDeStatus(
     Text(
         text = texto,
         fontSize = 10.sp,
+        lineHeight = 14.sp,
         fontWeight = FontWeight.Bold,
         color = cor,
         modifier = Modifier

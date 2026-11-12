@@ -76,7 +76,7 @@ class SeedDataTest {
         assertEquals(antes, depois, "o seed não é idempotente");
 
         String cursos = get("/cursos");
-        assertTrue(cursos.contains("UX/UI na prática"), cursos);
+        assertTrue(cursos.contains("HTML5 e CSS3 para iniciantes"), cursos);
         assertTrue(cursos.contains("\"categoria\":\"SEGURANCA\""), cursos);
         assertTrue(cursos.contains("\"categoria\":\"REDES\""), cursos);
         assertTrue(cursos.contains("\"nivel\":\"INTERMEDIARIO\""), cursos);

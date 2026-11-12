@@ -139,7 +139,7 @@ public class ProgressoAulaService {
             Modulo modulo = aula.getModulo();
             resultado.add(new AulaProgressoResponse(aula.getId(), modulo.getOrdem(), modulo.getTitulo(),
                     aula.getOrdem(), aula.getTitulo(), aula.getDuracaoMinutos(), aula.getXpRecompensa(),
-                    status, concluidas.get(aula.getId())));
+                    status, concluidas.get(aula.getId()), aula.getConteudoUrl()));
         }
         return resultado;
     }

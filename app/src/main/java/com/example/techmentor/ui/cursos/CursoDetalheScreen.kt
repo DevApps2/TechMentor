@@ -116,7 +116,10 @@ fun CursoDetalheScreen(
                         aulas = modulo.aulas.mapNotNull { aula -> porId[aula.id] },
                         aberto = aberto,
                         onAbrir = { modulosAbertos[modulo.ordem] = !aberto },
-                        onSelecionarAula = { aulaSelecionada = it }
+                        onSelecionarAula = { aula ->
+                            if (aula.status == "BLOQUEADA") aulaSelecionada = aula
+                            else navController.navigate("aula/$cursoId/${aula.aulaId}")
+                        }
                     )
                 }
                 if (estado.erro != null) item { Text(estado.erro.orEmpty(), color = Color(0xFFB42318), fontSize = 13.sp) }
@@ -125,18 +128,12 @@ fun CursoDetalheScreen(
     }
 
     aulaSelecionada?.let { aula ->
-        DialogoAula(
-            aula = aula,
-            conteudoUrl = estado.curso?.modulos
-                ?.flatMap { modulo -> modulo.aulas }
-                ?.firstOrNull { conteudo -> conteudo.id == aula.aulaId }
-                ?.conteudoUrl,
-            salvando = estado.salvandoAula,
-            onFechar = { aulaSelecionada = null },
-            onConcluir = {
-                vm.concluirAula(aula)
-                aulaSelecionada = null
-            }
+        AlertDialog(
+            onDismissRequest = { aulaSelecionada = null },
+            title = { Text(aula.titulo, color = TextoDetalhe, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = { Text("Conclua a aula anterior para liberar esta etapa.", color = CinzaDetalhe, fontSize = 13.sp) },
+            confirmButton = { TextButton(onClick = { aulaSelecionada = null }) { Text("Entendi", color = RoxoDetalhe) } },
+            containerColor = Color.White
         )
     }
 }
@@ -204,42 +201,4 @@ private fun AulaLinha(aula: AulaProgressoResponse, onClick: () -> Unit) {
             fontWeight = if (atual) FontWeight.Bold else FontWeight.Normal
         )
     }
-}
-
-@Composable
-private fun DialogoAula(
-    aula: AulaProgressoResponse,
-    conteudoUrl: String?,
-    salvando: Boolean,
-    onFechar: () -> Unit,
-    onConcluir: () -> Unit
-) {
-    val uriHandler = LocalUriHandler.current
-    val urlDoConteudo = conteudoUrl?.takeIf { it.isNotBlank() }
-    AlertDialog(
-        onDismissRequest = onFechar,
-        title = { Text(aula.titulo, color = TextoDetalhe, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-        text = {
-            Column {
-                Text("${aula.tituloModulo} · ${aula.duracaoMinutos} min · ${aula.xpRecompensa} XP", color = CinzaDetalhe, fontSize = 13.sp)
-                when (aula.status) {
-                    "CONCLUIDA" -> Text("Aula concluída. Você já recebeu os pontos de XP desta etapa.", color = CinzaDetalhe, fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
-                    "BLOQUEADA" -> Text("Conclua a aula anterior para liberar esta etapa.", color = CinzaDetalhe, fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
-                    else -> Text("Esta é sua próxima aula. Ao concluir, seu progresso será salvo.", color = CinzaDetalhe, fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))
-                }
-                if (aula.status == "ATUAL") {
-                    TextButton(onClick = onConcluir, enabled = !salvando, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        if (salvando) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = RoxoDetalhe)
-                        else Text("Concluir aula e ganhar ${aula.xpRecompensa} XP", color = RoxoDetalhe, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (aula.status == "ATUAL" && urlDoConteudo != null) {
-                TextButton(onClick = { runCatching { uriHandler.openUri(urlDoConteudo) } }) { Text("Abrir conteúdo", color = RoxoDetalhe) }
-            } else TextButton(onClick = onFechar) { Text("Fechar", color = RoxoDetalhe) }
-        },
-        containerColor = Color.White
-    )
 }

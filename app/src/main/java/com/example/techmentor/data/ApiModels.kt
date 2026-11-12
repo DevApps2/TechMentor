@@ -375,7 +375,9 @@ data class AulaProgressoResponse(
     val duracaoMinutos: Int,
     val xpRecompensa: Int,
     val status: String,
-    val concluidaEm: String?
+    val concluidaEm: String?,
+    // link do vídeo da aula (https); nulo se a aula ainda não tem vídeo
+    val conteudoUrl: String? = null
 )
 
 data class ProgressoAulaResponse(

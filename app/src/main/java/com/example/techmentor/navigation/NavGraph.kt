@@ -32,6 +32,7 @@ import com.example.techmentor.ui.oportunidades.MinhasCandidaturasScreen
 import com.example.techmentor.ui.oportunidades.OportunidadesScreen
 import com.example.techmentor.ui.profile.ProfileScreen
 import com.example.techmentor.ui.profile.TrocarSenhaScreen
+import com.example.techmentor.ui.cursos.AulaScreen
 import com.example.techmentor.ui.cursos.CursoDetalheScreen
 import com.example.techmentor.ui.cursos.CursosScreen
 import com.example.techmentor.ui.onboarding.OnboardingScreen
@@ -108,6 +109,20 @@ fun NavGraph() {
             CursoDetalheScreen(
                 navController = navController,
                 cursoId = entrada.arguments?.getLong("cursoId") ?: 0L
+            )
+        }
+
+        composable(
+            route = "aula/{cursoId}/{aulaId}",
+            arguments = listOf(
+                navArgument("cursoId") { type = NavType.LongType },
+                navArgument("aulaId") { type = NavType.LongType }
+            )
+        ) { entrada ->
+            AulaScreen(
+                navController = navController,
+                cursoId = entrada.arguments?.getLong("cursoId") ?: 0L,
+                aulaId = entrada.arguments?.getLong("aulaId") ?: 0L
             )
         }
 

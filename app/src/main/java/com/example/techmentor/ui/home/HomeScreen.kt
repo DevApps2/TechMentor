@@ -660,7 +660,7 @@ private fun CartaoDeAcao(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 88.dp)
+            .height(92.dp)   // a mesma altura nos dois cartões, com ou sem barra de progresso
             .clip(FormaDoCartaoDeAcao)
             .background(Color.White)
             .border(1.dp, Color(0xFFECE9F1), FormaDoCartaoDeAcao)
@@ -699,6 +699,7 @@ private fun CartaoDeAcao(
                 Text(
                     text = rotulo,
                     fontSize = 9.sp,
+                    lineHeight = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.7.sp,
                     color = Roxo
@@ -710,6 +711,7 @@ private fun CartaoDeAcao(
             Text(
                 text = titulo,
                 fontSize = 14.sp,
+                lineHeight = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextoEscuro,
                 maxLines = 1,
@@ -721,8 +723,10 @@ private fun CartaoDeAcao(
             Text(
                 text = detalhe,
                 fontSize = 11.sp,
+                lineHeight = 15.sp,
                 color = Color(0xFF625D6C),
-                maxLines = 2,
+                // com rótulo e barra o cartão já está cheio: o detalhe cabe em uma linha
+                maxLines = if (rotulo != null) 1 else 2,
                 overflow = TextOverflow.Ellipsis
             )
 

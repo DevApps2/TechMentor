@@ -33,6 +33,14 @@ android {
         compose = true
     }
 }
+// A biblioteca do YouTube pede lifecycle 2.9.4, e ele puxa o Compose 1.9 na hora de rodar enquanto o app é compilado
+// com o 1.7 (BOM 2024.09): a tela de Mentoria quebrava com NoSuchMethodError (FlowRow). Mantemos o lifecycle que o app já usava.
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.lifecycle") useVersion("2.9.2")
+    }
+}
+
 dependencies {
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
@@ -47,6 +55,9 @@ dependencies {
     // Fotos de perfil (carrega a imagem a partir do fotoUrl que a API devolve)
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+
+    // Player do YouTube (trata a origem/Referer e o ciclo de vida do WebView)
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:13.1.0")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.navigation:navigation-compose:2.8.2")
 
