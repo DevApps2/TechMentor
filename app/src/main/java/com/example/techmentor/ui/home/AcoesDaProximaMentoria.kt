@@ -101,6 +101,7 @@ fun CartaoDaProximaMentoria(
                 Text(
                     text = iniciais(proxima.mentoraNome),
                     fontSize = 14.sp,
+                    lineHeight = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
@@ -113,6 +114,7 @@ fun CartaoDaProximaMentoria(
                 Text(
                     text = "Mentoria com ${proxima.mentoraNome}",
                     fontSize = 14.sp,
+                    lineHeight = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF20202A),
                     maxLines = 1,
@@ -124,6 +126,7 @@ fun CartaoDaProximaMentoria(
                 Text(
                     text = descricaoDaMentoria(proxima),
                     fontSize = 11.sp,
+                    lineHeight = 15.sp,
                     color = Color(0xFF625D6C)
                 )
             }
