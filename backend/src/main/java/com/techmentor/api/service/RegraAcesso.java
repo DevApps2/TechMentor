@@ -17,4 +17,8 @@ public final class RegraAcesso {
     public static void exigirMentora(Usuario actor) {
         if (actor.getTipo() != Usuario.Tipo.MENTORA) throw new ForbiddenException();
     }
+
+    public static void exigirAdminOuMentora(Usuario actor) {
+        if (actor.getTipo() != Usuario.Tipo.ADMIN && actor.getTipo() != Usuario.Tipo.MENTORA) throw new ForbiddenException();
+    }
 }

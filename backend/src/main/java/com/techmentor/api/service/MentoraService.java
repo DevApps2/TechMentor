@@ -35,7 +35,7 @@ public class MentoraService {
     }
 
     public AreaResponse criarArea(Usuario actor, String nome) {
-        RegraAcesso.exigirAdmin(actor);
+        RegraAcesso.exigirAdminOuMentora(actor);
         if (nome == null || nome.isBlank() || nome.trim().length() > 80)
             throw new BadRequestException("Nome da área deve ter entre 1 e 80 caracteres.");
         if (areas.findAll().stream().anyMatch(area -> area.getNome().equalsIgnoreCase(nome.trim())))
