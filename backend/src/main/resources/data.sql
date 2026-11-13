@@ -1,11 +1,11 @@
 -- =====================================================================
--- Carga inicial de dados de teste do TechMentor (MySQL).
+-- Carga inicial de dados de exemplo do TechMentor (MySQL).
 --
 -- Idempotente: cada INSERT só grava o que ainda não existe (chave natural:
 -- e-mail, título, nome...), então pode ser executado várias vezes sem duplicar
 -- e convive com dados que você já cadastrou pela API.
 --
--- Todos os usuários abaixo usam a senha de teste: Techmentor@123
+-- Todos os usuários abaixo usam a senha padrão: Techmentor@123
 -- (o hash BCrypt abaixo foi gerado com BCryptPasswordEncoder, o mesmo da API).
 -- =====================================================================
 
@@ -35,7 +35,7 @@ WHERE email = 'beatriz.santos@email.com' AND bio IS NULL;
 UPDATE usuarios SET bio = 'Em transição de carreira para tecnologia'
 WHERE email = 'camila.rocha@email.com' AND bio IS NULL;
 
--- Fotos de perfil de teste (só preenche quem ainda não tem foto)
+-- Fotos de perfil de exemplo (só preenche quem ainda não tem foto)
 UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=47' WHERE email = 'beatriz.santos@email.com'    AND foto_url IS NULL;
 UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=45' WHERE email = 'camila.rocha@email.com'      AND foto_url IS NULL;
 UPDATE usuarios SET foto_url = 'https://i.pravatar.cc/300?img=44' WHERE email = 'daniela.martins@email.com'   AND foto_url IS NULL;
@@ -521,27 +521,96 @@ FROM (
 WHERE NOT EXISTS (SELECT 1 FROM conteudos_seguranca c WHERE c.titulo = v.titulo);
 
 -- =====================================================================
--- CENÁRIO DE TESTE DAS FUNCIONALIDADES NOVAS
-
-
-
--- =====================================================================
--- CENÁRIO DE TESTE DAS FUNCIONALIDADES NOVAS
--- As datas são relativas a "agora", e o cenário pode ser recriado quantas vezes quiser:
--- ele apaga o anterior (assunto/descrição começam com [TESTE], horários de 45 minutos) e cria de novo.
+-- DADOS DE EXEMPLO COM DATAS RELATIVAS A "AGORA"
+-- Mentorias aguardando, confirmadas, concluídas e canceladas, avaliações, denúncias, notificações, vagas e candidaturas.
+-- Pode ser executado quantas vezes quiser: apaga o que criou na rodada anterior (pelo texto exato) e cria de novo.
 -- Senha de todos os usuários: Techmentor@123
 -- =====================================================================
     SET @agora = LOCALTIMESTAMP;
 
--- 0) Apaga o cenário da rodada anterior (por causa das chaves: denúncias, avaliações, mentorias, horários)
-DELETE FROM denuncias WHERE descricao LIKE '[TESTE]%';
+-- 0) Apaga o cenário da rodada anterior (por causa das chaves: denúncias, avaliações, mentorias, horários).
+--    Os registros são achados pelo texto exato que este cenário cria (assuntos, descrições e links abaixo).
+DELETE FROM denuncias WHERE descricao IN (
+    'Mandou links suspeitos pedindo dados pessoais.',
+    'Usa a foto de outra pessoa no perfil.',
+    'Tentou contato fora do app depois de ser ignorado.',
+    'Comentários desrespeitosos durante a mentoria.',
+    'Divulgou uma vaga que cobrava taxa para participar do processo seletivo.');
 DELETE FROM inscricoes_oportunidade WHERE oportunidade_id IN (
-    SELECT id FROM oportunidades WHERE link_externo LIKE 'https://example.com/teste/%');
-DELETE FROM oportunidades WHERE link_externo LIKE 'https://example.com/teste/%';
+    SELECT id FROM oportunidades WHERE link_externo IN (
+    'https://www.linkedin.com/jobs/search/?keywords=estagio%20ux%20research',
+    'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior',
+    'https://www.linkedin.com/jobs/search/?keywords=bolsa%20mulheres%20em%20dados',
+    'https://www.linkedin.com/jobs/search/?keywords=analista%20de%20seguranca%20junior',
+    'https://www.meetup.com/pt-BR/find/?keywords=git%20github',
+    'https://www.eventbrite.com.br/d/online/curriculo/',
+    'https://www.linkedin.com/jobs/search/?keywords=estagio%20em%20dados'));
+DELETE FROM oportunidades WHERE link_externo IN (
+    'https://www.linkedin.com/jobs/search/?keywords=estagio%20ux%20research',
+    'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior',
+    'https://www.linkedin.com/jobs/search/?keywords=bolsa%20mulheres%20em%20dados',
+    'https://www.linkedin.com/jobs/search/?keywords=analista%20de%20seguranca%20junior',
+    'https://www.meetup.com/pt-BR/find/?keywords=git%20github',
+    'https://www.eventbrite.com.br/d/online/curriculo/',
+    'https://www.linkedin.com/jobs/search/?keywords=estagio%20em%20dados');
 DELETE FROM denuncias WHERE avaliacao_id IN (
-    SELECT a.id FROM avaliacoes a JOIN mentorias m ON m.id = a.mentoria_id WHERE m.assunto LIKE '[TESTE]%');
-DELETE FROM avaliacoes WHERE mentoria_id IN (SELECT id FROM mentorias WHERE assunto LIKE '[TESTE]%');
-DELETE FROM mentorias WHERE assunto LIKE '[TESTE]%';
+    SELECT a.id FROM avaliacoes a JOIN mentorias m ON m.id = a.mentoria_id WHERE m.assunto IN (
+    'Dúvidas sobre a transição para tecnologia',
+    'Primeiros passos em programação',
+    'Revisão de currículo',
+    'Dúvidas sobre UX e portfólio',
+    'Carreira em dados',
+    'Planejamento de estudos',
+    'Primeiros passos em dados',
+    'Portfólio de design',
+    'Preparação para entrevista técnica',
+    'Orientação sobre estágio',
+    'Organização da rotina de estudos',
+    'Mapa de carreira em tecnologia',
+    'Orientação sobre transição de carreira',
+    'Dúvidas sobre linguagens de programação',
+    'Conversa sobre vagas e currículo',
+    'Revisão do portfólio',
+    'Simulação de entrevista',
+    'Plano de estudos em tecnologia'));
+DELETE FROM avaliacoes WHERE mentoria_id IN (SELECT id FROM mentorias WHERE assunto IN (
+    'Dúvidas sobre a transição para tecnologia',
+    'Primeiros passos em programação',
+    'Revisão de currículo',
+    'Dúvidas sobre UX e portfólio',
+    'Carreira em dados',
+    'Planejamento de estudos',
+    'Primeiros passos em dados',
+    'Portfólio de design',
+    'Preparação para entrevista técnica',
+    'Orientação sobre estágio',
+    'Organização da rotina de estudos',
+    'Mapa de carreira em tecnologia',
+    'Orientação sobre transição de carreira',
+    'Dúvidas sobre linguagens de programação',
+    'Conversa sobre vagas e currículo',
+    'Revisão do portfólio',
+    'Simulação de entrevista',
+    'Plano de estudos em tecnologia'));
+DELETE FROM mentorias WHERE assunto IN (
+    'Dúvidas sobre a transição para tecnologia',
+    'Primeiros passos em programação',
+    'Revisão de currículo',
+    'Dúvidas sobre UX e portfólio',
+    'Carreira em dados',
+    'Planejamento de estudos',
+    'Primeiros passos em dados',
+    'Portfólio de design',
+    'Preparação para entrevista técnica',
+    'Orientação sobre estágio',
+    'Organização da rotina de estudos',
+    'Mapa de carreira em tecnologia',
+    'Orientação sobre transição de carreira',
+    'Dúvidas sobre linguagens de programação',
+    'Conversa sobre vagas e currículo',
+    'Revisão do portfólio',
+    'Simulação de entrevista',
+    'Plano de estudos em tecnologia');
 DELETE FROM horarios_disponiveis
 WHERE TIMESTAMPDIFF(MINUTE, inicio, fim) = 45
   AND NOT EXISTS (SELECT 1 FROM mentorias m WHERE m.horario_id = horarios_disponiveis.id);
@@ -586,45 +655,45 @@ FROM (
          -- Pedidos aguardando confirmação
          SELECT 'camila.rocha@email.com' AS aluna, 'juliana.costa@techmentor.com' AS mentora,
                 TIMESTAMPADD(MINUTE, -30, @agora) AS inicio, 'AGENDADA' AS status,
-                '[TESTE] Pedido sem resposta: expira sozinho em até 1 minuto' AS assunto
+                'Dúvidas sobre a transição para tecnologia' AS assunto
          UNION ALL SELECT 'elisa.ferreira@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(HOUR, 48, @agora), 'AGENDADA', '[TESTE] Pedido novo: a mentora confirma ou reagenda'
+                          TIMESTAMPADD(HOUR, 48, @agora), 'AGENDADA', 'Primeiros passos em programação'
          UNION ALL SELECT 'beatriz.santos@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(HOUR, 76, @agora), 'AGENDADA', '[TESTE] Pedido pendente: revisão de currículo'
+                          TIMESTAMPADD(HOUR, 76, @agora), 'AGENDADA', 'Revisão de currículo'
          UNION ALL SELECT 'camila.rocha@email.com', 'fernanda.alves@techmentor.com',
-                          TIMESTAMPADD(HOUR, 52, @agora), 'AGENDADA', '[TESTE] Pedido pendente: dúvidas sobre UX'
+                          TIMESTAMPADD(HOUR, 52, @agora), 'AGENDADA', 'Dúvidas sobre UX e portfólio'
          UNION ALL SELECT 'daniela.martins@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, 28, @agora), 'AGENDADA', '[TESTE] Pedido pendente: carreira em dados'
+                          TIMESTAMPADD(HOUR, 28, @agora), 'AGENDADA', 'Carreira em dados'
          -- Confirmadas
          UNION ALL SELECT 'daniela.martins@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(MINUTE, 20, @agora), 'CONFIRMADA', '[TESTE] Começa em 20 minutos: a sala já abre no app'
+                          TIMESTAMPADD(MINUTE, 20, @agora), 'CONFIRMADA', 'Planejamento de estudos'
          UNION ALL SELECT 'elisa.ferreira@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, 100, @agora), 'CONFIRMADA', '[TESTE] Confirmada: primeiros passos em dados'
+                          TIMESTAMPADD(HOUR, 100, @agora), 'CONFIRMADA', 'Primeiros passos em dados'
          UNION ALL SELECT 'beatriz.santos@email.com', 'fernanda.alves@techmentor.com',
-                          TIMESTAMPADD(HOUR, 124, @agora), 'CONFIRMADA', '[TESTE] Confirmada: portfólio de design'
+                          TIMESTAMPADD(HOUR, 124, @agora), 'CONFIRMADA', 'Portfólio de design'
          UNION ALL SELECT 'camila.rocha@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(HOUR, 148, @agora), 'CONFIRMADA', '[TESTE] Confirmada: entrevista técnica'
+                          TIMESTAMPADD(HOUR, 148, @agora), 'CONFIRMADA', 'Preparação para entrevista técnica'
          -- Cancelada
          UNION ALL SELECT 'daniela.martins@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, -26, @agora), 'CANCELADA', '[TESTE] Cancelada: a aluna precisou remarcar'
+                          TIMESTAMPADD(HOUR, -26, @agora), 'CANCELADA', 'Orientação sobre estágio'
          -- Concluídas sem avaliação (as duas podem avaliar / o prazo acabou)
          UNION ALL SELECT 'camila.rocha@email.com', 'fernanda.alves@techmentor.com',
-                          TIMESTAMPADD(HOUR, -48, @agora), 'CONCLUIDA', '[TESTE] Concluída sem avaliação: as duas podem avaliar'
+                          TIMESTAMPADD(HOUR, -48, @agora), 'CONCLUIDA', 'Organização da rotina de estudos'
          UNION ALL SELECT 'beatriz.santos@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, -480, @agora), 'CONCLUIDA', '[TESTE] Concluída há 20 dias: o prazo de avaliação acabou'
+                          TIMESTAMPADD(HOUR, -480, @agora), 'CONCLUIDA', 'Mapa de carreira em tecnologia'
          -- Concluídas e avaliadas pelas duas
          UNION ALL SELECT 'elisa.ferreira@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, -72, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)'
+                          TIMESTAMPADD(HOUR, -72, @agora), 'CONCLUIDA', 'Orientação sobre transição de carreira'
          UNION ALL SELECT 'daniela.martins@email.com', 'fernanda.alves@techmentor.com',
-                          TIMESTAMPADD(HOUR, -96, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário ofensivo (para denunciar no app)'
+                          TIMESTAMPADD(HOUR, -96, @agora), 'CONCLUIDA', 'Dúvidas sobre linguagens de programação'
          UNION ALL SELECT 'camila.rocha@email.com', 'juliana.costa@techmentor.com',
-                          TIMESTAMPADD(HOUR, -220, @agora), 'CONCLUIDA', '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)'
+                          TIMESTAMPADD(HOUR, -220, @agora), 'CONCLUIDA', 'Conversa sobre vagas e currículo'
          UNION ALL SELECT 'beatriz.santos@email.com', 'fernanda.alves@techmentor.com',
-                          TIMESTAMPADD(HOUR, -150, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (1)'
+                          TIMESTAMPADD(HOUR, -150, @agora), 'CONCLUIDA', 'Revisão do portfólio'
          UNION ALL SELECT 'camila.rocha@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(HOUR, -200, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (2)'
+                          TIMESTAMPADD(HOUR, -200, @agora), 'CONCLUIDA', 'Simulação de entrevista'
          UNION ALL SELECT 'daniela.martins@email.com', 'maria.silva@techmentor.com',
-                          TIMESTAMPADD(HOUR, -240, @agora), 'CONCLUIDA', '[TESTE] Avaliada com elogio (3)'
+                          TIMESTAMPADD(HOUR, -240, @agora), 'CONCLUIDA', 'Plano de estudos em tecnologia'
      ) v
          JOIN usuarios al ON al.email = v.aluna
          JOIN usuarios um ON um.email = v.mentora
@@ -635,17 +704,17 @@ FROM (
 INSERT INTO avaliacoes (mentoria_id, avaliador_id, avaliado_id, autor, nota, comentario, oculta, criada_em)
 SELECT m.id, m.aluna_id, p.usuario_id, 'ALUNA', v.nota, v.comentario, v.oculta, TIMESTAMPADD(HOUR, 1, h.fim)
 FROM (
-         SELECT '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)' AS assunto, 1 AS nota,
+         SELECT 'Orientação sobre transição de carreira' AS assunto, 1 AS nota,
                 'Atendimento ruim, achei a mentora grosseira e sem preparo.' AS comentario, FALSE AS oculta
-         UNION ALL SELECT '[TESTE] Avaliada com comentário ofensivo (para denunciar no app)', 1,
+         UNION ALL SELECT 'Dúvidas sobre linguagens de programação', 1,
                           'Perdi meu tempo. Mentora arrogante e despreparada.', FALSE
-         UNION ALL SELECT '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)', 1,
-                          'Texto ofensivo que a moderação já escondeu.', TRUE
-         UNION ALL SELECT '[TESTE] Avaliada com elogio (1)', 5,
+         UNION ALL SELECT 'Conversa sobre vagas e currículo', 1,
+                          'Mentoria horrível, a mentora foi grosseira e debochou das minhas perguntas.', TRUE
+         UNION ALL SELECT 'Revisão do portfólio', 5,
                           'A Fernanda explicou cada etapa do portfólio com muita paciência. Recomendo!', FALSE
-         UNION ALL SELECT '[TESTE] Avaliada com elogio (2)', 4,
+         UNION ALL SELECT 'Simulação de entrevista', 4,
                           'Mentoria objetiva e cheia de dicas práticas para a entrevista.', FALSE
-         UNION ALL SELECT '[TESTE] Avaliada com elogio (3)', 5,
+         UNION ALL SELECT 'Plano de estudos em tecnologia', 5,
                           'A Maria me ajudou a montar um plano de estudos claro. Super atenciosa!', FALSE
      ) v
          JOIN mentorias m ON m.assunto = v.assunto
@@ -658,35 +727,35 @@ SELECT m.id, p.usuario_id, m.aluna_id, 'MENTORA', 5, NULL, FALSE, TIMESTAMPADD(H
 FROM mentorias m
          JOIN horarios_disponiveis h ON h.id = m.horario_id
          JOIN perfis_mentora p ON p.id = h.mentora_id
-WHERE m.assunto LIKE '[TESTE] Avaliada%';
+WHERE m.assunto IN ('Orientação sobre transição de carreira', 'Dúvidas sobre linguagens de programação', 'Conversa sobre vagas e currículo', 'Revisão do portfólio', 'Simulação de entrevista', 'Plano de estudos em tecnologia');
 
 -- 4) Denúncias sobre o comentário de uma avaliação (a mentora denunciou a aluna): uma aberta e uma já resolvida
 INSERT INTO denuncias (denunciante_id, denunciado_id, avaliacao_id, motivo, descricao, status, criada_em)
 SELECT p.usuario_id, a.avaliador_id, a.id, 'COMPORTAMENTO_INADEQUADO',
        'Comentário ofensivo e sem respeito na avaliação da mentoria.', v.status, TIMESTAMPADD(HOUR, 2, h.fim)
 FROM (
-         SELECT '[TESTE] Avaliada com comentário ofensivo (denúncia aberta)' AS assunto, 'ABERTA' AS status
-         UNION ALL SELECT '[TESTE] Avaliada com comentário já escondido (denúncia resolvida)', 'RESOLVIDA'
+         SELECT 'Orientação sobre transição de carreira' AS assunto, 'ABERTA' AS status
+         UNION ALL SELECT 'Conversa sobre vagas e currículo', 'RESOLVIDA'
      ) v
          JOIN mentorias m ON m.assunto = v.assunto
          JOIN avaliacoes a ON a.mentoria_id = m.id AND a.autor = 'ALUNA'
          JOIN horarios_disponiveis h ON h.id = m.horario_id
          JOIN perfis_mentora p ON p.id = h.mentora_id;
 
--- 5) Outras denúncias, de situações variadas (a descrição começa com [TESTE] para a limpeza achar)
+-- 5) Outras denúncias, de situações variadas (a limpeza as acha pela descrição)
 INSERT INTO denuncias (denunciante_id, denunciado_id, motivo, descricao, status, criada_em)
 SELECT du.id, dd.id, v.motivo, v.descricao, v.status, TIMESTAMPADD(HOUR, v.horas, @agora)
 FROM (
          SELECT 'daniela.martins@email.com' AS denunciante, 'suspeito@email.com' AS denunciado, 'SPAM' AS motivo,
-                '[TESTE] Mandou links suspeitos pedindo dados pessoais.' AS descricao, 'ABERTA' AS status, -5 AS horas
+                'Mandou links suspeitos pedindo dados pessoais.' AS descricao, 'ABERTA' AS status, -5 AS horas
          UNION ALL SELECT 'elisa.ferreira@email.com', 'suspeito@email.com', 'PERFIL_FALSO',
-                          '[TESTE] Usa a foto de outra pessoa no perfil.', 'EM_ANALISE', -30
+                          'Usa a foto de outra pessoa no perfil.', 'EM_ANALISE', -30
          UNION ALL SELECT 'juliana.costa@techmentor.com', 'suspeito@email.com', 'ASSEDIO',
-                          '[TESTE] Tentou contato fora do app depois de ser ignorado.', 'RESOLVIDA', -120
+                          'Tentou contato fora do app depois de ser ignorado.', 'RESOLVIDA', -120
          UNION ALL SELECT 'fernanda.alves@techmentor.com', 'elisa.ferreira@email.com', 'COMPORTAMENTO_INADEQUADO',
-                          '[TESTE] Comentários desrespeitosos durante a mentoria.', 'ABERTA', -2
+                          'Comentários desrespeitosos durante a mentoria.', 'ABERTA', -2
          UNION ALL SELECT 'beatriz.santos@email.com', NULL, 'OUTRO',
-                          '[TESTE] A tela de oportunidades demorou muito para carregar.', 'ABERTA', -8
+                          'Divulgou uma vaga que cobrava taxa para participar do processo seletivo.', 'ABERTA', -8
      ) v
          JOIN usuarios du ON du.email = v.denunciante
          LEFT JOIN usuarios dd ON dd.email = v.denunciado;
@@ -719,7 +788,7 @@ FROM (
 WHERE NOT EXISTS (SELECT 1 FROM notificacoes n WHERE n.usuario_id = u.id AND n.mensagem = v.mensagem);
 
 
--- 8) Oportunidades com prazo relativo a "agora" (o link https://example.com/teste/... é o que as identifica na limpeza)
+-- 8) Oportunidades com prazo relativo a "agora" (o link de cada uma é o que a identifica na limpeza)
 INSERT INTO oportunidades (tipo, titulo, organizacao, descricao, requisitos, beneficios, area, nivel, localidade, link_externo, prazo_inscricao, ativa)
 SELECT v.tipo, v.titulo, v.organizacao, v.descricao, v.requisitos, v.beneficios, v.area, v.nivel, v.localidade, v.link,
        CASE WHEN v.dias IS NULL THEN NULL ELSE TIMESTAMPADD(DAY, v.dias, CURRENT_DATE) END, TRUE
@@ -728,45 +797,45 @@ FROM (
                 'Apoio em pesquisas com usuárias e testes de usabilidade.' AS descricao,
                 'Cursando Design, Psicologia ou áreas afins.' AS requisitos,
                 'Bolsa-auxílio e mentoria semanal.' AS beneficios, 'Design' AS area, 'Iniciante' AS nivel,
-                'Remoto' AS localidade, 'https://example.com/teste/1' AS link, 20 AS dias
+                'Remoto' AS localidade, 'https://www.linkedin.com/jobs/search/?keywords=estagio%20ux%20research' AS link, 20 AS dias
          UNION ALL SELECT 'EMPREGO', 'Desenvolvedora Front-end Júnior', 'Acme Tecnologia',
                           'Construção de telas em React com o time de produto.',
                           'Conhecimento de JavaScript e Git.', 'Home office e vale-refeição.', 'Programação', 'Júnior',
-                          'São Paulo - SP (híbrido)', 'https://example.com/teste/2', 12
+                          'São Paulo - SP (híbrido)', 'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior', 12
          UNION ALL SELECT 'BOLSA', 'Bolsa Mulheres em Dados', 'Instituto Código Feminino',
                           'Formação em análise de dados com mentoria e projetos reais.',
                           'Ser mulher e maior de 18 anos.', 'Curso gratuito e certificado.', 'Dados', 'Iniciante',
-                          'Online', 'https://example.com/teste/3', 30
+                          'Online', 'https://www.linkedin.com/jobs/search/?keywords=bolsa%20mulheres%20em%20dados', 30
          UNION ALL SELECT 'EMPREGO', 'Analista de Segurança Júnior', 'DataWorks',
                           'Monitoramento de alertas e resposta a incidentes.',
                           'Noções de redes e Linux.', 'Plano de carreira.', 'Segurança', 'Júnior',
-                          'Remoto', 'https://example.com/teste/4', 3
+                          'Remoto', 'https://www.linkedin.com/jobs/search/?keywords=analista%20de%20seguranca%20junior', 3
          UNION ALL SELECT 'EVENTO', 'Meetup de Git e GitHub', 'TechMentor',
                           'Conversa aberta com profissionais sobre como começar na área.',
                           'Aberto ao público.', 'Networking e dicas de carreira.', 'Carreira', 'Todos os níveis',
-                          'Online', 'https://example.com/teste/5', 6
+                          'Online', 'https://www.meetup.com/pt-BR/find/?keywords=git%20github', 6
          UNION ALL SELECT 'EVENTO', 'Oficina de Currículo e LinkedIn', 'TechMentor',
                           'Oficina prática para montar um currículo e um perfil que chamam atenção.',
                           'Aberto ao público.', 'Revisão ao vivo do seu currículo.', 'Carreira', 'Iniciante',
-                          'Online', 'https://example.com/teste/6', 1
+                          'Online', 'https://www.eventbrite.com.br/d/online/curriculo/', 1
          UNION ALL SELECT 'ESTAGIO', 'Estágio em Dados (sem prazo)', 'DataWorks',
                           'Apoio ao time de dados em análises e relatórios.',
                           'Cursando áreas de exatas.', 'Mentoria e horário flexível.', 'Dados', 'Iniciante',
-                          'Remoto', 'https://example.com/teste/7', NULL
+                          'Remoto', 'https://www.linkedin.com/jobs/search/?keywords=estagio%20em%20dados', NULL
      ) v;
 
 -- 9) Candidaturas e inscrições de exemplo, de todas as situações
 INSERT INTO inscricoes_oportunidade (usuario_id, oportunidade_id, status, criada_em)
 SELECT u.id, o.id, v.status, TIMESTAMPADD(HOUR, v.horas, @agora)
 FROM (
-         SELECT 'beatriz.santos@email.com' AS email, 'https://example.com/teste/1' AS link, 'ENVIADA' AS status, -5 AS horas
-         UNION ALL SELECT 'beatriz.santos@email.com',  'https://example.com/teste/2', 'EM_ANALISE', -30
-         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/2', 'APROVADA',   -72
-         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/3', 'RECUSADA',   -100
-         UNION ALL SELECT 'camila.rocha@email.com',    'https://example.com/teste/5', 'ENVIADA',    -2
-         UNION ALL SELECT 'daniela.martins@email.com', 'https://example.com/teste/1', 'EM_ANALISE', -20
-         UNION ALL SELECT 'daniela.martins@email.com', 'https://example.com/teste/6', 'APROVADA',   -10
-         UNION ALL SELECT 'elisa.ferreira@email.com',  'https://example.com/teste/2', 'ENVIADA',    -1
+         SELECT 'beatriz.santos@email.com' AS email, 'https://www.linkedin.com/jobs/search/?keywords=estagio%20ux%20research' AS link, 'ENVIADA' AS status, -5 AS horas
+         UNION ALL SELECT 'beatriz.santos@email.com',  'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior', 'EM_ANALISE', -30
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior', 'APROVADA',   -72
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://www.linkedin.com/jobs/search/?keywords=bolsa%20mulheres%20em%20dados', 'RECUSADA',   -100
+         UNION ALL SELECT 'camila.rocha@email.com',    'https://www.meetup.com/pt-BR/find/?keywords=git%20github', 'ENVIADA',    -2
+         UNION ALL SELECT 'daniela.martins@email.com', 'https://www.linkedin.com/jobs/search/?keywords=estagio%20ux%20research', 'EM_ANALISE', -20
+         UNION ALL SELECT 'daniela.martins@email.com', 'https://www.eventbrite.com.br/d/online/curriculo/', 'APROVADA',   -10
+         UNION ALL SELECT 'elisa.ferreira@email.com',  'https://www.linkedin.com/jobs/search/?keywords=desenvolvedora%20front-end%20junior', 'ENVIADA',    -1
      ) v
          JOIN usuarios u ON u.email = v.email
          JOIN oportunidades o ON o.link_externo = v.link;

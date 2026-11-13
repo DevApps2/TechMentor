@@ -83,6 +83,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalUriHandler
+import com.example.techmentor.ui.components.AvatarEditavel
 
 private val Fundo = Color(0xFFF8F8FB)
 private val Roxo = Color(0xFF7C3AED)
@@ -202,6 +203,15 @@ private fun ProfileContent(
     var editando by remember { mutableStateOf(false) }
     var confirmandoSaida by remember { mutableStateOf(false) }
 
+    val contextoDaFoto = LocalContext.current
+    val escolherFoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            reduzirFoto(contextoDaFoto, uri)?.let(onEnviarFoto)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -210,7 +220,16 @@ private fun ProfileContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        AvatarPerfil(nome = usuario.nome, fotoUrl = usuario.fotoUrl)
+        AvatarEditavel(
+            nome = usuario.nome,
+            fotoUrl = usuario.fotoUrl,
+            enviando = estado.enviandoFoto,
+            onTrocarFoto = {
+                escolherFoto.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 

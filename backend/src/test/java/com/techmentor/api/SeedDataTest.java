@@ -102,8 +102,8 @@ class SeedDataTest {
 
     @Test
     void usuariosDoSeedEntramComASenhaDeTeste() throws Exception {
-        Matcher m = Pattern.compile("senha de teste:\\s*([^\\s]+)").matcher(Files.readString(DATA_SQL));
-        assertTrue(m.find(), "o data.sql precisa documentar a senha de teste no cabeçalho");
+        Matcher m = Pattern.compile("senha padrão:\\s*([^\\s]+)").matcher(Files.readString(DATA_SQL));
+        assertTrue(m.find(), "o data.sql precisa documentar a senha padrão no cabeçalho");
 
         HttpResponse<String> r = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create("http://localhost:" + porta + "/usuarios/login"))

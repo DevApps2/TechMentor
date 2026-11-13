@@ -2,6 +2,7 @@ package com.example.techmentor.ui.mentora
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.techmentor.data.AdminAreaRequest
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.AreaResponse
 import com.example.techmentor.data.ERRO_CONEXAO
@@ -38,6 +39,9 @@ data class MentoraPerfilFormUiState(
     val fotoUrl: String? = null,
     val enviandoFoto: Boolean = false,
     val erroFoto: String? = null,
+    // criação de uma área de atuação nova
+    val criandoArea: Boolean = false,
+    val erroDaArea: String? = null,
 )
 
 class MentoraPerfilFormViewModel : ViewModel() {
@@ -171,6 +175,42 @@ class MentoraPerfilFormViewModel : ViewModel() {
             }
         }
     }
+
+    /** Cria uma área de atuação nova (a API recusa nome repetido) e avisa a tela para já deixá-la marcada. */
+    fun criarArea(nome: String, aoCriar: (AreaResponse) -> Unit) {
+        if (_estado.value.criandoArea) return
+
+        val nomeLimpo = nome.trim()
+        if (nomeLimpo.isEmpty()) {
+            _estado.update { it.copy(erroDaArea = "Digite o nome da área.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _estado.update { it.copy(criandoArea = true, erroDaArea = null) }
+
+            try {
+                val nova = ApiClient.api.criarArea(AdminAreaRequest(nomeLimpo))
+
+                _estado.update {
+                    it.copy(
+                        criandoArea = false,
+                        areasDisponiveis = (it.areasDisponiveis + nova).sortedBy { a -> a.nome }
+                    )
+                }
+                aoCriar(nova)
+            } catch (e: HttpException) {
+                _estado.update { it.copy(criandoArea = false, erroDaArea = mensagemDaApi(e) ?: ERRO_CONEXAO) }
+            } catch (e: IOException) {
+                _estado.update { it.copy(criandoArea = false, erroDaArea = ERRO_CONEXAO) }
+            }
+        }
+    }
+
+    fun limparErroDaArea() {
+        _estado.update { it.copy(erroDaArea = null) }
+    }
+
 
     fun limparSalvo() {
         _estado.update { it.copy(salvo = false) }

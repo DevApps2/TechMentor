@@ -34,6 +34,10 @@ interface TechMentorApi {
     @GET("api/areas-atuacao")
     suspend fun listarAreas(): List<AreaResponse>
 
+    // A administradora e a própria mentora podem criar uma área nova
+    @POST("api/areas-atuacao")
+    suspend fun criarArea(@Body corpo: AdminAreaRequest): AreaResponse
+
     // busca e area são opcionais: quando nulos, o Retrofit nem manda o parâmetro
     @GET("api/mentoras")
     suspend fun listarMentoras(

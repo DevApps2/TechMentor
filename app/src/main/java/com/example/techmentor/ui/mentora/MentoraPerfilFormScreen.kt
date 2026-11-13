@@ -50,21 +50,16 @@ import com.example.techmentor.ui.mentoria.EsqueletoBloco
 import com.example.techmentor.ui.mentoria.EstadoErro
 import com.example.techmentor.ui.mentoria.MentoriaCores
 import com.example.techmentor.ui.theme.ManropeFamily
-import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import coil3.compose.AsyncImage
-import com.example.techmentor.data.ApiClient
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import com.example.techmentor.ui.components.AvatarEditavel
 import com.example.techmentor.ui.components.reduzirFoto
 
 private const val LIMITE_BIO = 2000
@@ -148,6 +143,30 @@ fun MentoraPerfilFormScreen(
     val cargoOk = cargo.trim().isNotEmpty()
     val empresaOk = empresa.trim().isNotEmpty()
     val areasOk = areasEscolhidas.isNotEmpty()
+
+    var novaAreaAberta by rememberSaveable { mutableStateOf(false) }
+    var nomeNovaArea by rememberSaveable { mutableStateOf("") }
+
+    if (novaAreaAberta) {
+        DialogoNovaArea(
+            nome = nomeNovaArea,
+            aoMudarNome = { nomeNovaArea = it },
+            criando = estado.criandoArea,
+            erro = estado.erroDaArea,
+            aoCriar = {
+                viewModel.criarArea(nomeNovaArea) { nova ->
+                    areasEscolhidas = areasEscolhidas + nova.id
+                    nomeNovaArea = ""
+                    novaAreaAberta = false
+                }
+            },
+            aoCancelar = {
+                novaAreaAberta = false
+                nomeNovaArea = ""
+                viewModel.limparErroDaArea()
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -306,6 +325,13 @@ fun MentoraPerfilFormScreen(
                                 }
                             )
                         }
+
+                        // NOVO: o último chip abre a criação de uma área nova
+                        ChipOpcao(
+                            texto = "+ Nova área",
+                            selecionado = false,
+                            onClick = { novaAreaAberta = true }
+                        )
                     }
 
                     if (tentou && !areasOk) MensagemDoCampo("Escolha pelo menos uma área.")
@@ -382,47 +408,33 @@ private fun FotoDePerfil(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        // A inicial fica por baixo; a foto, se existir, cobre quando carregar
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFFEDE9FE)),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(
-                text = nome.trim().firstOrNull()?.uppercase() ?: "?",
-                fontFamily = ManropeFamily,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MentoriaCores.RoxoEscuro
-            )
-
-            if (!fotoUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = ApiClient.urlDaFoto(fotoUrl),
-                    contentDescription = "Foto de perfil",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+        AvatarEditavel(
+            nome = nome,
+            fotoUrl = fotoUrl,
+            enviando = enviando,
+            onTrocarFoto = onEscolher,
+            tamanho = 84.dp
+        )
 
         Spacer(modifier = Modifier.width(14.dp))
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
 
-            OutlinedAuthButton(
-                text = when {
-                    enviando -> "Enviando foto..."
-                    fotoUrl.isNullOrBlank() -> "Escolher foto da galeria"
-                    else -> "Trocar foto"
-                },
-                onClick = { if (!enviando) onEscolher() }
+            Text(
+                text = "Foto de perfil",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF20202A)
+            )
+
+            Text(
+                text = if (enviando) "Enviando a foto..." else "Toque na câmera para trocar, ou na foto para ampliar.",
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = Color(0xFF797486)
             )
 
             if (erro != null) {
@@ -434,4 +446,69 @@ private fun FotoDePerfil(
             }
         }
     }
+}
+
+// NOVO: o diálogo para criar uma área de atuação
+@Composable
+private fun DialogoNovaArea(
+    nome: String,
+    aoMudarNome: (String) -> Unit,
+    criando: Boolean,
+    erro: String?,
+    aoCriar: () -> Unit,
+    aoCancelar: () -> Unit
+) {
+
+    AlertDialog(
+        onDismissRequest = { if (!criando) aoCancelar() },
+        containerColor = Color.White,
+        title = {
+            Text(
+                text = "Nova área de atuação",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF20202A)
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                Text(
+                    text = "Não achou a sua área? Crie uma nova: ela fica disponível para todas as mentoras.",
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    color = Color(0xFF797486)
+                )
+
+                AuthField(
+                    label = "Nome da área",
+                    value = nome,
+                    onValueChange = { if (it.length <= 80) aoMudarNome(it) },
+                    placeholder = "Ex.: Segurança da Informação",
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions.Default
+                )
+
+                if (erro != null) {
+                    Text(text = erro, fontSize = 11.sp, color = AuthColors.Error)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = aoCriar, enabled = !criando && nome.isNotBlank()) {
+                Text(
+                    text = if (criando) "Criando..." else "Adicionar",
+                    fontWeight = FontWeight.Bold,
+                    color = MentoriaCores.RoxoEscuro
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = aoCancelar, enabled = !criando) {
+                Text(text = "Cancelar", color = Color(0xFF797486))
+            }
+        }
+    )
 }
