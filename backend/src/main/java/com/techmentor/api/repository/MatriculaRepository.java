@@ -16,4 +16,8 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
 
     Optional<Matricula> findByUsuarioAndCurso(Usuario usuario, Curso curso);
 
+    long countByCurso(Curso curso);
+
+    long countByCursoAndConcluidoEmIsNotNull(Curso curso);
+
 }

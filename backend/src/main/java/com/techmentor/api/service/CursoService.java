@@ -1,5 +1,10 @@
 package com.techmentor.api.service;
 
+import java.util.ArrayList;
+import com.techmentor.api.repository.MatriculaRepository;
+import com.techmentor.api.model.Usuario;
+import com.techmentor.api.model.SituacaoCurso;
+import com.techmentor.api.model.Matricula;
 import com.techmentor.api.dto.CursoDtos.CursoRequest;
 import com.techmentor.api.dto.CursoDtos.CursoResponse;
 import com.techmentor.api.exceptions.ConflictException;
@@ -20,6 +25,7 @@ public class CursoService {
 
     private final CursoRepository cursoRepository;
     private final AulaRepository aulaRepository;
+    private final MatriculaRepository matriculaRepository;
 
     public List<Curso> listarCursosAtivos() {
         return cursoRepository.findAllByAtivoTrue();
@@ -34,6 +40,38 @@ public class CursoService {
         List<Curso> cursos = listarCursosAtivos(categoria);
         cursos.forEach(curso -> curso.setTotalAulas(aulaRepository.countByModulo_Curso(curso)));
         return cursos.stream().map(CursoResponse::from).toList();
+    }
+
+    /**
+     * O catálogo da aluna: os cursos publicados, mais os arquivados em que ela já está matriculada
+     * (quem começou um curso continua com acesso a ele, mesmo depois de arquivado).
+     */
+    @Transactional(readOnly = true)
+    public List<CursoResponse> listarCursosDTO(Curso.Categoria categoria, Usuario usuario) {
+        List<Curso> cursos = new ArrayList<>(listarCursosAtivos(categoria));
+
+        matriculaRepository.findByUsuario(usuario).stream()
+                .map(Matricula::getCurso)
+                .filter(curso -> curso.getSituacao() == SituacaoCurso.ARQUIVADO)
+                .filter(curso -> categoria == null || curso.getCategoria() == categoria)
+                .filter(curso -> cursos.stream().noneMatch(outro -> outro.getId().equals(curso.getId())))
+                .forEach(cursos::add);
+
+        cursos.forEach(curso -> curso.setTotalAulas(aulaRepository.countByModulo_Curso(curso)));
+        return cursos.stream().map(CursoResponse::from).toList();
+    }
+
+    /** Para a aluna estudar: curso publicado, ou arquivado em que ela já está matriculada. */
+    public Curso buscarCursoParaAluna(String titulo, Usuario usuario) {
+        Curso curso = cursoRepository.findByTituloIgnoreCase(titulo)
+                .orElseThrow(() -> new NotFoundException("Curso não encontrado!"));
+
+        boolean publicado = curso.getSituacao() == SituacaoCurso.PUBLICADO;
+        boolean arquivadoComMatricula = curso.getSituacao() == SituacaoCurso.ARQUIVADO
+                && matriculaRepository.existsByUsuarioAndCurso(usuario, curso);
+
+        if (!publicado && !arquivadoComMatricula) throw new NotFoundException("Curso não encontrado!");
+        return curso;
     }
 
     public Curso detalharCurso(String titulo) {
@@ -106,6 +144,7 @@ public class CursoService {
         existente.setCategoria(curso.getCategoria());
         existente.setNivel(curso.getNivel());
         existente.setIconeUrl(curso.getIconeUrl());
+        existente.setInstituicao(curso.getInstituicao());
         existente.setAtivo(curso.isAtivo());
 
         cursoRepository.save(existente);

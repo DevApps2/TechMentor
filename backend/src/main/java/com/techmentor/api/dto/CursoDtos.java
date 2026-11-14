@@ -2,6 +2,7 @@ package com.techmentor.api.dto;
 
 import com.techmentor.api.model.Curso;
 import com.techmentor.api.model.Aula;
+import com.techmentor.api.model.SituacaoCurso;
 import com.techmentor.api.model.Matricula;
 import com.techmentor.api.model.Modulo;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,7 +31,11 @@ public final class CursoDtos {
             @Schema(description = "Indica se o curso está ativo; se omitido, o curso é criado como ativo", example = "true")
             Boolean ativo,
             @Schema(description = "Nível da trilha (opcional)", example = "INICIANTE")
-            Curso.Nivel nivel
+            Curso.Nivel nivel,
+            @Schema(description = "Quem produziu o conteúdo; aparece como crédito para as alunas", example = "Curso em Vídeo")
+            @Size(max = 120) String instituicao,
+            @Schema(description = "Situação do curso; se omitida, vale a regra do campo ativo (criado como publicado)", example = "RASCUNHO")
+            SituacaoCurso situacao
     ) {
         public Curso toEntity() {
             Curso curso = new Curso();
@@ -39,7 +44,9 @@ public final class CursoDtos {
             curso.setCategoria(categoria);
             curso.setNivel(nivel);
             curso.setIconeUrl(iconeUrl);
-            if (ativo != null) curso.setAtivo(ativo);
+            curso.setInstituicao(instituicao == null || instituicao.isBlank() ? null : instituicao.trim());
+            if (situacao != null) curso.setSituacao(situacao);
+            else if (ativo != null) curso.setAtivo(ativo);
             return curso;
         }
     }
@@ -58,8 +65,12 @@ public final class CursoDtos {
             Curso.Nivel nivel,
             @Schema(description = "URL do ícone do curso", example = "https://cdn.techmentor.com/icones/java.png")
             String iconeUrl,
-            @Schema(description = "Indica se o curso está ativo", example = "true")
+            @Schema(description = "Indica se o curso está publicado (visível no catálogo)", example = "true")
             boolean ativo,
+            @Schema(description = "Quem produziu o conteúdo; nulo se não informado", example = "Curso em Vídeo", nullable = true)
+            String instituicao,
+            @Schema(description = "Situação do curso", example = "PUBLICADO")
+            SituacaoCurso situacao,
             @Schema(description = "Total de aulas do curso", example = "12")
             Long totalAulas,
             @Schema(description = "Duração total do curso em minutos (soma das aulas)", example = "390")
@@ -78,6 +89,7 @@ public final class CursoDtos {
                     .mapToInt(AulaResponse::xpRecompensa).sum();
             return new CursoResponse(curso.getId(), curso.getTitulo(), curso.getDescricao(),
                     curso.getCategoria(), curso.getNivel(), curso.getIconeUrl(), curso.isAtivo(),
+                    curso.getInstituicao(), curso.getSituacao(),
                     curso.getTotalAulas(), duracao, xp, modulos);
         }
     }
@@ -132,7 +144,7 @@ public final class CursoDtos {
             @PositiveOrZero Integer xpRecompensa,
             @Schema(description = "URL do conteúdo da aula", example = "https://cdn.techmentor.com/aulas/variaveis.mp4")
             @Size(max = 255)
-            @Pattern(regexp = "^https://\\S+$", message = "O link do vídeo deve começar com https://")
+            @Pattern(regexp = LinksDeVideo.PADRAO, message = LinksDeVideo.MENSAGEM)
             String conteudoUrl
     ) {
         public Aula toEntity() {

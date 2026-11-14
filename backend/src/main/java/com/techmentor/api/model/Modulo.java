@@ -9,7 +9,8 @@ import java.time.*;
 import java.util.*;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@Entity @Table(name = "modulos")
+@Entity @Table(name = "modulos",
+        uniqueConstraints = @UniqueConstraint(name = "uk_modulo_ordem", columnNames = {"curso_id", "ordem"}))
 @Getter @Setter @NoArgsConstructor
 @JsonPropertyOrder({"id", "titulo", "ordem", "aulas"})
 

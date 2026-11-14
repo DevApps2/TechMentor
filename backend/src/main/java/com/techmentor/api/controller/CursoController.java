@@ -25,11 +25,11 @@ public class CursoController {
 
     private final UsuarioAtualService usuarios;
 
-    @Operation(summary = "Listar cursos", description = "Lista os cursos ativos, com filtro opcional por categoria.")
+    @Operation(summary = "Listar cursos", description = "Lista os cursos publicados (mais os arquivados em que a usuária já está matriculada), com filtro opcional por categoria.")
     @GetMapping
     public ResponseEntity<List<CursoResponse>> listarCursos(
             @Parameter(description = "Categoria do curso (opcional)") @RequestParam(required = false) Curso.Categoria categoria) {
-        return ResponseEntity.ok(cursoService.listarCursosDTO(categoria));
+        return ResponseEntity.ok(cursoService.listarCursosDTO(categoria, usuarios.buscarAtual()));
     }
 
     @Operation(summary = "Listar cursos desativados")
