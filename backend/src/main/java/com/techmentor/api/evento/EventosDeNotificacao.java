@@ -1,6 +1,7 @@
 package com.techmentor.api.evento;
 
 import com.techmentor.api.model.Denuncia;
+import com.techmentor.api.model.SituacaoParceira;
 import com.techmentor.api.model.Usuario;
 import java.time.LocalDateTime;
 
@@ -73,4 +74,25 @@ public final class EventosDeNotificacao {
     // A equipe mudou a situacao de uma candidatura (ou inscricao em evento): avisa quem se candidatou
     public record CandidaturaAtualizada(Usuario destinatario, String tituloDaOportunidade, boolean evento,
                                         com.techmentor.api.model.InscricaoOportunidade.Status novoStatus) { }
+
+    // ---- Parcerias ----
+
+    // A administradora convidou uma parceira. O código em texto só existe aqui, na memória, para o e-mail.
+    public record ParceiraConvidada(String nomeDaInstituicao, String responsavel, String email, String codigo,
+                                    LocalDateTime expiraEm) { }
+
+    // A parceira criou a senha e aceitou os termos: falta a verificação da administradora
+    public record ParceiraAceitouConvite(Long parceiraId, String nomeDaInstituicao) { }
+
+    // A administradora verificou, suspendeu ou reativou a parceira. motivo só vem na suspensão.
+    public record SituacaoDaParceiraMudou(Usuario parceira, SituacaoParceira nova, String motivo) { }
+
+    // A parceira terminou o curso e pediu a análise
+    public record CursoEnviadoParaRevisao(Long cursoId, String tituloDoCurso, String nomeDaParceira) { }
+
+    public enum DecisaoDeRevisao { APROVADO, DEVOLVIDO, RECUSADO }
+
+    // A administradora decidiu. comentario vem na devolução e na recusa.
+    public record CursoRevisado(Usuario parceira, Long cursoId, String tituloDoCurso, DecisaoDeRevisao decisao,
+                                String comentario) { }
 }

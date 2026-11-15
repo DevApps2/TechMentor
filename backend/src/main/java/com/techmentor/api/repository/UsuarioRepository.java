@@ -16,5 +16,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmail(String email);
 
+    List<Usuario> findByTipoAndAtivoTrue(Usuario.Tipo tipo);
+
     List<Usuario> findTop20ByAtivoTrueAndNomeContainingIgnoreCaseOrderByNomeAsc(String nome);
 }

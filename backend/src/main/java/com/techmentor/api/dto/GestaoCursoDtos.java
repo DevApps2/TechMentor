@@ -39,6 +39,12 @@ public final class GestaoCursoDtos {
             @Schema(description = "RASCUNHO, PUBLICADO ou ARQUIVADO", example = "PUBLICADO")
             @NotNull SituacaoCurso situacao) { }
 
+    @Schema(description = "O comentário da administradora ao devolver ou recusar um curso em revisão")
+    public record ComentarioRequest(
+            @Schema(description = "Diz à parceira o que ajustar (ou por que foi recusado); ela lê este texto", example = "A aula 3 está sem vídeo.")
+            @NotBlank(message = "Escreva o comentário para a parceira")
+            @Size(max = 500, message = "O comentário deve ter no máximo 500 caracteres") String comentario) { }
+
     @Schema(description = "A nova ordem: os ids de todos os itens, na sequência desejada")
     public record OrdemRequest(
             @Schema(description = "Ids na nova ordem; precisa conter exatamente os itens atuais, cada um uma vez", example = "[12, 10, 11]")

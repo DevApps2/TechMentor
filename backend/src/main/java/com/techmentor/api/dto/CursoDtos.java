@@ -1,5 +1,6 @@
 package com.techmentor.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.techmentor.api.model.Curso;
 import com.techmentor.api.model.Aula;
 import com.techmentor.api.model.SituacaoCurso;
@@ -78,7 +79,11 @@ public final class CursoDtos {
             @Schema(description = "XP total que o curso concede (soma das aulas)", example = "450")
             int xpTotal,
             @Schema(description = "Módulos do curso, ordenados pela ordem")
-            List<ModuloResponse> modulos
+            List<ModuloResponse> modulos,
+            @Schema(description = "ID da empresa parceira dona do curso; ausente nos cursos do TechMentor", nullable = true)
+            @JsonInclude(JsonInclude.Include.NON_NULL) Long parceiraId,
+            @Schema(description = "Comentário da administradora ao devolver ou recusar o curso; ausente quando não há", nullable = true)
+            @JsonInclude(JsonInclude.Include.NON_NULL) String comentarioRevisao
     ) {
         public static CursoResponse from(Curso curso) {
             List<ModuloResponse> modulos = curso.getModulos() == null ? List.of()
@@ -90,7 +95,8 @@ public final class CursoDtos {
             return new CursoResponse(curso.getId(), curso.getTitulo(), curso.getDescricao(),
                     curso.getCategoria(), curso.getNivel(), curso.getIconeUrl(), curso.isAtivo(),
                     curso.getInstituicao(), curso.getSituacao(),
-                    curso.getTotalAulas(), duracao, xp, modulos);
+                    curso.getTotalAulas(), duracao, xp, modulos,
+                    curso.getParceira() == null ? null : curso.getParceira().getId(), curso.getComentarioRevisao());
         }
     }
 

@@ -3,6 +3,8 @@ package com.techmentor.api.dto;
 import com.techmentor.api.model.UsuarioDesafio;
 import com.techmentor.api.model.Conquista;
 import com.techmentor.api.model.Desafio;
+import com.techmentor.api.model.DestinoNotificacao;
+import com.techmentor.api.model.TipoNotificacao;
 import com.techmentor.api.model.HistoricoXp;
 import com.techmentor.api.model.Notificacao;
 import com.techmentor.api.model.ProgressoAula;
@@ -185,6 +187,12 @@ public final class GamificacaoDtos {
             String titulo,
             @Schema(description = "Mensagem da notificação", example = "Você desbloqueou a conquista Primeira aula")
             String mensagem,
+            @Schema(description = "Categoria, para o ícone: GERAL, CONQUISTA, NIVEL, CURSO, DESAFIO, DENUNCIA, MENTORIA, AVALIACAO, OPORTUNIDADE, PARCERIA ou REVISAO", example = "CONQUISTA")
+            TipoNotificacao tipo,
+            @Schema(description = "Tela para onde o toque leva; NENHUM = só marca como lida", example = "CONQUISTAS")
+            DestinoNotificacao destino,
+            @Schema(description = "Completa o destino (título ou id do curso); nulo quando não precisa", example = "Algoritmos", nullable = true)
+            String referencia,
             @Schema(description = "Indica se a notificação já foi lida", example = "false")
             boolean lida,
             @Schema(description = "Data e hora de criação da notificação", example = "2026-10-26T14:30:00")
@@ -192,7 +200,8 @@ public final class GamificacaoDtos {
     ) {
         public static NotificacaoResponse from(Notificacao notificacao) {
             return new NotificacaoResponse(notificacao.getId(), notificacao.getUsuario().getId(),
-                    notificacao.getTitulo(), notificacao.getMensagem(), notificacao.isLida(),
+                    notificacao.getTitulo(), notificacao.getMensagem(), notificacao.getTipo(), notificacao.getDestino(),
+                    notificacao.getReferencia(), notificacao.isLida(),
                     notificacao.getCriadaEm());
         }
     }

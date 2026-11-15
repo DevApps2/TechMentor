@@ -16,8 +16,8 @@ import java.util.Set;
 @Getter @Setter @NoArgsConstructor
 @JsonPropertyOrder({"id", "nome", "email", "fotoUrl", "tipo", "xpTotal", "nivel", "sequenciaDias", "ultimaAtividade", "criadoEm"})
 public class Usuario {
-    @Schema(description = "Tipo do usuário: ALUNA, MENTORA ou ADMIN")
-    public enum Tipo { ALUNA, MENTORA, ADMIN }
+    @Schema(description = "Tipo do usuário: ALUNA, MENTORA, ADMIN ou PARCEIRA (empresa que cadastra cursos)")
+    public enum Tipo { ALUNA, MENTORA, ADMIN, PARCEIRA }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 

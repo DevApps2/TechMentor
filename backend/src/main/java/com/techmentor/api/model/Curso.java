@@ -1,5 +1,6 @@
 package com.techmentor.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -44,6 +45,14 @@ public class Curso {
     @Column(length = 255) private String iconeUrl;
     // Quem produziu o conteúdo (ex.: "Curso em Vídeo"). Aparece como crédito nas telas da aluna.
     @Column(length = 120) private String instituicao;
+
+    // A empresa parceira dona do curso; nulo nos cursos do próprio TechMentor
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parceira_id") private Parceira parceira;
+
+    // O que a administradora escreveu ao devolver ou recusar o curso; sai quando o curso é publicado
+    @JsonIgnore
+    @Column(length = 500) private String comentarioRevisao;
 
     // Nulo nos cursos antigos: nesse caso a situação sai do "ativo" (veja getSituacao)
     @Enumerated(EnumType.STRING) @Column(length = 20) private SituacaoCurso situacao;
