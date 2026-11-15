@@ -272,7 +272,11 @@ data class NotificacaoResponse(
     val titulo: String,
     val mensagem: String,
     val lida: Boolean,
-    val criadaEm: String?
+    val criadaEm: String?,
+    // Para onde o toque leva. Nulos em servidores antigos; valores desconhecidos só marcam como lida.
+    val tipo: String? = null,
+    val destino: String? = null,
+    val referencia: String? = null
 )
 
 // Mentoria concluída que a pessoa ainda pode avaliar (GET /api/avaliacoes/pendentes). voce: ALUNA ou MENTORA
@@ -346,7 +350,9 @@ data class CursoResponse(
     val totalAulas: Long,
     val duracaoTotalMinutos: Int,
     val xpTotal: Int,
-    val modulos: List<ModuloResponse>
+    val modulos: List<ModuloResponse>,
+    // Quem produziu o conteúdo (ex.: "Curso em Vídeo"); nulo se não informado
+    val instituicao: String? = null
 )
 
 data class ModuloResponse(

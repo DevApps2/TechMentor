@@ -178,7 +178,8 @@ fun AulaScreen(
                         aula = aula,
                         semVideo = semVideo,
                         fracao = fracao,
-                        assistiuOSuficiente = assistiuOSuficiente
+                        assistiuOSuficiente = assistiuOSuficiente,
+                        credito = creditoDaInstituicao(estado.instituicao)
                     )
                 }
 
@@ -274,7 +275,8 @@ private fun InformacoesDaAula(
     aula: AulaProgressoResponse,
     semVideo: Boolean,
     fracao: Float,
-    assistiuOSuficiente: Boolean
+    assistiuOSuficiente: Boolean,
+    credito: String? = null
 ) {
 
     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
@@ -301,6 +303,11 @@ private fun InformacoesDaAula(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(text = aula.tituloModulo, fontSize = 13.sp, color = TextoMudo)
+
+        if (credito != null) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = credito, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Roxo)
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 

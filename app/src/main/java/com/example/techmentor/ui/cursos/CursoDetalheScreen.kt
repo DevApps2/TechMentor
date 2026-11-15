@@ -74,6 +74,9 @@ fun CursoDetalheScreen(
                         }
                         Text("${rotuloCategoriaCurso(curso.categoria)} · ${rotuloNivel(curso.nivel)}", color = RoxoDetalhe, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .6.sp, modifier = Modifier.padding(top = 11.dp))
                         Text(curso.titulo, fontFamily = ManropeFamily, color = TextoDetalhe, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 5.dp))
+                        creditoDaInstituicao(curso.instituicao)?.let {
+                            Text(it, color = RoxoDetalhe, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 2.dp))
+                        }
                         Text(curso.descricao.orEmpty(), color = CinzaDetalhe, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.padding(top = 8.dp)) {
                             InfoPill("$total aulas")

@@ -107,7 +107,10 @@ fun NotificacoesScreen(
                 ) {
                     Lista(
                         lista = lista,
-                        onAbrir = { viewModel.marcarComoLida(it) },
+                        onAbrir = { notificacao ->
+                            viewModel.marcarComoLida(notificacao)
+                            abrirDestino(navController, viewModel, notificacao)
+                        },
                         onMarcarTodas = { viewModel.marcarTodasComoLidas() }
                     )
                 }
@@ -217,7 +220,7 @@ private fun CartaoDeNotificacao(
         ) {
 
             IconeLinha(
-                icone = iconeDaNotificacao(notificacao.titulo),
+                icone = iconeDaNotificacao(notificacao.tipo, notificacao.titulo),
                 cor = if (naoLida) MentoriaCores.Roxo else Color(0xFF9A96A3),
                 tamanho = 20.dp
             )
@@ -268,8 +271,43 @@ private fun CartaoDeNotificacao(
     }
 }
 
-/** O backend só manda título e mensagem, então o ícone é escolhido pelo assunto do título. */
-private fun iconeDaNotificacao(titulo: String): Icone {
+/**
+ * Leva à tela do assunto. Destino que o app ainda não conhece (ou NENHUM) só marca como lida: nada quebra
+ * quando o servidor ganha um destino novo.
+ */
+private fun abrirDestino(navController: NavController, viewModel: NotificacoesViewModel, n: NotificacaoResponse) {
+    when (n.destino) {
+        "CURSO" -> {
+            val titulo = n.referencia
+            if (titulo.isNullOrBlank()) {
+                navController.navigate("learning")
+            } else {
+                viewModel.buscarIdDoCurso(titulo) { id ->
+                    navController.navigate(if (id != null) "learning/$id" else "learning")
+                }
+            }
+        }
+        else -> rotaDoDestino(n.destino, Sessao.ehMentora)?.let { navController.navigate(it) }
+    }
+}
+
+private fun rotaDoDestino(destino: String?, ehMentora: Boolean): String? = when (destino) {
+    "CONQUISTAS", "DESAFIOS" -> "achievements"
+    "MENTORIAS" -> if (ehMentora) "mentora/agenda" else "mentorship"
+    "AVALIACOES" -> if (ehMentora) "mentora" else "home"
+    "OPORTUNIDADES" -> "opportunities/minhas"
+    "DENUNCIAS" -> "safety"
+    else -> null
+}
+
+/** Usa a categoria que o servidor manda; sem ela (servidor antigo), escolhe pelo assunto do título. */
+private fun iconeDaNotificacao(tipo: String?, titulo: String): Icone {
+    when (tipo) {
+        "MENTORIA" -> return Icone.USUARIOS
+        "AVALIACAO", "CONQUISTA", "NIVEL", "DESAFIO" -> return Icone.TROFEU
+        "DENUNCIA" -> return Icone.ESCUDO
+        "CURSO" -> return Icone.LIVRO
+    }
     val t = titulo.lowercase(LocaleBr)
     return when {
         "mentoria" in t -> Icone.USUARIOS

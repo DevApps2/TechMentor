@@ -113,6 +113,9 @@ private fun CursoDestaque(curso: CursoResponse, onClick: () -> Unit) {
             Text("COMECE OS SEUS PLANOS", color = Color.White.copy(alpha = .72f), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(curso.titulo, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
             Text("${rotuloCategoriaCurso(curso.categoria)} · ${rotuloNivel(curso.nivel)}", color = Color.White.copy(alpha = .78f), fontSize = 12.sp, modifier = Modifier.padding(top = 3.dp))
+            creditoDaInstituicao(curso.instituicao)?.let {
+                Text(it, color = Color.White.copy(alpha = .78f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+            }
             Row(Modifier.padding(top = 10.dp).clip(RoundedCornerShape(8.dp)).background(Color.White).padding(horizontal = 11.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Conheça a trilha", color = RoxoEscuroCursos, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 IconeLinha(Icone.SETA, RoxoEscuroCursos, tamanho = 13.dp, modifier = Modifier.padding(start = 4.dp))
@@ -139,6 +142,9 @@ private fun CursoCard(item: CursoCatalogoItem, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text("${rotuloCategoriaCurso(curso.categoria)} · ${rotuloNivel(curso.nivel)}", color = RoxoCursos, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .35.sp)
             Text(curso.titulo, color = TextoCursos, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            creditoDaInstituicao(curso.instituicao)?.let {
+                Text(it, color = CinzaCursos, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+            }
             Text("$total aulas · até ${formatarDuracao(curso.duracaoTotalMinutos)} · ${curso.xpTotal} XP", color = CinzaCursos, fontSize = 11.sp, maxLines = 1, modifier = Modifier.padding(top = 3.dp))
             Spacer(Modifier.height(6.dp))
             Box(Modifier.fillMaxWidth().height(5.dp).clip(CircleShape).background(Color(0xFFE9E6EF))) {

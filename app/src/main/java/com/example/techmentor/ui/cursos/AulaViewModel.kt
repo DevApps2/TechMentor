@@ -20,6 +20,8 @@ data class AulaUiState(
     val carregando: Boolean = true,
     val erro: String? = null,
     val cursoTitulo: String = "",
+    // quem produziu o curso (ex.: "Curso em Vídeo"); nulo se não informado
+    val instituicao: String? = null,
     val aula: AulaProgressoResponse? = null,
     // a aula seguinte da trilha (pode estar bloqueada até esta ser concluída)
     val proxima: AulaProgressoResponse? = null,
@@ -56,7 +58,7 @@ class AulaViewModel : ViewModel() {
                 val curso = ApiClient.api.listarCursos().firstOrNull { it.id == cursoId }
                     ?: throw IllegalStateException("Não foi possível encontrar este curso.")
                 val aulas = ApiClient.api.listarAulasComProgresso(curso.titulo, usuarioId)
-                aplicar(curso.titulo, aulas)
+                aplicar(curso.titulo, aulas, instituicao = curso.instituicao)
             } catch (e: IllegalStateException) {
                 _estado.update { it.copy(carregando = false, erro = e.message) }
             } catch (_: HttpException) {
@@ -68,7 +70,12 @@ class AulaViewModel : ViewModel() {
     }
 
     /** Localiza a aula e a seguinte na lista que veio do servidor (já na ordem de estudo). */
-    private fun aplicar(cursoTitulo: String, aulas: List<AulaProgressoResponse>, concluidaAgora: Boolean = false) {
+    private fun aplicar(
+        cursoTitulo: String,
+        aulas: List<AulaProgressoResponse>,
+        concluidaAgora: Boolean = false,
+        instituicao: String? = _estado.value.instituicao
+    ) {
         val indice = aulas.indexOfFirst { it.aulaId == aulaId }
         val aula = aulas.getOrNull(indice)
 
@@ -86,6 +93,7 @@ class AulaViewModel : ViewModel() {
                 carregando = false,
                 erro = null,
                 cursoTitulo = cursoTitulo,
+                instituicao = instituicao,
                 aula = aula,
                 proxima = aulas.getOrNull(indice + 1),
                 concluidaAgora = concluidaAgora,

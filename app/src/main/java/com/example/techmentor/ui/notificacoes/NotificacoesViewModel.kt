@@ -98,6 +98,23 @@ class NotificacoesViewModel : ViewModel() {
         }
     }
 
+    /**
+     * O destino CURSO traz o título do curso e a trilha abre por id: procura o id na lista de cursos.
+     * Se não achar (curso arquivado, falha de rede), entrega nulo e a tela cai na lista de cursos.
+     */
+    fun buscarIdDoCurso(titulo: String, aoAchar: (Long?) -> Unit) {
+        viewModelScope.launch {
+            val id = try {
+                ApiClient.api.listarCursos().firstOrNull { it.titulo.equals(titulo, ignoreCase = true) }?.id
+            } catch (e: HttpException) {
+                null
+            } catch (e: IOException) {
+                null
+            }
+            aoAchar(id)
+        }
+    }
+
     fun marcarTodasComoLidas() {
         val usuarioId = Sessao.usuarioId ?: return
 
