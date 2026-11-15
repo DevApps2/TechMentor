@@ -44,7 +44,7 @@ public class ProgressoAulaService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
 
-        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoParaAluna(tituloCurso, usuario);
 
         Modulo modulo = moduloRepository.findByCursoAndOrdem(curso, ordemModulo)
                 .orElseThrow(() -> new NotFoundException("Módulo não encontrado!"));
@@ -96,7 +96,7 @@ public class ProgressoAulaService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
 
-        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoParaAluna(tituloCurso, usuario);
 
         Long total = aulaRepository.countByModulo_Curso(curso);
 
@@ -117,7 +117,7 @@ public class ProgressoAulaService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
 
-        Curso curso = cursoService.buscarCursoAtivo(tituloCurso);
+        Curso curso = cursoService.buscarCursoParaAluna(tituloCurso, usuario);
 
         Map<Long, LocalDateTime> concluidas = new HashMap<>();
         for (ProgressoAula p : progressoAulaRepository.findByUsuarioAndAula_Modulo_Curso(usuario, curso)) {

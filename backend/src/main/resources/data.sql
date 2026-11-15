@@ -153,8 +153,8 @@ WHERE NOT EXISTS (SELECT 1 FROM avaliacoes a WHERE a.mentoria_id = m.id AND a.av
 -- ---------------------------------------------------------------------
 -- Cursos, módulos e aulas ("Java para iniciantes" reaproveita o que já existir)
 -- ---------------------------------------------------------------------
-INSERT INTO cursos (titulo, descricao, categoria, nivel, icone_url, ativo)
-SELECT v.titulo, v.descricao, v.categoria, v.nivel, v.icone_url, 1
+INSERT INTO cursos (titulo, descricao, categoria, nivel, icone_url, ativo, situacao)
+SELECT v.titulo, v.descricao, v.categoria, v.nivel, v.icone_url, 1, 'PUBLICADO'
 FROM (
     SELECT 'Java para iniciantes' AS titulo, 'Aprenda os fundamentos de Java do zero, com o Curso em Vídeo.' AS descricao,
            'PROGRAMACAO' AS categoria, 'INICIANTE' AS nivel, 'https://cdn.techmentor.com/icones/java.png' AS icone_url
@@ -172,6 +172,16 @@ FROM (
            'DESIGN', 'INICIANTE', 'https://cdn.techmentor.com/icones/uxui.png'
 ) v
 WHERE NOT EXISTS (SELECT 1 FROM cursos c WHERE c.titulo = v.titulo);
+
+-- Situação dos cursos que já existiam antes deste campo (ativo = publicado, inativo = arquivado).
+UPDATE cursos SET situacao = 'PUBLICADO' WHERE situacao IS NULL AND ativo = TRUE;
+UPDATE cursos SET situacao = 'ARQUIVADO' WHERE situacao IS NULL AND ativo = FALSE;
+
+-- Quem produziu o conteúdo de cada curso do catálogo de exemplo (aparece como crédito para as alunas).
+UPDATE cursos SET instituicao = 'Curso em Vídeo'
+WHERE instituicao IS NULL
+  AND titulo IN ('Java para iniciantes', 'Python para iniciantes', 'Lógica de Programação', 'Git e GitHub',
+                 'Cibersegurança Essencial', 'Redes de Computadores', 'HTML5 e CSS3 para iniciantes');
 
 -- Cursos que já existiam no banco antes da coluna "nivel"
 UPDATE cursos SET nivel = 'INICIANTE'

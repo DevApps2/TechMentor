@@ -10,7 +10,8 @@ import java.time.*;
 import java.util.*;
 
 @JsonPropertyOrder({"id", "titulo", "ordem", "duracaoMinutos", "xpRecompensa", "conteudoUrl"})
-@Entity @Table(name = "aulas")
+@Entity @Table(name = "aulas",
+        uniqueConstraints = @UniqueConstraint(name = "uk_aula_ordem", columnNames = {"modulo_id", "ordem"}))
 @Getter @Setter @NoArgsConstructor
 public class Aula {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

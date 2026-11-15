@@ -36,3 +36,13 @@ WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
 -- Vídeos das aulas: o data.sql traz 53 aulas com vídeos do YouTube (Curso em Vídeo). Um banco que já tinha aulas
 -- com os links antigos (inventados ou clipes de teste) não é corrigido pelo data.sql, que só insere o que falta.
 -- Para recomeçar só o conteúdo dos cursos, apague aulas, módulos, matrículas e progresso e rode o data.sql de novo.
+
+-- Gestão de cursos (instituição, situação, posição única). Com ddl-auto=update (desenvolvimento) o Hibernate cria as
+-- colunas e as restrições sozinho. Em produção, com o perfil "prod" (ddl-auto=validate), rode antes de subir a API:
+--   ALTER TABLE cursos ADD COLUMN instituicao VARCHAR(120) NULL;
+--   ALTER TABLE cursos ADD COLUMN situacao VARCHAR(20) NULL;
+--   UPDATE cursos SET situacao = CASE WHEN ativo = 1 THEN 'PUBLICADO' ELSE 'ARQUIVADO' END WHERE situacao IS NULL;
+--   ALTER TABLE modulos ADD CONSTRAINT uk_modulo_ordem UNIQUE (curso_id, ordem);
+--   ALTER TABLE aulas   ADD CONSTRAINT uk_aula_ordem   UNIQUE (modulo_id, ordem);
+-- As duas últimas falham se já existirem duas aulas (ou dois módulos) na mesma posição: corrija as posições antes.
+-- A coluna "ativo" continua existindo: é o espelho da situação (ativo = PUBLICADO).
