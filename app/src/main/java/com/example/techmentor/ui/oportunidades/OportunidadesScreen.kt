@@ -100,12 +100,15 @@ fun OportunidadesScreen(
     }
 
     var selecionadaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    // id da oportunidade cujo formulário de candidatura está aberto (null = fechado)
+    var formularioId by rememberSaveable { mutableStateOf<Long?>(null) }
     val selecionada = estado.oportunidades?.firstOrNull { it.id == selecionadaId }
 
     if (selecionada != null) {
 
         val fecharDetalhes = {
             viewModel.limparErroEnvio()
+            formularioId = null
             selecionadaId = null
         }
 
@@ -114,21 +117,59 @@ fun OportunidadesScreen(
             if (estado.confirmadaId != null) viewModel.fecharConfirmacao() else fecharDetalhes()
         }
 
-        OportunidadeDetalhe(
-            navController = navController,
-            oportunidade = selecionada,
-            statusParticipacao = estado.participacoes[selecionada.id],
-            enviando = estado.enviandoId == selecionada.id,
-            erroEnvio = estado.erroEnvio,
-            confirmada = estado.confirmadaId == selecionada.id,
-            onParticipar = { viewModel.participar(selecionada) },
-            onVoltarAosDetalhes = { viewModel.fecharConfirmacao() },
-            onVoltar = fecharDetalhes,
-            onVoltarAsOportunidades = {
-                viewModel.fecharConfirmacao()
-                selecionadaId = null
+        val ehEvento = selecionada.tipo.equals("EVENTO", ignoreCase = true)
+        val participacao = estado.participacoes[selecionada.id]
+
+        if (formularioId == selecionada.id && participacao == null && estado.confirmadaId != selecionada.id) {
+
+            // Botão "voltar" do celular no formulário: volta para os detalhes
+            BackHandler {
+                viewModel.limparErroEnvio()
+                formularioId = null
             }
-        )
+
+            FormularioCandidatura(
+                oportunidade = selecionada,
+                enviando = estado.enviandoId == selecionada.id,
+                erroEnvio = estado.erroEnvio,
+                onEnviar = { _ ->
+                    // TODO: hoje o backend só registra a candidatura, sem corpo.
+                    // Quando ele passar a aceitar os dados e o PDF, enviar o "dados" aqui.
+                    viewModel.participar(selecionada)
+                },
+                onVoltar = {
+                    viewModel.limparErroEnvio()
+                    formularioId = null
+                }
+            )
+
+        } else {
+
+            OportunidadeDetalhe(
+                navController = navController,
+                oportunidade = selecionada,
+                statusParticipacao = participacao,
+                enviando = estado.enviandoId == selecionada.id,
+                erroEnvio = estado.erroEnvio,
+                confirmada = estado.confirmadaId == selecionada.id,
+                onParticipar = {
+                    if (ehEvento) {
+                        viewModel.participar(selecionada)
+                    } else {
+                        // Vagas e bolsas: pede os dados antes de enviar
+                        viewModel.limparErroEnvio()
+                        formularioId = selecionada.id
+                    }
+                },
+                onVoltarAosDetalhes = { viewModel.fecharConfirmacao() },
+                onVoltar = fecharDetalhes,
+                onVoltarAsOportunidades = {
+                    viewModel.fecharConfirmacao()
+                    formularioId = null
+                    selecionadaId = null
+                }
+            )
+        }
 
     } else {
 
