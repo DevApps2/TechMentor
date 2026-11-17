@@ -102,7 +102,16 @@ data class AdminCandidatura(
     val oportunidadeId: Long,
     val titulo: String,
     val status: String,
-    val criadaEm: String?
+    val criadaEm: String?,
+    // O que a candidata preencheu no formulário (nulos em eventos e candidaturas antigas)
+    val contatoNome: String? = null,
+    val contatoEmail: String? = null,
+    val telefone: String? = null,
+    val cidade: String? = null,
+    val linkProfissional: String? = null,
+    val mensagem: String? = null,
+    val temCurriculo: Boolean = false,
+    val nomeDoCurriculo: String? = null
 )
 
 // Corpo do PATCH /api/admin/candidaturas/{id}/status

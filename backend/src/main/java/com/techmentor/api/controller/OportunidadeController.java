@@ -8,7 +8,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import com.techmentor.api.service.OportunidadeService;
 import com.techmentor.api.service.UsuarioAtualService;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -58,11 +66,34 @@ public class OportunidadeController {
         oportunidades.excluir(usuarios.buscarAtual(), id);
     }
 
-    @Operation(summary = "Candidatar-se a uma oportunidade")
+    @Operation(summary = "Candidatar-se a uma oportunidade",
+            description = "O corpo (nome, e-mail, telefone, cidade, link e mensagem) é opcional: sem ele a candidatura é só registrada. "
+                    + "O currículo em PDF vai depois, em PUT /candidaturas/{id}/curriculo.")
     @PostMapping("/oportunidades/{id}/candidaturas")
     @ResponseStatus(HttpStatus.CREATED)
-    public InscricaoResponse candidatar(@Parameter(description = "ID da oportunidade") @PathVariable Long id) {
-        return oportunidades.candidatar(usuarios.buscarAtual(), id);
+    public InscricaoResponse candidatar(@Parameter(description = "ID da oportunidade") @PathVariable Long id,
+                                        @Valid @RequestBody(required = false) CandidaturaRequest dados) {
+        return oportunidades.candidatar(usuarios.buscarAtual(), id, dados);
+    }
+
+    @Operation(summary = "Anexar o currículo em PDF à candidatura",
+            description = "Só a dona da candidatura, e só enquanto a equipe não respondeu. PDF de até 5 MB; troca o anterior, se houver.")
+    @PutMapping(value = "/candidaturas/{id}/curriculo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public InscricaoResponse anexarCurriculo(@Parameter(description = "ID da candidatura") @PathVariable Long id,
+                                             @RequestParam("curriculo") MultipartFile curriculo) {
+        return oportunidades.anexarCurriculo(usuarios.buscarAtual(), id, curriculo);
+    }
+
+    @Operation(summary = "Baixar o currículo de uma candidatura", description = "Só para administradoras. 404 se a candidata não anexou.")
+    @GetMapping("/admin/candidaturas/{id}/curriculo")
+    public ResponseEntity<Resource> baixarCurriculo(@Parameter(description = "ID da candidatura") @PathVariable Long id) {
+        var curriculo = oportunidades.curriculoDaCandidatura(usuarios.buscarAtual(), id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(curriculo.nome(), StandardCharsets.UTF_8).build().toString())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(new FileSystemResource(curriculo.caminho()));
     }
 
     @Operation(summary = "Inscrever-se em um evento")

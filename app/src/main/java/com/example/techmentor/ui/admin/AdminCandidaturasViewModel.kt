@@ -6,12 +6,15 @@ import com.example.techmentor.data.AdminCandidatura
 import com.example.techmentor.data.AdminCandidaturaStatusRequest
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.Sessao
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 data class AdminCandidaturasUiState(
     val carregando: Boolean = true,
@@ -21,7 +24,12 @@ data class AdminCandidaturasUiState(
     val candidaturas: List<AdminCandidatura>? = null,
     // id da candidatura que está mudando de situação agora
     val alterandoId: Long? = null,
-    val erroAoAlterar: String? = null
+    val erroAoAlterar: String? = null,
+    // id da candidatura cujo currículo está sendo baixado agora
+    val baixandoCurriculoId: Long? = null,
+    // o PDF já baixado, esperando a tela abri-lo (a tela chama curriculoAberto() depois)
+    val curriculoParaAbrir: File? = null,
+    val erroCurriculo: String? = null
 )
 
 /** Quem se candidatou a uma oportunidade e a situação de cada candidatura (a admin pode mudar). */
@@ -60,6 +68,57 @@ class AdminCandidaturasViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    /**
+     * Baixa o currículo para a pasta temporária do app (cache/shared, a mesma que o FileProvider já libera)
+     * e entrega o arquivo à tela, que o abre num leitor de PDF.
+     */
+    fun baixarCurriculo(candidaturaId: Long, cacheDir: File) {
+        if (_estado.value.baixandoCurriculoId != null) return
+
+        viewModelScope.launch {
+            _estado.update { it.copy(baixandoCurriculoId = candidaturaId, erroCurriculo = null) }
+
+            when (val resultado = chamar { ApiClient.adminApi.baixarCurriculo(candidaturaId) }) {
+
+                is Resultado.Ok -> {
+                    val arquivo = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val pasta = File(cacheDir, "shared").apply { mkdirs() }
+                            val destino = File(pasta, "curriculo-$candidaturaId.pdf")
+                            resultado.valor.use { corpo ->
+                                corpo.byteStream().use { entrada ->
+                                    destino.outputStream().use { saida -> entrada.copyTo(saida) }
+                                }
+                            }
+                            destino
+                        }.getOrNull()
+                    }
+
+                    _estado.update {
+                        if (arquivo != null) {
+                            it.copy(baixandoCurriculoId = null, curriculoParaAbrir = arquivo)
+                        } else {
+                            it.copy(baixandoCurriculoId = null, erroCurriculo = "Não foi possível baixar o currículo. Tente de novo.")
+                        }
+                    }
+                }
+
+                is Resultado.Falha -> _estado.update {
+                    it.copy(
+                        baixandoCurriculoId = null,
+                        erroCurriculo = if (resultado.codigo == 404) "Esta candidata não anexou currículo." else resultado.mensagem,
+                        sessaoExpirada = resultado.sessaoExpirada
+                    )
+                }
+            }
+        }
+    }
+
+    /** A tela já abriu (ou tentou abrir) o PDF. */
+    fun curriculoAberto(erro: String? = null) {
+        _estado.update { it.copy(curriculoParaAbrir = null, erroCurriculo = erro ?: it.erroCurriculo) }
     }
 
     /** Muda a situação (EM_ANALISE, APROVADA, RECUSADA ou ENVIADA). A candidata recebe uma notificação. */

@@ -23,4 +23,17 @@ public class InscricaoOportunidade {
 
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private Status status = Status.ENVIADA;
     private LocalDateTime criadaEm = LocalDateTime.now();
+
+    // O que a candidata preencheu no formulário (vagas e bolsas). Nulos nos eventos e nas candidaturas antigas.
+    @Column(length = 120) private String contatoNome;
+    @Column(length = 160) private String contatoEmail;
+    @Column(length = 20) private String telefone;
+    @Column(length = 120) private String cidade;
+    @Column(length = 255) private String linkProfissional;
+    @Column(length = 500) private String mensagem;
+
+    // Currículo em PDF (opcional): o nome do arquivo guardado no servidor e o nome original, para mostrar à equipe.
+    // O arquivo nunca é público: só a administradora baixa, por uma rota própria.
+    @Column(length = 100) private String curriculoArquivo;
+    @Column(length = 120) private String curriculoNome;
 }

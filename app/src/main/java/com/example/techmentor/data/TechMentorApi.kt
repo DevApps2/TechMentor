@@ -153,6 +153,21 @@ interface TechMentorApi {
         @Path("id") oportunidadeId: Long
     ): InscricaoResponse
 
+    // a mesma candidatura, com os dados do formulário (o Retrofit não aceita corpo nulo, por isso são duas funções)
+    @POST("api/oportunidades/{id}/candidaturas")
+    suspend fun candidatarComDados(
+        @Path("id") oportunidadeId: Long,
+        @Body dados: CandidaturaRequest
+    ): InscricaoResponse
+
+    // currículo em PDF (até 5 MB) da própria candidatura; o campo do arquivo se chama "curriculo"
+    @Multipart
+    @PUT("api/candidaturas/{id}/curriculo")
+    suspend fun anexarCurriculo(
+        @Path("id") candidaturaId: Long,
+        @Part curriculo: MultipartBody.Part
+    ): InscricaoResponse
+
     @POST("api/oportunidades/{id}/inscricoes")
     suspend fun inscreverEmEvento(
         @Path("id") oportunidadeId: Long

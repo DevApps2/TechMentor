@@ -11,11 +11,19 @@ import com.techmentor.api.exceptions.BadRequestException;
 import com.techmentor.api.exceptions.ConflictException;
 import com.techmentor.api.exceptions.ForbiddenException;
 import com.techmentor.api.exceptions.NotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -24,6 +32,15 @@ public class OportunidadeService {
     private final InscricaoOportunidadeRepository inscricoes;
     private final ConquistaService conquistas;
     private final ApplicationEventPublisher eventos;
+
+    // Fora da pasta de fotos de propósito: as fotos são públicas, os currículos não
+    @Value("${app.pasta-curriculos:curriculos}")
+    private String pastaCurriculos;
+
+    private static final long LIMITE_DO_CURRICULO = 5L * 1024 * 1024;
+
+    /** O PDF guardado: onde está e com que nome mostrar. */
+    public record CurriculoGuardado(Path caminho, String nome) { }
 
     public OportunidadeService(OportunidadeRepository oportunidades,
                                InscricaoOportunidadeRepository inscricoes,
@@ -84,14 +101,19 @@ public class OportunidadeService {
     }
 
     public InscricaoResponse candidatar(Usuario actor, Long oportunidadeId) {
-        return inscrever(actor, oportunidadeId, false);
+        return inscrever(actor, oportunidadeId, false, null);
+    }
+
+    /** Candidatura com os dados do formulário (corpo opcional: sem dados, só registra). */
+    public InscricaoResponse candidatar(Usuario actor, Long oportunidadeId, CandidaturaRequest dados) {
+        return inscrever(actor, oportunidadeId, false, dados);
     }
 
     public InscricaoResponse inscreverEmEvento(Usuario actor, Long oportunidadeId) {
-        return inscrever(actor, oportunidadeId, true);
+        return inscrever(actor, oportunidadeId, true, null);
     }
 
-    private InscricaoResponse inscrever(Usuario actor, Long id, boolean evento) {
+    private InscricaoResponse inscrever(Usuario actor, Long id, boolean evento, CandidaturaRequest dados) {
         Oportunidade oportunidade = buscar(id);
         if (!oportunidade.isAtiva() || (oportunidade.getPrazoInscricao() != null
                 && oportunidade.getPrazoInscricao().isBefore(LocalDate.now())))
@@ -105,6 +127,14 @@ public class OportunidadeService {
         InscricaoOportunidade inscricao = new InscricaoOportunidade();
         inscricao.setUsuario(actor);
         inscricao.setOportunidade(oportunidade);
+        if (dados != null) {
+            inscricao.setContatoNome(dados.nome().trim());
+            inscricao.setContatoEmail(dados.email().trim().toLowerCase());
+            inscricao.setTelefone(dados.telefone().trim());
+            inscricao.setCidade(vazioComoNulo(dados.cidade()));
+            inscricao.setLinkProfissional(vazioComoNulo(dados.linkProfissional()));
+            inscricao.setMensagem(vazioComoNulo(dados.mensagem()));
+        }
         InscricaoOportunidade salva = inscricoes.save(inscricao);
         conquistas.desbloquear(actor, ConquistaService.PRIMEIRA_CANDIDATURA);
         return toResponse(salva);
@@ -123,6 +153,63 @@ public class OportunidadeService {
                 .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
         RegraAcesso.exigirProprietarioOuAdmin(actor, inscricao.getUsuario().getId());
         return toResponse(inscricao);
+    }
+
+    /**
+     * A candidata anexa (ou troca) o currículo em PDF da própria candidatura. Só enquanto a equipe ainda não respondeu.
+     * O tipo que o app informa pode ser falso: confere se o arquivo começa mesmo com "%PDF-".
+     */
+    public InscricaoResponse anexarCurriculo(Usuario actor, Long id, MultipartFile arquivo) {
+        InscricaoOportunidade inscricao = inscricoes.findById(id)
+                .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
+        if (!inscricao.getUsuario().getId().equals(actor.getId())) throw new ForbiddenException();
+        if (inscricao.getStatus() == InscricaoOportunidade.Status.APROVADA
+                || inscricao.getStatus() == InscricaoOportunidade.Status.RECUSADA)
+            throw new ConflictException("Esta candidatura já foi respondida e não aceita mais anexos.");
+
+        if (arquivo == null || arquivo.isEmpty()) throw new BadRequestException("Envie o currículo em PDF.");
+        if (arquivo.getSize() > LIMITE_DO_CURRICULO) throw new BadRequestException("O PDF deve ter no máximo 5 MB.");
+
+        byte[] inicio;
+        try (InputStream entrada = arquivo.getInputStream()) {
+            inicio = entrada.readNBytes(5);
+        } catch (IOException e) {
+            throw new BadRequestException("Não foi possível ler o arquivo.");
+        }
+        if (!"%PDF-".equals(new String(inicio, StandardCharsets.ISO_8859_1))) {
+            throw new BadRequestException("O arquivo não é um PDF válido.");
+        }
+
+        String antigo = inscricao.getCurriculoArquivo();
+        String nomeGuardado = "curriculo-" + id + "-" + UUID.randomUUID() + ".pdf";
+        try {
+            Path pasta = Path.of(pastaCurriculos).toAbsolutePath();
+            Files.createDirectories(pasta);
+            arquivo.transferTo(pasta.resolve(nomeGuardado));
+        } catch (IOException e) {
+            throw new BadRequestException("Não foi possível salvar o currículo.");
+        }
+
+        inscricao.setCurriculoArquivo(nomeGuardado);
+        inscricao.setCurriculoNome(nomeOriginal(arquivo.getOriginalFilename()));
+        apagarArquivo(antigo);
+        return toResponse(inscricao);
+    }
+
+    /** Só a admin: o PDF da candidatura, para baixar. 404 se a candidata não anexou. */
+    @Transactional(readOnly = true)
+    public CurriculoGuardado curriculoDaCandidatura(Usuario actor, Long id) {
+        RegraAcesso.exigirAdmin(actor);
+        InscricaoOportunidade inscricao = inscricoes.findById(id)
+                .orElseThrow(() -> new NotFoundException("Candidatura não encontrada."));
+        if (inscricao.getCurriculoArquivo() == null) throw new NotFoundException("Esta candidatura não tem currículo.");
+
+        Path pasta = Path.of(pastaCurriculos).toAbsolutePath().normalize();
+        Path caminho = pasta.resolve(inscricao.getCurriculoArquivo()).normalize();
+        if (!caminho.startsWith(pasta) || !Files.isRegularFile(caminho)) {
+            throw new NotFoundException("O arquivo do currículo não foi encontrado.");
+        }
+        return new CurriculoGuardado(caminho, inscricao.getCurriculoNome() == null ? "curriculo.pdf" : inscricao.getCurriculoNome());
     }
 
     /** Só a admin: quem se candidatou a esta oportunidade, da mais nova para a mais antiga. */
@@ -160,7 +247,32 @@ public class OportunidadeService {
         if (inscricao.getStatus() == InscricaoOportunidade.Status.APROVADA
                 || inscricao.getStatus() == InscricaoOportunidade.Status.RECUSADA)
             throw new ConflictException("Esta candidatura já foi respondida e não pode ser retirada.");
+        String curriculo = inscricao.getCurriculoArquivo();
         inscricoes.delete(inscricao);
+        apagarArquivo(curriculo);   // quem desiste leva os dados embora: o PDF não fica guardado
+    }
+
+    private void apagarArquivo(String nomeGuardado) {
+        if (nomeGuardado == null) return;
+        try {
+            Path pasta = Path.of(pastaCurriculos).toAbsolutePath().normalize();
+            Path caminho = pasta.resolve(nomeGuardado).normalize();
+            if (caminho.startsWith(pasta)) Files.deleteIfExists(caminho);
+        } catch (IOException e) {
+            // arquivo que não dá para apagar agora não deve impedir a desistência
+        }
+    }
+
+    /** Só o nome do arquivo (sem pastas), limpo e curto, para mostrar à equipe. */
+    private static String nomeOriginal(String enviado) {
+        String nome = enviado == null ? "" : enviado.replace('\\', '/');
+        nome = nome.substring(nome.lastIndexOf('/') + 1).replaceAll("[\\p{Cntrl}]", "").trim();
+        if (nome.isEmpty()) nome = "curriculo.pdf";
+        return nome.length() <= 120 ? nome : nome.substring(0, 116) + ".pdf";
+    }
+
+    private static String vazioComoNulo(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     private Oportunidade buscar(Long id) {
@@ -202,7 +314,10 @@ public class OportunidadeService {
         Usuario usuario = inscricao.getUsuario();
         return new CandidaturaAdminResponse(inscricao.getId(), usuario.getId(), usuario.getNome(), usuario.getEmail(),
                 inscricao.getOportunidade().getId(), inscricao.getOportunidade().getTitulo(),
-                inscricao.getStatus(), inscricao.getCriadaEm());
+                inscricao.getStatus(), inscricao.getCriadaEm(),
+                inscricao.getContatoNome(), inscricao.getContatoEmail(), inscricao.getTelefone(), inscricao.getCidade(),
+                inscricao.getLinkProfissional(), inscricao.getMensagem(),
+                inscricao.getCurriculoArquivo() != null, inscricao.getCurriculoNome());
     }
 
     private InscricaoResponse toResponse(InscricaoOportunidade inscricao) {
