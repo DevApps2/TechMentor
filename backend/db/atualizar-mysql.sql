@@ -104,3 +104,13 @@ ALTER TABLE cursos   MODIFY situacao ENUM('RASCUNHO','EM_REVISAO','PUBLICADO','A
 --   CREATE INDEX ix_auditoria_entidade ON auditoria (entidade, entidade_id);
 --   ALTER TABLE cursos ADD COLUMN parceira_id BIGINT NULL, ADD COLUMN comentario_revisao VARCHAR(500) NULL,
 --                      ADD CONSTRAINT fk_cursos_parceira FOREIGN KEY (parceira_id) REFERENCES parceiras (id);
+
+-- Candidatura com formulário e currículo em PDF. Com ddl-auto=update (desenvolvimento) o Hibernate cria as colunas sozinho.
+-- Em produção, com o perfil "prod" (ddl-auto=validate), rode antes de subir a API:
+--   ALTER TABLE inscricoes_oportunidade
+--       ADD COLUMN contato_nome VARCHAR(120) NULL, ADD COLUMN contato_email VARCHAR(160) NULL,
+--       ADD COLUMN telefone VARCHAR(20) NULL, ADD COLUMN cidade VARCHAR(120) NULL,
+--       ADD COLUMN link_profissional VARCHAR(255) NULL, ADD COLUMN mensagem VARCHAR(500) NULL,
+--       ADD COLUMN curriculo_arquivo VARCHAR(100) NULL, ADD COLUMN curriculo_nome VARCHAR(120) NULL;
+-- Os PDFs ficam na pasta "curriculos" (app.pasta-curriculos), ao lado da API, e NÃO são públicos: só a administradora baixa.
+-- Inclua essa pasta no backup do servidor.

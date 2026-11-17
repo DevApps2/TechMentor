@@ -5,6 +5,7 @@ import com.techmentor.api.model.Oportunidade;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -81,6 +82,24 @@ public final class OportunidadeDtos {
             @Schema(description = "Data e hora em que a candidatura/inscrição foi criada", example = "2026-10-26T14:30:00")
             LocalDateTime criadaEm) { }
 
+    @Schema(description = "Dados que a candidata preenche ao se candidar a uma vaga ou bolsa. Corpo opcional: sem ele a candidatura é só registrada")
+    public record CandidaturaRequest(
+            @Schema(description = "Nome completo", example = "Camila Rocha")
+            @NotBlank(message = "Informe o nome") @Size(min = 3, max = 120, message = "O nome deve ter entre 3 e 120 caracteres") String nome,
+            @Schema(description = "E-mail de contato", example = "camila.rocha@email.com")
+            @NotBlank(message = "Informe o e-mail") @jakarta.validation.constraints.Email(message = "Informe um e-mail válido")
+            @Size(max = 160, message = "O e-mail deve ter no máximo 160 caracteres") String email,
+            @Schema(description = "Telefone com DDD", example = "(11) 99999-9999")
+            @NotBlank(message = "Informe o telefone")
+            @Pattern(regexp = "^\\D*(\\d\\D*){10,11}$", message = "Informe o telefone com DDD") String telefone,
+            @Schema(description = "Cidade e estado", example = "São Paulo, SP", nullable = true)
+            @Size(max = 120, message = "A cidade deve ter no máximo 120 caracteres") String cidade,
+            @Schema(description = "LinkedIn ou portfólio (http:// ou https://)", example = "https://linkedin.com/in/camila", nullable = true)
+            @Size(max = 255, message = "O link deve ter no máximo 255 caracteres")
+            @Pattern(regexp = "^$|^https?://\\S+$", message = "O link deve começar com http:// ou https://") String linkProfissional,
+            @Schema(description = "Apresentação da candidata", nullable = true)
+            @Size(max = 500, message = "A mensagem deve ter no máximo 500 caracteres") String mensagem) { }
+
     @Schema(description = "Candidatura vista pela administração, com os dados de quem se candidatou")
     public record CandidaturaAdminResponse(
             @Schema(description = "ID da candidatura/inscrição", example = "1")
@@ -98,7 +117,15 @@ public final class OportunidadeDtos {
             @Schema(description = "Situação: ENVIADA, EM_ANALISE, APROVADA ou RECUSADA", example = "ENVIADA")
             InscricaoOportunidade.Status status,
             @Schema(description = "Quando a usuária se candidatou", example = "2026-10-26T14:30:00")
-            LocalDateTime criadaEm) { }
+            LocalDateTime criadaEm,
+            @Schema(description = "Nome informado no formulário; nulo em eventos e candidaturas antigas", nullable = true) String contatoNome,
+            @Schema(description = "E-mail de contato informado no formulário", nullable = true) String contatoEmail,
+            @Schema(description = "Telefone informado no formulário", nullable = true) String telefone,
+            @Schema(description = "Cidade e estado", nullable = true) String cidade,
+            @Schema(description = "LinkedIn ou portfólio", nullable = true) String linkProfissional,
+            @Schema(description = "Apresentação da candidata", nullable = true) String mensagem,
+            @Schema(description = "Se a candidata anexou o currículo em PDF") boolean temCurriculo,
+            @Schema(description = "Nome original do PDF", nullable = true) String nomeDoCurriculo) { }
 
     @Schema(description = "Nova situação de uma candidatura (só administradores)")
     public record CandidaturaStatusRequest(
