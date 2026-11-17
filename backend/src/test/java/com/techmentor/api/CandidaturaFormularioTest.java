@@ -137,7 +137,11 @@ class CandidaturaFormularioTest {
 
     @Test
     void oFormularioRecusaDadosInvalidos() {
-        assertTrue(VALIDADOR.validate(formulario()).isEmpty());
+        // o app manda os campos já sem espaços nas pontas (o servidor também limpa depois de validar)
+        assertTrue(VALIDADOR.validate(new CandidaturaRequest("Camila Rocha", "camila@email.com", "(11) 99999-9999",
+                "São Paulo, SP", "https://linkedin.com/in/camila", "Quero muito aprender.")).isEmpty());
+        // campos opcionais podem faltar
+        assertTrue(VALIDADOR.validate(new CandidaturaRequest("Camila Rocha", "camila@email.com", "11999999999", null, null, null)).isEmpty());
 
         assertFalse(VALIDADOR.validate(new CandidaturaRequest("Ca", "camila@email.com", "11999999999", null, null, null)).isEmpty());
         assertFalse(VALIDADOR.validate(new CandidaturaRequest("Camila Rocha", "isso-nao-e-email", "11999999999", null, null, null)).isEmpty());
