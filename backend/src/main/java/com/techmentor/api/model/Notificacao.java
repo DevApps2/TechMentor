@@ -11,7 +11,7 @@ import java.util.*;
 
 @Entity @Table(name = "notificacoes")
 @Getter @Setter @NoArgsConstructor
-@JsonPropertyOrder({"id", "titulo", "mensagem", "lida", "criadaEm"})
+@JsonPropertyOrder({"id", "titulo", "mensagem", "tipo", "destino", "referencia", "lida", "criadaEm"})
 public class Notificacao {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
@@ -20,6 +20,21 @@ public class Notificacao {
 
     @Column(nullable = false) private String titulo;
     @Column(length = 500) private String mensagem;
+
+    // Nulos nas notificações antigas: os getters abaixo devolvem GERAL / NENHUM
+    @Enumerated(EnumType.STRING) @Column(length = 30) private TipoNotificacao tipo;
+    @Enumerated(EnumType.STRING) @Column(length = 30) private DestinoNotificacao destino;
+    // Completa o destino (título do curso, id do curso...); nulo quando o destino não precisa
+    @Column(length = 150) private String referencia;
+
     private boolean lida = false;
     private LocalDateTime criadaEm = LocalDateTime.now();
+
+    public TipoNotificacao getTipo() {
+        return tipo == null ? TipoNotificacao.GERAL : tipo;
+    }
+
+    public DestinoNotificacao getDestino() {
+        return destino == null ? DestinoNotificacao.NENHUM : destino;
+    }
 }

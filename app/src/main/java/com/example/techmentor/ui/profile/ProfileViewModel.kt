@@ -3,6 +3,7 @@ package com.example.techmentor.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.data.AreaResponse
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.AtualizarUsuarioRequest
@@ -31,6 +32,8 @@ data class ProfileUiState(
     val atualizando: Boolean = false,
     val erro: String? = null,
     val usuario: UsuarioResponse? = null,
+    // as áreas que se podem escolher como interesse (as mesmas das mentoras); vazio se não carregou
+    val areasDisponiveis: List<AreaResponse> = emptyList(),
     val totalConquistas: Int = 0,
     val ultimoCursoConcluido: MatriculaResponse? = null,
     val historicoMentorias: List<AgendamentoResponse> = emptyList(),
@@ -81,17 +84,20 @@ class ProfileViewModel : ViewModel() {
                     val conquistasPedido = async { runCatching { api.listarConquistasDoUsuario(usuarioId) }.getOrNull() }
                     val matriculasPedido = async { runCatching { api.listarMatriculas(usuarioId) }.getOrNull() }
                     val agendamentosPedido = async { runCatching { api.listarAgendamentos() }.getOrNull() }
+                    val areasPedido = async { runCatching { api.listarAreas() }.getOrNull() }
 
                     val usuario = usuarioPedido.await()
                     val conquistas = conquistasPedido.await()
                     val matriculas = matriculasPedido.await()
                     val agendamentos = agendamentosPedido.await()
+                    val areas = areasPedido.await()
 
                     _estado.update {
                         it.copy(
                             carregando = false,
                             erro = null,
                             usuario = usuario,
+                            areasDisponiveis = areas?.sortedBy { a -> a.nome } ?: it.areasDisponiveis,
                             totalConquistas = conquistas?.size ?: it.totalConquistas,
                             ultimoCursoConcluido = if (matriculas != null) {
                                 // as datas da API são ISO, então comparar o texto já ordena por data

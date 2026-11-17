@@ -1,10 +1,12 @@
 package com.techmentor.api.controller;
 
+import com.techmentor.api.dto.AuditoriaDtos.RegistroResponse;
 import com.techmentor.api.dto.CursoDtos.AulaResponse;
 import com.techmentor.api.dto.CursoDtos.CursoRequest;
 import com.techmentor.api.dto.CursoDtos.CursoResponse;
 import com.techmentor.api.dto.CursoDtos.ModuloResponse;
 import com.techmentor.api.dto.GestaoCursoDtos.AulaGestaoRequest;
+import com.techmentor.api.dto.GestaoCursoDtos.ComentarioRequest;
 import com.techmentor.api.dto.GestaoCursoDtos.MetricasCursoResponse;
 import com.techmentor.api.dto.GestaoCursoDtos.ModuloGestaoRequest;
 import com.techmentor.api.dto.GestaoCursoDtos.OrdemRequest;
@@ -72,6 +74,24 @@ public class GestaoCursoController {
     @PatchMapping("/cursos/{id}/situacao")
     public CursoResponse mudarSituacao(@PathVariable Long id, @Valid @RequestBody SituacaoRequest request) {
         return gestao.mudarSituacao(id, request.situacao());
+    }
+
+    @Operation(summary = "Devolver curso em revisão", description = "Volta para RASCUNHO com um comentário que a parceira lê. Só vale para curso em EM_REVISAO.")
+    @PostMapping("/cursos/{id}/devolucao")
+    public CursoResponse devolver(@PathVariable Long id, @Valid @RequestBody ComentarioRequest request) {
+        return gestao.devolver(id, request.comentario());
+    }
+
+    @Operation(summary = "Recusar curso em revisão", description = "Arquiva o curso com o motivo. Só vale para curso em EM_REVISAO. Para aprovar, publique o curso (PATCH da situação).")
+    @PostMapping("/cursos/{id}/recusa")
+    public CursoResponse recusar(@PathVariable Long id, @Valid @RequestBody ComentarioRequest request) {
+        return gestao.recusar(id, request.comentario());
+    }
+
+    @Operation(summary = "Histórico do curso", description = "Quem fez o quê e quando, do mais recente para o mais antigo.")
+    @GetMapping("/cursos/{id}/historico")
+    public List<RegistroResponse> historico(@PathVariable Long id) {
+        return gestao.historico(id);
     }
 
     @Operation(summary = "Métricas do curso", description = "Matrículas, concluintes e a aula onde mais alunas pararam. Nunca identifica alunas.")

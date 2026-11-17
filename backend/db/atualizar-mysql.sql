@@ -46,3 +46,61 @@ WHERE nome IN ('Primeiro desafio', 'Explorando oportunidades');
 --   ALTER TABLE aulas   ADD CONSTRAINT uk_aula_ordem   UNIQUE (modulo_id, ordem);
 -- As duas últimas falham se já existirem duas aulas (ou dois módulos) na mesma posição: corrija as posições antes.
 -- A coluna "ativo" continua existindo: é o espelho da situação (ativo = PUBLICADO).
+
+-- Parcerias, revisão de cursos, histórico (auditoria) e notificações com destino.
+-- Com ddl-auto=update (desenvolvimento) o Hibernate cria as tabelas parceiras, convites_parceira e auditoria e as colunas novas
+-- (notificacoes.tipo/destino/referencia e cursos.parceira_id/comentario_revisao). O que ele NÃO faz é ampliar um ENUM que já
+-- existe no MySQL: sem os dois comandos abaixo, criar uma parceira (tipo PARCEIRA) e enviar um curso para revisão (EM_REVISAO) falham.
+-- Rode uma vez, com a API já iniciada pelo menos uma vez:
+ALTER TABLE usuarios MODIFY tipo ENUM('ALUNA','MENTORA','ADMIN','PARCEIRA') NOT NULL;
+ALTER TABLE cursos   MODIFY situacao ENUM('RASCUNHO','EM_REVISAO','PUBLICADO','ARQUIVADO') NULL;
+-- (se a coluna cursos.situacao já for VARCHAR(20), o segundo comando continua valendo e não faz mal)
+
+-- Em produção, com o perfil "prod" (ddl-auto=validate), rode antes de subir a API:
+--   ALTER TABLE notificacoes ADD COLUMN tipo VARCHAR(30) NULL, ADD COLUMN destino VARCHAR(30) NULL, ADD COLUMN referencia VARCHAR(150) NULL;
+--   CREATE TABLE parceiras (
+--       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+--       usuario_id BIGINT NOT NULL UNIQUE,
+--       nome VARCHAR(120) NOT NULL UNIQUE,
+--       tipo VARCHAR(20) NOT NULL,
+--       documento VARCHAR(14) NULL UNIQUE,
+--       site VARCHAR(200) NULL,
+--       responsavel VARCHAR(120) NOT NULL,
+--       situacao VARCHAR(20) NOT NULL,
+--       criada_em DATETIME(6) NOT NULL,
+--       termos_versao VARCHAR(20) NULL,
+--       termos_aceitos_em DATETIME(6) NULL,
+--       site_conferido BIT NOT NULL,
+--       dominio_do_email_conferido BIT NOT NULL,
+--       identificacao_conferida BIT NOT NULL,
+--       verificada_em DATETIME(6) NULL,
+--       verificada_por_id BIGINT NULL,
+--       observacao_da_verificacao VARCHAR(500) NULL,
+--       motivo_da_suspensao VARCHAR(500) NULL,
+--       CONSTRAINT fk_parceiras_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id),
+--       CONSTRAINT fk_parceiras_verificada_por FOREIGN KEY (verificada_por_id) REFERENCES usuarios (id)
+--   );
+--   CREATE TABLE convites_parceira (
+--       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+--       parceira_id BIGINT NOT NULL,
+--       codigo_hash VARCHAR(255) NOT NULL,
+--       expira_em DATETIME(6) NOT NULL,
+--       criado_em DATETIME(6) NOT NULL,
+--       tentativas INT NOT NULL,
+--       usado BIT NOT NULL,
+--       CONSTRAINT fk_convites_parceira FOREIGN KEY (parceira_id) REFERENCES parceiras (id)
+--   );
+--   CREATE TABLE auditoria (
+--       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+--       quando DATETIME(6) NOT NULL,
+--       autor_id BIGINT NULL,
+--       autor_nome VARCHAR(120) NULL,
+--       autor_papel VARCHAR(20) NULL,
+--       acao VARCHAR(40) NOT NULL,
+--       entidade VARCHAR(20) NOT NULL,
+--       entidade_id BIGINT NOT NULL,
+--       detalhe VARCHAR(500) NULL
+--   );
+--   CREATE INDEX ix_auditoria_entidade ON auditoria (entidade, entidade_id);
+--   ALTER TABLE cursos ADD COLUMN parceira_id BIGINT NULL, ADD COLUMN comentario_revisao VARCHAR(500) NULL,
+--                      ADD CONSTRAINT fk_cursos_parceira FOREIGN KEY (parceira_id) REFERENCES parceiras (id);

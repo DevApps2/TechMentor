@@ -61,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.techmentor.data.AgendamentoResponse
+import com.example.techmentor.data.AreaResponse
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.Sessao
 import com.example.techmentor.data.UsuarioResponse
@@ -73,6 +74,8 @@ import com.example.techmentor.ui.components.TopBarMarca
 import com.example.techmentor.ui.home.BottomNavigationBar
 import com.example.techmentor.ui.home.formatarNumero
 import com.example.techmentor.ui.home.parseDataHora
+import com.example.techmentor.ui.mentoria.ChipOpcao
+import com.example.techmentor.ui.mentoria.MentoriaCores
 import com.example.techmentor.ui.theme.ManropeFamily
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
@@ -96,6 +99,8 @@ private val Borda = Color(0xFFEBE8EF)
 private const val LIMITE_NOME = 120
 
 private const val LIMITE_BIO = 500
+private const val LIMITE_AREA = 80
+private const val MAXIMO_DE_AREAS = 10
 
 // Política de Privacidade publicada no Google Sites (a mesma do cadastro)
 private const val URL_POLITICA_DE_PRIVACIDADE =
@@ -265,6 +270,7 @@ private fun ProfileContent(
         if (editando) {
             CardDeEdicao(
                 usuario = usuario,
+                areasDisponiveis = estado.areasDisponiveis,
                 salvando = estado.salvando,
                 enviandoFoto = estado.enviandoFoto,
                 erro = estado.erroEdicao,
@@ -436,9 +442,11 @@ private fun BotaoSair(onClick: () -> Unit) {
 // EDIÇÃO DO PERFIL
 // ======================================================
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CardDeEdicao(
     usuario: UsuarioResponse,
+    areasDisponiveis: List<AreaResponse>,
     salvando: Boolean,
     enviandoFoto: Boolean,
     erro: String?,
@@ -458,7 +466,67 @@ private fun CardDeEdicao(
 
     var nome by remember { mutableStateOf(usuario.nome) }
     var bio by remember { mutableStateOf(usuario.bio.orEmpty()) }
-    var areas by remember { mutableStateOf(usuario.areasInteresse.orEmpty().joinToString(", ")) }
+    // Os nomes escolhidos. Áreas antigas digitadas à mão (que não existem na lista) continuam aparecendo, marcadas,
+    // para a pessoa poder tirá-las; as novas só se escolhem entre as áreas oficiais.
+    var areasEscolhidas by remember { mutableStateOf(usuario.areasInteresse.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }.toSet()) }
+    var outroAberto by remember { mutableStateOf(false) }
+    var textoOutro by remember { mutableStateOf("") }
+    val nomesDisponiveis = areasDisponiveis.map { it.nome }
+    val chips = nomesDisponiveis + areasEscolhidas.filter { escolhida -> nomesDisponiveis.none { it.equals(escolhida, ignoreCase = true) } }
+
+    if (outroAberto) {
+        val digitado = textoOutro.trim()
+        val cheio = areasEscolhidas.size >= MAXIMO_DE_AREAS
+        AlertDialog(
+            onDismissRequest = { outroAberto = false; textoOutro = "" },
+            containerColor = Color.White,
+            title = { Text(text = "Outro interesse", fontWeight = FontWeight.Bold, color = Color(0xFF20202A)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = if (cheio) "Você já escolheu $MAXIMO_DE_AREAS áreas. Desmarque uma para adicionar outra."
+                        else "Não achou o que procura? Escreva o seu interesse. Ele fica só no seu perfil.",
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = Color(0xFF797486)
+                    )
+                    AuthField(
+                        label = "Seu interesse",
+                        value = textoOutro,
+                        onValueChange = { if (it.length <= LIMITE_AREA) textoOutro = it },
+                        placeholder = "Ex.: Robótica",
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions.Default
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = digitado.isNotEmpty() && !cheio,
+                    onClick = {
+                        // se já existe uma área com esse nome, usa o nome oficial (assim bate com as das mentoras)
+                        val oficial = nomesDisponiveis.firstOrNull { it.equals(digitado, ignoreCase = true) }
+                        val nome = oficial ?: digitado
+                        if (areasEscolhidas.none { it.equals(nome, ignoreCase = true) }) {
+                            areasEscolhidas = areasEscolhidas + nome
+                        }
+                        outroAberto = false
+                        textoOutro = ""
+                    }
+                ) {
+                    Text(text = "Adicionar", fontWeight = FontWeight.Bold, color = MentoriaCores.RoxoEscuro)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { outroAberto = false; textoOutro = "" }) {
+                    Text(text = "Cancelar", color = Color(0xFF797486))
+                }
+            }
+        )
+    }
 
     SecaoBranca(titulo = "Editar perfil") {
 
@@ -510,14 +578,60 @@ private fun CardDeEdicao(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        AuthField(
-            label = "Áreas de interesse (separe por vírgula)",
-            value = areas,
-            onValueChange = { areas = it },
-            placeholder = "Dados, Back-end, UX/UI",
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions.Default
+        Text(
+            text = "Áreas de interesse",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF514C58)
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (chips.isEmpty()) {
+            Text(
+                text = "Não foi possível carregar a lista de áreas agora, mas você pode escrever o seu interesse.",
+                fontSize = 11.sp,
+                color = TextoMudo
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        run {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                chips.forEach { nome ->
+                    val marcada = areasEscolhidas.any { it.equals(nome, ignoreCase = true) }
+                    ChipOpcao(
+                        texto = nome,
+                        selecionado = marcada,
+                        onClick = {
+                            areasEscolhidas = when {
+                                marcada -> areasEscolhidas.filterNot { it.equals(nome, ignoreCase = true) }.toSet()
+                                areasEscolhidas.size >= MAXIMO_DE_AREAS -> areasEscolhidas
+                                else -> areasEscolhidas + nome
+                            }
+                        }
+                    )
+                }
+
+                ChipOpcao(
+                    texto = "+ Outro",
+                    selecionado = false,
+                    onClick = { outroAberto = true }
+                )
+            }
+        }
+
+        if (areasEscolhidas.size >= MAXIMO_DE_AREAS) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Máximo de $MAXIMO_DE_AREAS áreas.",
+                fontSize = 11.sp,
+                color = TextoMudo
+            )
+        }
 
         if (erro != null) {
             Spacer(modifier = Modifier.height(10.dp))
@@ -529,7 +643,7 @@ private fun CardDeEdicao(
         GradientButton(
             text = if (salvando) "Salvando..." else "Salvar alterações",
             onClick = {
-                if (!salvando) onSalvar(nome, bio, usuario.fotoUrl.orEmpty(), areas.split(","))
+                if (!salvando) onSalvar(nome, bio, usuario.fotoUrl.orEmpty(), chips.filter { c -> areasEscolhidas.any { it.equals(c, ignoreCase = true) } })
             }
         )
     }

@@ -56,22 +56,30 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Públicas: quem ainda não tem token, fotos (o app carrega por URL), documentação e página de erro
                         .requestMatchers(HttpMethod.POST,
-                                "/usuarios", "/usuarios/login", "/usuarios/senha/esqueci", "/usuarios/senha/redefinir"
+                                "/usuarios", "/usuarios/login", "/usuarios/senha/esqueci", "/usuarios/senha/redefinir",
+                                "/parceiras/convite/aceitar"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/fotos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/fotos/**", "/parceiras/termos").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
 
                         // 2. Só administradoras (módulos e aulas só têm rotas de gestão: vale para qualquer método)
                         .requestMatchers("/api/admin/**", "/modulos/**", "/aulas/**").hasRole("ADMIN")
+
+                        // 2b. Só empresas parceiras: a área delas
+                        .requestMatchers("/api/parceira/**").hasRole("PARCEIRA")
                         .requestMatchers(HttpMethod.POST, "/cursos", "/conquistas", "/desafios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/cursos/**", "/conquistas/**", "/desafios/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/cursos/**", "/conquistas/**", "/desafios/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/usuarios", "/cursos/desativados").hasRole("ADMIN")
 
-                        // 3. Dados pessoais: só a própria usuária (nem a admin)
+                        // 3. Dados pessoais: só a própria usuária (nem a admin). As notificações servem a todas, parceira inclusa
                         .requestMatchers(
                                 "/notificacoes/usuarios/{usuarioId}",
-                                "/notificacoes/leitura/usuarios/{usuarioId}",
+                                "/notificacoes/leitura/usuarios/{usuarioId}"
+                        ).access(proprioUsuario("usuarioId", false))
+
+                        // 3b. O restante dos dados pessoais é do app das alunas e mentoras: a parceira não entra
+                        .requestMatchers(
                                 "/matriculas/usuarios/{usuarioId}",
                                 "/matriculas/{curso}/usuarios/{usuarioId}",
                                 "/progresso/{titulo}/usuarios/{usuarioId}",
@@ -81,18 +89,18 @@ public class SecurityConfig {
                                 "/conquistas/usuarios/{usuarioId}",
                                 "/desafios/usuarios/{usuarioId}",
                                 "/desafios/{titulo}/participacao/usuarios/{usuarioId}"
-                        ).access(proprioUsuario("usuarioId", false))
+                        ).access(proprioUsuario("usuarioId", false, true))
 
                         // 4. Conta: trocar a senha é só da dona; editar, mandar foto e desativar, a dona ou a admin
-                        .requestMatchers(HttpMethod.GET, "/usuarios/busca").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/usuarios/busca").access(todasMenosParceira())
                         .requestMatchers(HttpMethod.GET, "/usuarios/{id}").access(proprioUsuario("id", true))
                         .requestMatchers(HttpMethod.PATCH, "/usuarios/{id}/senha").access(proprioUsuario("id", false))
                         .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").access(proprioUsuario("id", true))
                         .requestMatchers(HttpMethod.POST, "/usuarios/{id}/foto").access(proprioUsuario("id", true))
                         .requestMatchers(HttpMethod.DELETE, "/usuarios/{id}").access(proprioUsuario("id", true))
 
-                        // Todo o resto: basta estar logada
-                        .anyRequest().authenticated()
+                        // Todo o resto (o app das alunas e mentoras): basta estar logada, menos a parceira, que só tem a área dela
+                        .anyRequest().access(todasMenosParceira())
                 )
 
                 .addFilterBefore(
@@ -113,14 +121,36 @@ public class SecurityConfig {
     }
 
     /**
+     * Logada e que não seja parceira. A empresa parceira só usa /api/parceira, a própria conta, as notificações e as fotos:
+     * sem esta trava ela alcançaria matrículas, mentorias, denúncias e o resto do app das alunas.
+     */
+    private static AuthorizationManager<RequestAuthorizationContext> todasMenosParceira() {
+        return (autenticacao, contexto) -> {
+            Authentication auth = autenticacao.get();
+            boolean permitido = auth != null
+                    && auth.isAuthenticated()
+                    && auth.getPrincipal() instanceof Usuario usuario
+                    && usuario.getTipo() != Usuario.Tipo.PARCEIRA;
+            return new AuthorizationDecision(permitido);
+        };
+    }
+
+    /**
      * Libera só se o id que está no caminho da URL (por exemplo {usuarioId}) for o da pessoa logada.
      * Com adminTambem = true, a administradora também passa.
      */
     private static AuthorizationManager<RequestAuthorizationContext> proprioUsuario(String variavel, boolean adminTambem) {
+        return proprioUsuario(variavel, adminTambem, false);
+    }
+
+    /** Com menosParceira = true, a empresa parceira não passa nem no próprio id (são dados do app das alunas). */
+    private static AuthorizationManager<RequestAuthorizationContext> proprioUsuario(String variavel, boolean adminTambem,
+                                                                                    boolean menosParceira) {
         return (autenticacao, contexto) -> {
             Authentication auth = autenticacao.get();
             boolean permitido = auth != null
                     && auth.getPrincipal() instanceof Usuario usuario
+                    && !(menosParceira && usuario.getTipo() == Usuario.Tipo.PARCEIRA)
                     && (String.valueOf(usuario.getId()).equals(contexto.getVariables().get(variavel))
                     || (adminTambem && usuario.getTipo() == Usuario.Tipo.ADMIN));
             return new AuthorizationDecision(permitido);
