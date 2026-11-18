@@ -70,6 +70,8 @@ Mais detalhes da organização do backend em [`backend/README-arquitetura.md`](b
 
 ## Como rodar
 
+> **Vai deixar a API rodando num notebook, na internet (ngrok), com e-mail e Google Meet?** Siga o guia completo e testado passo a passo: [backend/docs/rodar-no-notebook.md](backend/docs/rodar-no-notebook.md).
+
 ### 1) A API
 
 Pré-requisito: **Java 17 ou superior**. Os comandos abaixo são para a pasta `backend/` (no Windows use `mvnw.cmd`; no Linux e no macOS, `./mvnw`).
