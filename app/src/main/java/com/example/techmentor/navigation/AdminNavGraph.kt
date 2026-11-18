@@ -14,6 +14,7 @@ import com.example.techmentor.ui.admin.AdminOportunidadeFormScreen
 import com.example.techmentor.ui.admin.AdminOportunidadesScreen
 import com.example.techmentor.ui.admin.AdminPainelScreen
 import com.example.techmentor.ui.admin.AdminPerfilScreen
+import com.example.techmentor.ui.admin.AdminParceirasScreen
 
 /**
  * Telas da administradora. Ficam em um arquivo próprio para não dar conflito no NavGraph:
@@ -23,6 +24,10 @@ fun NavGraphBuilder.adminNavGraph(navController: NavController) {
 
     composable("admin") {
         AdminPainelScreen(navController = navController)
+    }
+
+    composable("admin/parceiras") {
+        AdminParceirasScreen(navController = navController)
     }
 
     // ---- Denúncias ----

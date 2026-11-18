@@ -210,6 +210,15 @@ private fun PainelConteudo(
             Spacer(modifier = Modifier.height(10.dp))
 
             CartaoDeAtalho(
+                icone = Icone.PREDIO,
+                titulo = "Gerenciar parceiras",
+                descricao = "Convites, verificação e situação das instituições",
+                onClick = { navController.navigate("admin/parceiras") }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CartaoDeAtalho(
                 icone = Icone.MALETA,
                 titulo = "Nova oportunidade",
                 descricao = "Estágio, emprego, bolsa ou evento",

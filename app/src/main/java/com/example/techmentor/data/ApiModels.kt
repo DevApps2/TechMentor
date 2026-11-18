@@ -339,6 +339,143 @@ data class TrocarSenhaRequest(
     val novaSenha: String
 )
 
+// Perfil e cursos da parceira autenticada (contrato-parceiras-e-cursos.md).
+data class ParceiraPerfilResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val nome: String,
+    val tipo: String,
+    val documento: String?,
+    val site: String?,
+    val responsavel: String,
+    val email: String,
+    val situacao: String,
+    val criadaEm: String?,
+    val aceitouOsTermos: Boolean,
+    val termosVersao: String?,
+    val termosAceitosEm: String?,
+    val dominioDoEmailConfereComSite: Boolean?,
+    val motivoDaSuspensao: String?,
+    val cursos: Long
+)
+
+data class ParceiraCursoRequest(
+    val titulo: String,
+    val descricao: String,
+    val categoria: String,
+    val nivel: String,
+    val iconeUrl: String? = null
+)
+
+data class ParceiraModuloRequest(val titulo: String)
+
+data class ParceiraAulaRequest(
+    val titulo: String,
+    val duracaoMinutos: Int,
+    val xpRecompensa: Int? = null,
+    val conteudoUrl: String
+)
+
+data class ParceiraCursoResponse(
+    val id: Long,
+    val titulo: String,
+    val descricao: String?,
+    val categoria: String,
+    val nivel: String?,
+    val iconeUrl: String?,
+    val ativo: Boolean,
+    val instituicao: String?,
+    val situacao: String,
+    val totalAulas: Long,
+    val duracaoTotalMinutos: Int,
+    val xpTotal: Int,
+    val modulos: List<ModuloResponse> = emptyList(),
+    val parceiraId: Long? = null,
+    val comentarioRevisao: String? = null
+)
+
+data class MetricasParceiraCursoResponse(
+    val cursoId: Long,
+    val titulo: String,
+    val situacao: String,
+    val matriculas: Long,
+    val alunasComProgresso: Long,
+    val concluintes: Long,
+    val taxaConclusao: Int
+)
+
+data class TermosParceiraResponse(
+    val versao: String,
+    val titulo: String,
+    val texto: String
+)
+
+data class AceitarConviteParceiraRequest(
+    val email: String,
+    val codigo: String,
+    val senha: String,
+    val aceitaTermos: Boolean,
+    val versaoTermos: String
+)
+
+data class AdminConviteParceiraRequest(
+    val nome: String,
+    val tipo: String,
+    val documento: String?,
+    val site: String?,
+    val responsavel: String,
+    val email: String
+)
+
+data class AdminVerificacaoParceiraRequest(
+    val siteConferido: Boolean,
+    val dominioDoEmailConferido: Boolean,
+    val identificacaoConferida: Boolean,
+    val observacao: String?
+)
+
+data class AdminMotivoParceiraRequest(val motivo: String)
+
+data class ParceiraVerificacaoResponse(
+    val siteConferido: Boolean,
+    val dominioDoEmailConferido: Boolean,
+    val identificacaoConferida: Boolean,
+    val verificadaEm: String?,
+    val verificadaPor: String?,
+    val observacao: String?
+)
+
+data class AdminParceiraResponse(
+    val id: Long,
+    val usuarioId: Long,
+    val nome: String,
+    val tipo: String,
+    val documento: String?,
+    val site: String?,
+    val responsavel: String,
+    val email: String,
+    val situacao: String,
+    val criadaEm: String?,
+    val aceitouOsTermos: Boolean,
+    val termosVersao: String?,
+    val termosAceitosEm: String?,
+    val dominioDoEmailConfereComSite: Boolean?,
+    val verificacao: ParceiraVerificacaoResponse?,
+    val motivoDaSuspensao: String?,
+    val cursos: Long
+)
+
+data class AdminHistoricoParceiraResponse(
+    val id: Long,
+    val quando: String?,
+    val autorId: Long?,
+    val autorNome: String?,
+    val autorPapel: String?,
+    val acao: String,
+    val descricao: String,
+    val detalhe: String?
+)
+
 data class CursoResponse(
     val id: Long,
     val titulo: String,

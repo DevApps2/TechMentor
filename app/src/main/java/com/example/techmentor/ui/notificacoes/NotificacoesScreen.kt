@@ -277,6 +277,11 @@ private fun CartaoDeNotificacao(
  */
 private fun abrirDestino(navController: NavController, viewModel: NotificacoesViewModel, n: NotificacaoResponse) {
     when (n.destino) {
+        "CURSO_DA_PARCEIRA" -> {
+            val id = n.referencia?.toLongOrNull()
+            navController.navigate(if (id != null) "parceira/curso/$id" else "parceira")
+        }
+        "PERFIL_DA_PARCEIRA" -> navController.navigate("parceira")
         "CURSO" -> {
             val titulo = n.referencia
             if (titulo.isNullOrBlank()) {

@@ -115,4 +115,30 @@ interface AdminApi {
     suspend fun criarArea(
         @Body body: AdminAreaRequest
     ): AreaResponse
+
+    // ---- Parceiras ----
+
+    @GET("api/admin/parceiras")
+    suspend fun listarParceiras(@retrofit2.http.Query("situacao") situacao: String? = null): List<AdminParceiraResponse>
+
+    @GET("api/admin/parceiras/{id}")
+    suspend fun obterParceira(@Path("id") id: Long): AdminParceiraResponse
+
+    @POST("api/admin/parceiras")
+    suspend fun convidarParceira(@Body body: AdminConviteParceiraRequest): AdminParceiraResponse
+
+    @POST("api/admin/parceiras/{id}/convite")
+    suspend fun reenviarConviteDaParceira(@Path("id") id: Long)
+
+    @PUT("api/admin/parceiras/{id}/verificacao")
+    suspend fun verificarParceira(@Path("id") id: Long, @Body body: AdminVerificacaoParceiraRequest): AdminParceiraResponse
+
+    @POST("api/admin/parceiras/{id}/suspensao")
+    suspend fun suspenderParceira(@Path("id") id: Long, @Body body: AdminMotivoParceiraRequest): AdminParceiraResponse
+
+    @POST("api/admin/parceiras/{id}/reativacao")
+    suspend fun reativarParceira(@Path("id") id: Long): AdminParceiraResponse
+
+    @GET("api/admin/parceiras/{id}/historico")
+    suspend fun historicoDaParceira(@Path("id") id: Long): List<AdminHistoricoParceiraResponse>
 }

@@ -31,7 +31,14 @@ enum class Icone {
     BUSCA,
     TROFEU,
     PERFIL,
-    SINO
+    SINO,
+    PREDIO,
+    CHAPEU,
+    ESTATISTICAS,
+    CONFIGURACOES,
+    CHECK,
+    RELOGIO,
+    ATUALIZAR
 }
 
 @Composable
@@ -118,6 +125,33 @@ fun IconeLinha(
                     tracar("M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9", cor, estilo)
                     tracar("M10.3 21a1.94 1.94 0 0 0 3.4 0", cor, estilo)
                 }
+
+                Icone.PREDIO -> {
+                    tracar("M4 21V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16M2 21h20M8 7h2m3 0h1M8 11h2m3 0h1M8 15h2m3 0h1M17 10h2a2 2 0 0 1 2 2v9", cor, estilo)
+                }
+
+                Icone.CHAPEU -> {
+                    tracar("m2 10 10-6 10 6-10 6zM6 12v5c3.6 2.8 8.4 2.8 12 0v-5M22 10v6", cor, estilo)
+                    drawCircle(cor, radius = 1.1f, center = Offset(22f, 17f))
+                }
+
+                Icone.ESTATISTICAS -> {
+                    tracar("M4 20V11h4v9M10 20V4h4v16M16 20v-7h4v7", cor, estilo)
+                }
+
+                Icone.CONFIGURACOES -> {
+                    drawCircle(cor, radius = 3.2f, center = Offset(12f, 12f), style = estilo)
+                    tracar("M12 2v3M12 19v3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M2 12h3m14 0h3M4.9 19.1 7 17m10-10 2.1-2.1", cor, estilo)
+                }
+
+                Icone.CHECK -> tracar("m5 12 4 4L19 6", cor, estilo)
+
+                Icone.RELOGIO -> {
+                    drawCircle(cor, radius = 9f, center = Offset(12f, 12f), style = estilo)
+                    tracar("M12 7v5l3 2", cor, estilo)
+                }
+
+                Icone.ATUALIZAR -> tracar("M20 7v5h-5M4 17v-5h5M5.6 9a7 7 0 0 1 11.8-2L20 12M4 12l2.6 5a7 7 0 0 0 11.8-2", cor, estilo)
             }
         }
     }

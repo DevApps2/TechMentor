@@ -4,6 +4,8 @@ Aplicativo Android com uma API própria para **conectar mulheres que estão entr
 
 > Este repositório tem duas partes: o **aplicativo** (`app/`) e a **API** (`backend/`).
 
+> Para saber o que falta configurar, validar e publicar, consulte o [guia de próximos passos](README-PROXIMOS-PASSOS.md).
+
 ---
 
 ## O que o TechMentor faz
