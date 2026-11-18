@@ -65,7 +65,7 @@ public class SecurityConfig {
                         // 1. Públicas: quem ainda não tem token, fotos (o app carrega por URL), documentação e página de erro
                         .requestMatchers(HttpMethod.POST,
                                 "/usuarios", "/usuarios/login", "/usuarios/senha/esqueci", "/usuarios/senha/redefinir",
-                                "/parceiras/convite/aceitar"
+                                "/parceiras/convite/aceitar", "/parceiras/pedidos"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/fotos/**", "/parceiras/termos").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
@@ -129,7 +129,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.stream(origens.split(","))
-                .map(String::trim)
+                .map(SecurityConfig::soAOrigem)
                 .filter(o -> !o.isEmpty())
                 .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
@@ -140,6 +140,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();
         fonte.registerCorsConfiguration("/**", config);
         return fonte;
+    }
+
+    /**
+     * O CORS compara só a origem (https://site.com), nunca o caminho. Se alguém colocar "https://site.com/pagina/" na lista,
+     * tira o que vem depois do domínio e a barra final, em vez de a API recusar o site sem explicar por quê.
+     */
+    static String soAOrigem(String endereco) {
+        String limpo = endereco.trim();
+        return limpo.replaceFirst("^(https?://[^/]+).*$", "$1");
     }
 
     /** O título do curso vai na URL e pode ter "/" (UX%2FUI). O Tomcat já aceita; o firewall do Spring Security também precisa aceitar. */

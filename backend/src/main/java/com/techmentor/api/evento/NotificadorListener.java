@@ -28,6 +28,7 @@ import com.techmentor.api.evento.EventosDeNotificacao.CandidaturaAtualizada;
 import com.techmentor.api.evento.EventosDeNotificacao.CursoEnviadoParaRevisao;
 import com.techmentor.api.evento.EventosDeNotificacao.CursoRevisado;
 import com.techmentor.api.evento.EventosDeNotificacao.ParceiraAceitouConvite;
+import com.techmentor.api.evento.EventosDeNotificacao.PedidoDeParceriaRecebido;
 import com.techmentor.api.evento.EventosDeNotificacao.SituacaoDaParceiraMudou;
 
 /**
@@ -179,6 +180,13 @@ public class NotificadorListener {
     }
 
     // ---- Parcerias ----
+
+    @EventListener
+    public void aoReceberPedidoDeParceria(PedidoDeParceriaRecebido evento) {
+        notificacoes.notificarAdministradoras(TipoNotificacao.PARCERIA, DestinoNotificacao.PEDIDO_DE_PARCERIA,
+                String.valueOf(evento.pedidoId()), "Novo pedido de parceria",
+                evento.nomeDaInstituicao() + " quer ser parceira do TechMentor. Abra o pedido para analisar.");
+    }
 
     @EventListener
     public void aoParceiraAceitarConvite(ParceiraAceitouConvite evento) {
