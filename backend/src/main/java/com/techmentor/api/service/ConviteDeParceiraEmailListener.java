@@ -38,9 +38,10 @@ public class ConviteDeParceiraEmailListener {
                     .nota("Se você não esperava este convite, ignore este e-mail. "
                             + "Nunca compartilhe este código com ninguém.");
 
-            emailService.enviar(evento.email(), "Convite de parceria - TechMentor", modelo);
+            emailService.enviarRastreado("parceira-convite:" + evento.eventoId(), evento.email(),
+                    "Convite de parceria - TechMentor", modelo, false);
         } catch (Exception e) {
-            log.warn("Não foi possível enviar o convite de parceria: {}", e.getMessage());
+            log.warn("Não foi possível preparar o convite de parceria ({}).", e.getClass().getSimpleName());
         }
     }
 }

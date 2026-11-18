@@ -104,3 +104,24 @@ ALTER TABLE cursos   MODIFY situacao ENUM('RASCUNHO','EM_REVISAO','PUBLICADO','A
 --   CREATE INDEX ix_auditoria_entidade ON auditoria (entidade, entidade_id);
 --   ALTER TABLE cursos ADD COLUMN parceira_id BIGINT NULL, ADD COLUMN comentario_revisao VARCHAR(500) NULL,
 --                      ADD CONSTRAINT fk_cursos_parceira FOREIGN KEY (parceira_id) REFERENCES parceiras (id);
+
+-- Registro idempotente dos e-mails do módulo de parceria. O HTML/texto é guardado só para mensagens retentáveis;
+-- códigos de convite não são persistidos e devem ser reenviados pelo endpoint que gera um código novo.
+-- Necessário em produção quando ddl-auto=validate; em desenvolvimento o Hibernate cria a tabela.
+CREATE TABLE IF NOT EXISTS registros_envio_email (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    chave_evento VARCHAR(120) NOT NULL,
+    destinatario VARCHAR(254) NOT NULL,
+    assunto VARCHAR(200) NOT NULL,
+    situacao VARCHAR(16) NOT NULL,
+    tentativas INT NOT NULL DEFAULT 0,
+    criada_em DATETIME(6) NOT NULL,
+    atualizada_em DATETIME(6) NOT NULL,
+    proxima_tentativa_em DATETIME(6) NULL,
+    ultimo_erro VARCHAR(500) NULL,
+    texto_retentativa LONGTEXT NULL,
+    html_retentativa LONGTEXT NULL,
+    com_logo BIT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_email_evento UNIQUE (chave_evento),
+    INDEX ix_email_retentativa (situacao, proxima_tentativa_em)
+);

@@ -4,6 +4,7 @@ import com.techmentor.api.model.Denuncia;
 import com.techmentor.api.model.SituacaoParceira;
 import com.techmentor.api.model.Usuario;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /** Fatos do sistema que geram uma notificação para alguém. Quem publica não sabe quem escuta. */
 public final class EventosDeNotificacao {
@@ -79,20 +80,41 @@ public final class EventosDeNotificacao {
 
     // A administradora convidou uma parceira. O código em texto só existe aqui, na memória, para o e-mail.
     public record ParceiraConvidada(String nomeDaInstituicao, String responsavel, String email, String codigo,
-                                    LocalDateTime expiraEm) { }
+                                    LocalDateTime expiraEm, UUID eventoId) {
+        public ParceiraConvidada(String nomeDaInstituicao, String responsavel, String email, String codigo, LocalDateTime expiraEm) {
+            this(nomeDaInstituicao, responsavel, email, codigo, expiraEm, UUID.randomUUID());
+        }
+    }
 
     // A parceira criou a senha e aceitou os termos: falta a verificação da administradora
-    public record ParceiraAceitouConvite(Long parceiraId, String nomeDaInstituicao) { }
+    public record ParceiraAceitouConvite(Long parceiraId, String nomeDaInstituicao, String email, UUID eventoId) {
+        public ParceiraAceitouConvite(Long parceiraId, String nomeDaInstituicao) {
+            this(parceiraId, nomeDaInstituicao, null, UUID.randomUUID());
+        }
+    }
 
     // A administradora verificou, suspendeu ou reativou a parceira. motivo só vem na suspensão.
-    public record SituacaoDaParceiraMudou(Usuario parceira, SituacaoParceira nova, String motivo) { }
+    public record SituacaoDaParceiraMudou(Usuario parceira, SituacaoParceira nova, String motivo, UUID eventoId) {
+        public SituacaoDaParceiraMudou(Usuario parceira, SituacaoParceira nova, String motivo) {
+            this(parceira, nova, motivo, UUID.randomUUID());
+        }
+    }
 
     // A parceira terminou o curso e pediu a análise
-    public record CursoEnviadoParaRevisao(Long cursoId, String tituloDoCurso, String nomeDaParceira) { }
+    public record CursoEnviadoParaRevisao(Long cursoId, String tituloDoCurso, String nomeDaParceira, UUID eventoId) {
+        public CursoEnviadoParaRevisao(Long cursoId, String tituloDoCurso, String nomeDaParceira) {
+            this(cursoId, tituloDoCurso, nomeDaParceira, UUID.randomUUID());
+        }
+    }
 
     public enum DecisaoDeRevisao { APROVADO, DEVOLVIDO, RECUSADO }
 
     // A administradora decidiu. comentario vem na devolução e na recusa.
     public record CursoRevisado(Usuario parceira, Long cursoId, String tituloDoCurso, DecisaoDeRevisao decisao,
-                                String comentario) { }
+                                String comentario, UUID eventoId) {
+        public CursoRevisado(Usuario parceira, Long cursoId, String tituloDoCurso, DecisaoDeRevisao decisao,
+                             String comentario) {
+            this(parceira, cursoId, tituloDoCurso, decisao, comentario, UUID.randomUUID());
+        }
+    }
 }

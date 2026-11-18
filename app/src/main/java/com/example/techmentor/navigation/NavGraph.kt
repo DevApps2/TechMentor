@@ -38,6 +38,8 @@ import com.example.techmentor.ui.cursos.CursosScreen
 import com.example.techmentor.ui.mentora.AgendaCalendarioScreen
 import com.example.techmentor.ui.onboarding.OnboardingScreen
 import com.example.techmentor.ui.splash.SplashScreen
+import com.example.techmentor.ui.parceira.ParceiraHomeScreen
+import com.example.techmentor.ui.parceira.AceitarConviteScreen
 
 @Composable
 fun NavGraph() {
@@ -76,6 +78,10 @@ fun NavGraph() {
 
         composable("login") {
             LoginScreen(navController = navController)
+        }
+
+        composable("parceira/aceitar-convite") {
+            AceitarConviteScreen(navController = navController)
         }
 
         composable("register") {
@@ -193,6 +199,24 @@ fun NavGraph() {
 
         composable("mentora") {
             MentoraHomeScreen(navController = navController)
+        }
+
+        composable("parceira") {
+            ParceiraHomeScreen(navController = navController)
+        }
+
+        composable(
+            route = "parceira/curso/{cursoId}",
+            arguments = listOf(navArgument("cursoId") { type = NavType.LongType })
+        ) { entrada ->
+            ParceiraHomeScreen(
+                navController = navController,
+                cursoIdInicial = entrada.arguments?.getLong("cursoId")
+            )
+        }
+
+        composable("notificacoes") {
+            NotificacoesScreen(navController = navController)
         }
 
         composable("mentora/agenda") {

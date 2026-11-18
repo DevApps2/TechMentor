@@ -40,7 +40,7 @@ object Sessao {
     val token: String?
         get() = prefs?.getString(CHAVE_TOKEN, null)
 
-    /** ALUNA, MENTORA ou ADMIN. Sessões antigas, sem tipo guardado, contam como ALUNA. */
+    /** ALUNA, MENTORA, ADMIN ou PARCEIRA. Sessões antigas, sem tipo guardado, contam como ALUNA. */
     val tipo: String
         get() = prefs?.getString(CHAVE_TIPO, null) ?: "ALUNA"
 
@@ -77,6 +77,7 @@ object Sessao {
         precisaTrocarSenha -> ROTA_TROCA_DE_SENHA
         tipo == "ADMIN" -> "admin"
         tipo == "MENTORA" -> "mentora"
+        tipo == "PARCEIRA" -> "parceira"
         !onboardingVisto -> ROTA_ONBOARDING
         else -> "home"
     }

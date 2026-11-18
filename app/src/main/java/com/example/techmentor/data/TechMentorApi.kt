@@ -207,6 +207,37 @@ interface TechMentorApi {
     @POST("usuarios/senha/redefinir")
     suspend fun redefinirSenha(@Body body: RedefinirSenhaRequest)
 
+    // ---- Aceite público de convite de parceira ----
+
+    @GET("parceiras/termos")
+    suspend fun termosDeParceria(): TermosParceiraResponse
+
+    @POST("parceiras/convite/aceitar")
+    suspend fun aceitarConviteDeParceria(@Body body: AceitarConviteParceiraRequest): ParceiraPerfilResponse
+
+    // ---- Área da parceira ----
+
+    @GET("api/parceira/perfil")
+    suspend fun meuPerfilDeParceira(): ParceiraPerfilResponse
+
+    @GET("api/parceira/cursos")
+    suspend fun meusCursosDeParceira(@Query("situacao") situacao: String? = null): List<ParceiraCursoResponse>
+
+    @GET("api/parceira/cursos/{id}/metricas")
+    suspend fun metricasDoCursoDaParceira(@Path("id") cursoId: Long): MetricasParceiraCursoResponse
+
+    @POST("api/parceira/cursos")
+    suspend fun criarCursoDaParceira(@Body body: ParceiraCursoRequest): ParceiraCursoResponse
+
+    @POST("api/parceira/cursos/{id}/modulos")
+    suspend fun criarModuloDaParceira(@Path("id") cursoId: Long, @Body body: ParceiraModuloRequest): ModuloResponse
+
+    @POST("api/parceira/modulos/{id}/aulas")
+    suspend fun criarAulaDaParceira(@Path("id") moduloId: Long, @Body body: ParceiraAulaRequest): AulaResponse
+
+    @POST("api/parceira/cursos/{id}/revisao")
+    suspend fun enviarCursoParaRevisaoDaParceira(@Path("id") cursoId: Long): ParceiraCursoResponse
+
     // ---- Avaliações ----
 
     @GET("api/agendamentos/{id}")
