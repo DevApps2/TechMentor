@@ -274,5 +274,18 @@ fun LoginScreen(
                 navController.navigate("register")
             }
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Recebi um convite de parceria",
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button) { navController.navigate("parceira/aceitar-convite") }
+                .padding(vertical = 8.dp),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = AuthColors.PurpleDark
+        )
     }
 }

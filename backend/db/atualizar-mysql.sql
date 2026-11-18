@@ -1,4 +1,4 @@
--- =====================================================================
+-- ==============================================================
 -- Atualização de um banco MySQL que já existia antes das mudanças de API completa.
 --
 -- O Hibernate (ddl-auto=update) cria tabelas e colunas novas sozinho, mas NÃO altera
@@ -114,3 +114,24 @@ ALTER TABLE cursos   MODIFY situacao ENUM('RASCUNHO','EM_REVISAO','PUBLICADO','A
 --       ADD COLUMN curriculo_arquivo VARCHAR(100) NULL, ADD COLUMN curriculo_nome VARCHAR(120) NULL;
 -- Os PDFs ficam na pasta "curriculos" (app.pasta-curriculos), ao lado da API, e NÃO são públicos: só a administradora baixa.
 -- Inclua essa pasta no backup do servidor.
+
+-- Registro idempotente dos e-mails do módulo de parceria. O HTML/texto é guardado só para mensagens retentáveis;
+-- códigos de convite não são persistidos e devem ser reenviados pelo endpoint que gera um código novo.
+-- Necessário em produção quando ddl-auto=validate; em desenvolvimento o Hibernate cria a tabela.
+CREATE TABLE IF NOT EXISTS registros_envio_email (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    chave_evento VARCHAR(120) NOT NULL,
+    destinatario VARCHAR(254) NOT NULL,
+    assunto VARCHAR(200) NOT NULL,
+    situacao VARCHAR(16) NOT NULL,
+    tentativas INT NOT NULL DEFAULT 0,
+    criada_em DATETIME(6) NOT NULL,
+    atualizada_em DATETIME(6) NOT NULL,
+    proxima_tentativa_em DATETIME(6) NULL,
+    ultimo_erro VARCHAR(500) NULL,
+    texto_retentativa LONGTEXT NULL,
+    html_retentativa LONGTEXT NULL,
+    com_logo BIT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_email_evento UNIQUE (chave_evento),
+    INDEX ix_email_retentativa (situacao, proxima_tentativa_em)
+);

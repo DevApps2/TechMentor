@@ -283,7 +283,7 @@ public class ParceiraService {
 
         auditoria.registrar(usuario, AcaoAuditada.PARCERIA_ACEITOU_TERMOS, RegistroAuditoria.PARCEIRA, parceira.getId(),
                 "Termos versão " + TermosDeParceria.VERSAO + ".");
-        eventos.publishEvent(new ParceiraAceitouConvite(parceira.getId(), parceira.getNome()));
+        eventos.publishEvent(new ParceiraAceitouConvite(parceira.getId(), parceira.getNome(), usuario.getEmail(), java.util.UUID.randomUUID()));
         return resposta(parceira);
     }
 
