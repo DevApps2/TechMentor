@@ -135,3 +135,33 @@ CREATE TABLE IF NOT EXISTS registros_envio_email (
     CONSTRAINT uk_email_evento UNIQUE (chave_evento),
     INDEX ix_email_retentativa (situacao, proxima_tentativa_em)
 );
+
+-- Pedidos de parceria vindos do site "Seja nosso parceiro". Com ddl-auto=update (desenvolvimento) o Hibernate cria a tabela
+-- pedidos_parceria sozinho. O que ele NÃO faz é ampliar uma coluna ENUM que já existe: sem os dois comandos abaixo, gravar
+-- o histórico do pedido e o aviso no sininho da administradora falham em um MySQL que já rodou a versão anterior.
+-- Rode uma vez, com a API já iniciada pelo menos uma vez (VARCHAR aceita qualquer valor novo no futuro):
+ALTER TABLE auditoria MODIFY acao VARCHAR(40) NOT NULL;
+ALTER TABLE notificacoes MODIFY destino VARCHAR(30) NULL;
+
+-- Em produção, com o perfil "prod" (ddl-auto=validate), rode antes de subir a API:
+--   CREATE TABLE pedidos_parceria (
+--       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+--       nome VARCHAR(120) NOT NULL,
+--       tipo VARCHAR(20) NOT NULL,
+--       documento VARCHAR(14) NULL,
+--       site VARCHAR(200) NULL,
+--       responsavel VARCHAR(120) NOT NULL,
+--       email VARCHAR(160) NOT NULL,
+--       mensagem VARCHAR(1000) NULL,
+--       situacao VARCHAR(20) NOT NULL,
+--       criado_em DATETIME(6) NOT NULL,
+--       consentimento_em DATETIME(6) NOT NULL,
+--       politica_versao VARCHAR(20) NOT NULL,
+--       decidido_em DATETIME(6) NULL,
+--       decidido_por_id BIGINT NULL,
+--       motivo_da_recusa VARCHAR(500) NULL,
+--       parceira_id BIGINT NULL,
+--       CONSTRAINT fk_pedidos_decidido_por FOREIGN KEY (decidido_por_id) REFERENCES usuarios (id),
+--       CONSTRAINT fk_pedidos_parceira FOREIGN KEY (parceira_id) REFERENCES parceiras (id)
+--   );
+--   CREATE INDEX ix_pedidos_situacao ON pedidos_parceria (situacao, criado_em);

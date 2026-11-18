@@ -27,5 +27,7 @@ public enum DestinoNotificacao {
     /** Perfil da parceira (situação da conta) */
     PERFIL_DA_PARCEIRA,
     /** Parceira para a administradora verificar; referencia = id da parceira */
-    PARCEIRA_PARA_VERIFICAR
+    PARCEIRA_PARA_VERIFICAR,
+    /** Pedido de parceria vindo do site, para a administradora analisar; referencia = id do pedido */
+    PEDIDO_DE_PARCERIA
 }

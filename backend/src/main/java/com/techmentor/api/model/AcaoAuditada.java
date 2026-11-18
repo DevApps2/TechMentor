@@ -23,7 +23,10 @@ public enum AcaoAuditada {
     PARCERIA_ACEITOU_TERMOS("Convite aceito e termos de parceria aceitos"),
     PARCERIA_VERIFICADA("Parceira verificada"),
     PARCERIA_SUSPENSA("Parceira suspensa"),
-    PARCERIA_REATIVADA("Parceira reativada");
+    PARCERIA_REATIVADA("Parceira reativada"),
+    PEDIDO_RECEBIDO("Pedido de parceria recebido pelo site"),
+    PEDIDO_APROVADO("Pedido de parceria aprovado"),
+    PEDIDO_RECUSADO("Pedido de parceria recusado");
 
     private final String descricao;
 

@@ -117,4 +117,22 @@ public final class EventosDeNotificacao {
             this(parceira, cursoId, tituloDoCurso, decisao, comentario, UUID.randomUUID());
         }
     }
+
+    // ---- Pedidos de parceria vindos do site ----
+
+    // Uma instituição preencheu "Seja nosso parceiro". Sai e-mail de confirmação para ela e aviso para a equipe.
+    public record PedidoDeParceriaRecebido(Long pedidoId, String nomeDaInstituicao, String responsavel, String email,
+                                           String tipo, String site, String mensagem, UUID eventoId) {
+        public PedidoDeParceriaRecebido(Long pedidoId, String nomeDaInstituicao, String responsavel, String email,
+                                        String tipo, String site, String mensagem) {
+            this(pedidoId, nomeDaInstituicao, responsavel, email, tipo, site, mensagem, UUID.randomUUID());
+        }
+    }
+
+    // A administradora recusou o pedido: a instituição lê o motivo por e-mail. (A aprovação já gera o e-mail de convite.)
+    public record PedidoDeParceriaRecusado(String nomeDaInstituicao, String responsavel, String email, String motivo, UUID eventoId) {
+        public PedidoDeParceriaRecusado(String nomeDaInstituicao, String responsavel, String email, String motivo) {
+            this(nomeDaInstituicao, responsavel, email, motivo, UUID.randomUUID());
+        }
+    }
 }
