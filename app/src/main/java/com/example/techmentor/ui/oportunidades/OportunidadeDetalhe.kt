@@ -80,6 +80,7 @@ internal fun OportunidadeDetalhe(
     enviando: Boolean,
     erroEnvio: String?,
     confirmada: Boolean,
+    avisoEnvio: String? = null,
     onParticipar: () -> Unit,
     onVoltarAosDetalhes: () -> Unit,
     onVoltar: () -> Unit,
@@ -91,6 +92,7 @@ internal fun OportunidadeDetalhe(
         ConfirmacaoEnvio(
             navController = navController,
             oportunidade = oportunidade,
+            aviso = avisoEnvio,
             onVoltarAosDetalhes = onVoltarAosDetalhes,
             onVoltarAsOportunidades = onVoltarAsOportunidades
         )
@@ -279,6 +281,7 @@ private fun DetalheDaOportunidade(
 private fun ConfirmacaoEnvio(
     navController: NavController,
     oportunidade: OportunidadeResponse,
+    aviso: String?,
     onVoltarAosDetalhes: () -> Unit,
     onVoltarAsOportunidades: () -> Unit
 ) {
@@ -342,6 +345,19 @@ private fun ConfirmacaoEnvio(
                 textAlign = TextAlign.Center,
                 color = Color(0xFF797486)
             )
+
+            if (aviso != null) {
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = aviso,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFFB45309)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

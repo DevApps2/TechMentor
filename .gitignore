@@ -2,3 +2,5 @@
 build/
 local.properties
 backend/fotos/
+backend/curriculos/
+backend/rodar-local.ps1

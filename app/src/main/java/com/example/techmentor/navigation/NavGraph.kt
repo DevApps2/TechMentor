@@ -197,6 +197,10 @@ fun NavGraph() {
             )
         }
 
+        composable("notificacoes") {
+            NotificacoesScreen(navController = navController)
+        }
+
         composable("mentora") {
             MentoraHomeScreen(navController = navController)
         }

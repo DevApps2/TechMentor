@@ -24,6 +24,13 @@ import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.config.Customizer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -38,6 +45,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
@@ -57,7 +65,7 @@ public class SecurityConfig {
                         // 1. Públicas: quem ainda não tem token, fotos (o app carrega por URL), documentação e página de erro
                         .requestMatchers(HttpMethod.POST,
                                 "/usuarios", "/usuarios/login", "/usuarios/senha/esqueci", "/usuarios/senha/redefinir",
-                                "/parceiras/convite/aceitar"
+                                "/parceiras/convite/aceitar", "/parceiras/pedidos"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/fotos/**", "/parceiras/termos").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
@@ -109,6 +117,38 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    /**
+     * CORS: quais sites podem chamar a API pelo navegador. O app Android não é afetado (CORS só vale para navegador).
+     * Os endereços vêm da variável CORS_ORIGENS (separados por vírgula); sem ela, só o portal local de desenvolvimento.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.origens:http://localhost:5173}") String origens) {
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.stream(origens.split(","))
+                .map(SecurityConfig::soAOrigem)
+                .filter(o -> !o.isEmpty())
+                .toList());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "ngrok-skip-browser-warning"));
+        config.setExposedHeaders(List.of("Content-Disposition"));
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();
+        fonte.registerCorsConfiguration("/**", config);
+        return fonte;
+    }
+
+    /**
+     * O CORS compara só a origem (https://site.com), nunca o caminho. Se alguém colocar "https://site.com/pagina/" na lista,
+     * tira o que vem depois do domínio e a barra final, em vez de a API recusar o site sem explicar por quê.
+     */
+    static String soAOrigem(String endereco) {
+        String limpo = endereco.trim();
+        return limpo.replaceFirst("^(https?://[^/]+).*$", "$1");
     }
 
     /** O título do curso vai na URL e pode ter "/" (UX%2FUI). O Tomcat já aceita; o firewall do Spring Security também precisa aceitar. */

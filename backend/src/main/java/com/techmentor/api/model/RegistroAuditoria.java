@@ -18,6 +18,7 @@ public class RegistroAuditoria {
 
     public static final String CURSO = "CURSO";
     public static final String PARCEIRA = "PARCEIRA";
+    public static final String PEDIDO = "PEDIDO";
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 

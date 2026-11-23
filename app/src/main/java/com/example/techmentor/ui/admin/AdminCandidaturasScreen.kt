@@ -1,6 +1,8 @@
 package com.example.techmentor.ui.admin
 
 import com.example.techmentor.ui.avaliacao.diaMesEAno
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,16 +24,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +60,24 @@ fun AdminCandidaturasScreen(
 ) {
 
     val estado by viewModel.estado.collectAsState()
+    val contexto = LocalContext.current
+
+    // O PDF terminou de baixar: abre num leitor de PDF do aparelho, pelo FileProvider (o arquivo nunca sai do app)
+    LaunchedEffect(estado.curriculoParaAbrir) {
+        val arquivo = estado.curriculoParaAbrir ?: return@LaunchedEffect
+
+        val uri = FileProvider.getUriForFile(contexto, "${contexto.packageName}.fileprovider", arquivo)
+        val abrir = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/pdf")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        try {
+            contexto.startActivity(abrir)
+            viewModel.curriculoAberto()
+        } catch (e: ActivityNotFoundException) {
+            viewModel.curriculoAberto("Não há um leitor de PDF neste aparelho. Instale um (por exemplo, o Google Drive) para abrir o currículo.")
+        }
+    }
 
     EfeitoSessaoExpirada(expirada = estado.sessaoExpirada, navController = navController)
 
@@ -101,11 +125,24 @@ fun AdminCandidaturasScreen(
                         }
                     }
 
+                    val erroCurriculo = estado.erroCurriculo
+                    if (erroCurriculo != null) {
+                        item {
+                            Text(
+                                text = erroCurriculo,
+                                fontSize = 13.sp,
+                                color = AuthColors.Error
+                            )
+                        }
+                    }
+
                     items(candidaturas, key = { it.id }) { candidatura ->
                         CartaoDeCandidatura(
                             candidatura = candidatura,
                             alterando = estado.alterandoId == candidatura.id,
-                            onAlterar = { novo -> viewModel.alterarStatus(candidatura.id, novo) }
+                            baixandoCurriculo = estado.baixandoCurriculoId == candidatura.id,
+                            onAlterar = { novo -> viewModel.alterarStatus(candidatura.id, novo) },
+                            onAbrirCurriculo = { viewModel.baixarCurriculo(candidatura.id, contexto.cacheDir) }
                         )
                     }
                 }
@@ -140,7 +177,9 @@ fun AdminCandidaturasScreen(
 private fun CartaoDeCandidatura(
     candidatura: AdminCandidatura,
     alterando: Boolean,
-    onAlterar: (String) -> Unit
+    baixandoCurriculo: Boolean,
+    onAlterar: (String) -> Unit,
+    onAbrirCurriculo: () -> Unit
 ) {
 
     val forma = RoundedCornerShape(17.dp)
@@ -206,6 +245,12 @@ private fun CartaoDeCandidatura(
             color = Color(0xFF8A8691)
         )
 
+        DadosDoFormulario(
+            candidatura = candidatura,
+            baixandoCurriculo = baixandoCurriculo,
+            onAbrirCurriculo = onAbrirCurriculo
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -218,6 +263,83 @@ private fun CartaoDeCandidatura(
                     onClick = { onAlterar(status) }
                 )
             }
+        }
+    }
+}
+
+/** O que a candidata preencheu no formulário e o botão do currículo. Não aparece em eventos nem em candidaturas antigas. */
+@Composable
+private fun DadosDoFormulario(
+    candidatura: AdminCandidatura,
+    baixandoCurriculo: Boolean,
+    onAbrirCurriculo: () -> Unit
+) {
+
+    val linhas = listOfNotNull(
+        candidatura.contatoNome?.let { "Nome" to it },
+        candidatura.contatoEmail?.let { "E-mail" to it },
+        candidatura.telefone?.let { "Telefone" to it },
+        candidatura.cidade?.let { "Cidade" to it }
+    )
+    val link = candidatura.linkProfissional
+    val mensagem = candidatura.mensagem
+
+    if (linhas.isEmpty() && link == null && mensagem == null && !candidatura.temCurriculo) return
+
+    val uri = LocalUriHandler.current
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF8F6FC))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+
+        linhas.forEach { (rotulo, valor) ->
+            Text(
+                text = "$rotulo: $valor",
+                fontSize = 12.sp,
+                color = MentoriaCores.TextoEscuro
+            )
+        }
+
+        if (link != null) {
+            Text(
+                text = "Link: $link",
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable(role = Role.Button) {
+                        // só abre endereços web; qualquer outra coisa fica só como texto
+                        if (link.startsWith("http://", ignoreCase = true) || link.startsWith("https://", ignoreCase = true)) {
+                            runCatching { uri.openUri(link) }
+                        }
+                    },
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MentoriaCores.Roxo
+            )
+        }
+
+        if (mensagem != null) {
+            Text(
+                text = "“$mensagem”",
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = MentoriaCores.TextoMudo
+            )
+        }
+
+        if (candidatura.temCurriculo) {
+            AcaoChip(
+                texto = if (baixandoCurriculo) "Baixando..." else "Abrir currículo (PDF)",
+                cor = MentoriaCores.Roxo,
+                habilitado = !baixandoCurriculo,
+                onClick = onAbrirCurriculo
+            )
         }
     }
 }

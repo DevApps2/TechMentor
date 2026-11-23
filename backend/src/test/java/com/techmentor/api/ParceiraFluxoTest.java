@@ -429,7 +429,8 @@ class ParceiraFluxoTest {
         assertTrue(cursosDaParceira.listar(b, null).isEmpty());
 
         // curso do próprio TechMentor (sem parceira): também fora do alcance
-        Long doTechMentor = cursos.findAll().stream().filter(c -> c.getParceira() == null).findFirst().orElseThrow().getId();
+        // (o banco dos testes nasce vazio: cria um curso do próprio TechMentor, sem parceira)
+        Long doTechMentor = gestao.criar(dadosDoCurso("Curso " + sufixo(), "Curso em Vídeo")).id();
         assertThrows(NotFoundException.class, () -> cursosDaParceira.detalhar(a, doTechMentor));
         assertThrows(NotFoundException.class, () -> cursosDaParceira.atualizar(a, doTechMentor, dadosDoCurso("Roubado", null)));
     }

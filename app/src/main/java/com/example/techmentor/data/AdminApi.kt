@@ -1,5 +1,6 @@
 package com.example.techmentor.data
 
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -8,6 +9,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Streaming
 
 /**
  * Chamadas das telas de administração, separadas do TechMentorApi para não dar conflito de merge
@@ -61,6 +63,11 @@ interface AdminApi {
     suspend fun listarCandidaturas(
         @Path("id") oportunidadeId: Long
     ): List<AdminCandidatura>
+
+    // o currículo em PDF da candidata (404 se ela não anexou); vem em fluxo, para não carregar o arquivo todo na memória
+    @Streaming
+    @GET("api/admin/candidaturas/{id}/curriculo")
+    suspend fun baixarCurriculo(@Path("id") candidaturaId: Long): ResponseBody
 
     // muda a situação da candidatura; a candidata recebe uma notificação
     @PATCH("api/admin/candidaturas/{id}/status")

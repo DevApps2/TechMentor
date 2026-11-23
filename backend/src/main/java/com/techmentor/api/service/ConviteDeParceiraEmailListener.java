@@ -4,11 +4,14 @@ import com.techmentor.api.email.ModeloDeEmail;
 import com.techmentor.api.evento.EventosDeNotificacao.ParceiraConvidada;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 
 /** E-mail do convite para a parceira. Mesmas regras dos outros: depois de gravar, em outra thread, falha só vira log. */
@@ -20,6 +23,10 @@ public class ConviteDeParceiraEmailListener {
 
     private final EmailService emailService;
 
+    // Endereço do portal da parceira (sem barra no fim). Em produção: variável PORTAL_URL.
+    @Value("${app.portal.url:http://localhost:5173}")
+    private String portalUrl;
+
     public ConviteDeParceiraEmailListener(EmailService emailService) {
         this.emailService = emailService;
     }
@@ -28,15 +35,21 @@ public class ConviteDeParceiraEmailListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void aoConvidar(ParceiraConvidada evento) {
         try {
+            String link = portalUrl.replaceAll("/+$", "") + "/convite?email="
+                    + URLEncoder.encode(evento.email(), StandardCharsets.UTF_8)
+                    + "&codigo=" + URLEncoder.encode(evento.codigo(), StandardCharsets.UTF_8);
+
             ModeloDeEmail modelo = ModeloDeEmail.com("Convite de parceria")
                     .saudacao("Olá, " + evento.responsavel() + "!")
                     .paragrafo(evento.nomeDaInstituicao() + " foi convidada para cadastrar cursos no TechMentor. "
-                            + "Para criar a sua senha e aceitar os Termos de Parceria, use o código abaixo no aplicativo:")
+                            + "Para criar a sua senha e aceitar os Termos de Parceria, use o botão abaixo. "
+                            + "Se preferir o aplicativo, use o código de convite.")
+                    .botao("Criar minha senha", link)
                     .destaque("Seu código de convite", evento.codigo())
                     .paragrafo("O código vale até " + evento.expiraEm().format(PRAZO) + " e só pode ser usado uma vez. "
                             + "Depois do cadastro, a nossa equipe confere os dados da instituição e libera a criação de cursos.")
                     .nota("Se você não esperava este convite, ignore este e-mail. "
-                            + "Nunca compartilhe este código com ninguém.");
+                            + "Nunca compartilhe este código nem este link com ninguém.");
 
             emailService.enviarRastreado("parceira-convite:" + evento.eventoId(), evento.email(),
                     "Convite de parceria - TechMentor", modelo, false);

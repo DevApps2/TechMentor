@@ -553,6 +553,12 @@ data class ProgressoAulaResponse(
     val concluidaEm: String?
 )
 
-
-
-
+// Corpo do POST /api/oportunidades/{id}/candidaturas (vagas e bolsas). cidade, link e mensagem vão nulos quando vazios.
+data class CandidaturaRequest(
+    val nome: String,
+    val email: String,
+    val telefone: String,
+    val cidade: String?,
+    val linkProfissional: String?,
+    val mensagem: String?
+)

@@ -30,7 +30,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -175,6 +175,10 @@ fun ParceiraHomeScreen(
                         aba = aba,
                         aoTrocarAba = { aba = it },
                         aoAbrirNotificacoes = { navController.navigate("notificacoes") },
+                        aoSair = {
+                            Sessao.sair()
+                            navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                        },
                         aoAbrirCurso = { cursoSelecionado = it },
                         aoCriarCurso = { mostrarCriacao = true },
                         aoTentarNovamente = { viewModel.carregar(manual = true) }
@@ -201,7 +205,8 @@ private fun ConteudoParceira(
     aoAbrirNotificacoes: () -> Unit,
     aoAbrirCurso: (ParceiraCursoResponse) -> Unit,
     aoCriarCurso: () -> Unit,
-    aoTentarNovamente: () -> Unit
+    aoTentarNovamente: () -> Unit,
+    aoSair: () -> Unit
 ) {
     val perfil = estado.perfil ?: return
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -227,10 +232,7 @@ private fun ConteudoParceira(
                 cursos = estado.cursos,
                 metricas = estado.metricas
             )
-            AbaParceira.CONFIGURACOES -> ConfiguracoesParceira(perfil) {
-                Sessao.sair()
-                navController.navigate("login") { popUpTo(0) { inclusive = true } }
-            }
+            AbaParceira.CONFIGURACOES -> ConfiguracoesParceira(perfil, aoSair = aoSair)
         }
     }
 }

@@ -3,11 +3,13 @@ package com.example.techmentor.ui.oportunidades
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.techmentor.data.ApiClient
+import com.example.techmentor.data.CandidaturaRequest
 import com.example.techmentor.data.ERRO_CONEXAO
 import com.example.techmentor.data.ErroResponse
 import com.example.techmentor.data.OportunidadeResponse
 import com.example.techmentor.data.Sessao
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -17,6 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -48,6 +54,8 @@ data class OportunidadesUiState(
     val erroEnvio: String? = null,
     // preenchido quando o envio deu certo: a tela mostra a confirmação
     val confirmadaId: Long? = null,
+    // recado na tela de confirmação (ex.: a candidatura foi enviada, mas o PDF não subiu)
+    val avisoEnvio: String? = null,
     // true quando o usuário da sessão não existe mais (ex.: o banco foi reiniciado)
     val sessaoExpirada: Boolean = false
 )
@@ -155,7 +163,16 @@ class OportunidadesViewModel : ViewModel() {
     }
 
     /** Candidatura (vagas e bolsas) ou inscrição (eventos) na oportunidade escolhida. */
-    fun participar(oportunidade: OportunidadeResponse) {
+    /**
+     * Candidata-se (vaga ou bolsa) ou inscreve-se (evento). [dados] é o formulário e [curriculo] lê o PDF escolhido
+     * (roda fora da tela principal). Se o PDF não subir, a candidatura continua valendo e a confirmação avisa.
+     */
+    fun participar(
+        oportunidade: OportunidadeResponse,
+        dados: CandidaturaRequest? = null,
+        curriculoNome: String? = null,
+        curriculo: (suspend () -> ByteArray?)? = null
+    ) {
         val atual = _estado.value
         if (atual.enviandoId != null || atual.participacoes.containsKey(oportunidade.id)) return
 
@@ -172,17 +189,20 @@ class OportunidadesViewModel : ViewModel() {
 
             try {
                 val api = ApiClient.api
-                val criada = if (evento) {
-                    api.inscreverEmEvento(oportunidade.id)
-                } else {
-                    api.candidatar(oportunidade.id)
+                val criada = when {
+                    evento -> api.inscreverEmEvento(oportunidade.id)
+                    dados != null -> api.candidatarComDados(oportunidade.id, dados)
+                    else -> api.candidatar(oportunidade.id)
                 }
+
+                val aviso = if (!evento && curriculo != null) enviarCurriculo(criada.id, curriculoNome, curriculo) else null
 
                 _estado.update {
                     it.copy(
                         enviandoId = null,
                         participacoes = it.participacoes + (oportunidade.id to criada.status),
-                        confirmadaId = oportunidade.id
+                        confirmadaId = oportunidade.id,
+                        avisoEnvio = aviso
                     )
                 }
             } catch (e: HttpException) {
@@ -213,9 +233,33 @@ class OportunidadesViewModel : ViewModel() {
         }
     }
 
+    /** Sobe o PDF da candidatura que acabou de ser criada. Devolve o recado para a confirmação, ou null se deu certo. */
+    private suspend fun enviarCurriculo(candidaturaId: Long, nome: String?, ler: suspend () -> ByteArray?): String? {
+
+        val falha = "Sua candidatura foi enviada, mas não conseguimos anexar o currículo. " +
+                "Você pode mandá-lo por outro meio, se a oportunidade pedir."
+
+        return try {
+            val bytes = withContext(Dispatchers.IO) { runCatching { ler() }.getOrNull() } ?: return falha
+
+            val parte = MultipartBody.Part.createFormData(
+                "curriculo",
+                nome?.takeIf { it.isNotBlank() } ?: "curriculo.pdf",
+                bytes.toRequestBody("application/pdf".toMediaType())
+            )
+            ApiClient.api.anexarCurriculo(candidaturaId, parte)
+            null
+
+        } catch (e: HttpException) {
+            mensagemDaApi(e)?.let { "Sua candidatura foi enviada, mas o currículo não foi anexado: $it" } ?: falha
+        } catch (e: IOException) {
+            falha
+        }
+    }
+
     /** Fecha a tela de confirmação (volta aos detalhes ou à lista). */
     fun fecharConfirmacao() {
-        _estado.update { it.copy(confirmadaId = null) }
+        _estado.update { it.copy(confirmadaId = null, avisoEnvio = null) }
     }
 
     fun limparErroEnvio() {
