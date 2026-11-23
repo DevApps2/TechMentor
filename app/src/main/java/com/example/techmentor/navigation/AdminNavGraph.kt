@@ -15,6 +15,7 @@ import com.example.techmentor.ui.admin.AdminOportunidadesScreen
 import com.example.techmentor.ui.admin.AdminPainelScreen
 import com.example.techmentor.ui.admin.AdminPerfilScreen
 import com.example.techmentor.ui.admin.AdminParceirasScreen
+import com.example.techmentor.ui.admin.AdminRevisaoCursosScreen
 
 /**
  * Telas da administradora. Ficam em um arquivo próprio para não dar conflito no NavGraph:
@@ -28,6 +29,16 @@ fun NavGraphBuilder.adminNavGraph(navController: NavController) {
 
     composable("admin/parceiras") {
         AdminParceirasScreen(navController = navController)
+    }
+
+    composable(
+        route = "admin/cursos-revisao?cursoId={cursoId}",
+        arguments = listOf(navArgument("cursoId") { type = NavType.LongType; defaultValue = 0L })
+    ) { entrada ->
+        AdminRevisaoCursosScreen(
+            navController = navController,
+            cursoId = entrada.arguments?.getLong("cursoId")?.takeIf { it > 0L }
+        )
     }
 
     // ---- Denúncias ----

@@ -1,6 +1,7 @@
 package com.example.techmentor.ui.admin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,13 +17,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -109,9 +114,13 @@ fun AdminParceirasScreen(
             title = { Text("Enviar um novo convite?") },
             text = { Text("O código anterior de ${item.nome} deixará de funcionar. Um novo código será enviado para ${item.email}.") },
             confirmButton = {
-                TextButton(enabled = !estado.enviando, onClick = { viewModel.reenviarConvite(item.id); reenviar = null }) { Text("Reenviar convite") }
+                TextButton(enabled = !estado.enviando, onClick = { viewModel.reenviarConvite(item.id); reenviar = null }) { Text("Reenviar convite", color = AuthColors.Purple) }
             },
-            dismissButton = { TextButton(onClick = { reenviar = null }) { Text("Cancelar") } }
+            dismissButton = { TextButton(onClick = { reenviar = null }) { Text("Cancelar", color = AuthColors.Purple) } },
+            containerColor = Color.White,
+            titleContentColor = AdminTinta,
+            textContentColor = AdminTinta,
+            tonalElevation = 0.dp
         )
     }
 
@@ -154,7 +163,14 @@ fun AdminParceirasScreen(
                                 FilterChip(
                                     selected = estado.filtro == filtro,
                                     onClick = { viewModel.carregar(filtro) },
-                                    label = { Text(rotulo, fontSize = 11.sp) }
+                                    label = { Text(rotulo, fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = Color.White,
+                                        labelColor = AdminTinta,
+                                        selectedContainerColor = AuthColors.Purple,
+                                        selectedLabelColor = Color.White
+                                    ),
+                                    border = BorderStroke(1.dp, if (estado.filtro == filtro) AuthColors.Purple else Color(0xFFE1DDE7))
                                 )
                             }
                         }
@@ -223,19 +239,24 @@ private fun DialogoConvidarParceira(
         title = { Text("Convidar parceira", color = AdminTinta, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(nome, { nome = it.take(120) }, label = { Text("Nome da instituição") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(nome, { nome = it.take(120) }, label = { Text("Nome da instituição") }, singleLine = true, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
                 Box {
-                    OutlinedButton(onClick = { menuTipo = true }, modifier = Modifier.fillMaxWidth()) { Text("Tipo: ${tipoParceiraLegivel(tipo)}") }
-                    DropdownMenu(expanded = menuTipo, onDismissRequest = { menuTipo = false }) {
+                    OutlinedButton(
+                        onClick = { menuTipo = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AuthColors.Purple),
+                        border = BorderStroke(1.dp, Color(0xFFB8B2BD))
+                    ) { Text("Tipo: ${tipoParceiraLegivel(tipo)}") }
+                    DropdownMenu(expanded = menuTipo, onDismissRequest = { menuTipo = false }, containerColor = Color.White) {
                         listOf("EMPRESA", "ONG", "INDEPENDENTE").forEach { valor ->
-                            DropdownMenuItem(text = { Text(tipoParceiraLegivel(valor)) }, onClick = { tipo = valor; menuTipo = false })
+                            DropdownMenuItem(text = { Text(tipoParceiraLegivel(valor), color = AdminTinta) }, onClick = { tipo = valor; menuTipo = false })
                         }
                     }
                 }
-                if (tipo == "EMPRESA") OutlinedTextField(documento, { documento = it.take(18) }, label = { Text("CNPJ") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(site, { site = it.take(200) }, label = { Text("Site (opcional)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(responsavel, { responsavel = it.take(120) }, label = { Text("Nome de quem responde") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(email, { email = it.take(160) }, label = { Text("E-mail que receberá o convite") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                if (tipo == "EMPRESA") OutlinedTextField(documento, { documento = it.take(18) }, label = { Text("CNPJ") }, singleLine = true, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(site, { site = it.take(200) }, label = { Text("Site (opcional)") }, singleLine = true, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(responsavel, { responsavel = it.take(120) }, label = { Text("Nome de quem responde") }, singleLine = true, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(email, { email = it.take(160) }, label = { Text("E-mail que receberá o convite") }, singleLine = true, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
                 Text("A pessoa responsável criará a própria senha pelo link de convite. O código expira em 7 dias.", color = AdminCinza, fontSize = 11.sp)
                 (erroLocal ?: erro)?.let { Text(it, color = Color(0xFFB42336), fontSize = 12.sp) }
             }
@@ -252,9 +273,13 @@ private fun DialogoConvidarParceira(
                     else -> null
                 }
                 if (erroLocal == null) aoConvidar(AdminConviteParceiraRequest(nome.trim(), tipo, documento.trim().ifBlank { null }, site.trim().ifBlank { null }, responsavel.trim(), emailLimpo))
-            }) { Text(if (enviando) "Enviando…" else "Enviar convite") }
+            }) { Text(if (enviando) "Enviando…" else "Enviar convite", color = AuthColors.Purple) }
         },
-        dismissButton = { TextButton(enabled = !enviando, onClick = aoFechar) { Text("Cancelar") } }
+        dismissButton = { TextButton(enabled = !enviando, onClick = aoFechar) { Text("Cancelar", color = AuthColors.Purple) } },
+        containerColor = Color.White,
+        titleContentColor = AdminTinta,
+        textContentColor = AdminTinta,
+        tonalElevation = 0.dp
     )
 }
 
@@ -299,20 +324,31 @@ private fun DialogoDetalheParceira(
                 })
 
                 if (parceira.situacao == "CONVIDADA" && !parceira.aceitouOsTermos) {
-                    OutlinedButton(onClick = aoReenviar, enabled = !enviando, modifier = Modifier.fillMaxWidth()) { Text("Reenviar convite") }
+                    OutlinedButton(
+                        onClick = aoReenviar,
+                        enabled = !enviando,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AuthColors.Purple),
+                        border = BorderStroke(1.dp, Color(0xFFB8B2BD))
+                    ) { Text("Reenviar convite") }
                 }
                 if (parceira.situacao == "CONVIDADA" && parceira.aceitouOsTermos) {
                     Text("Conferência da instituição", color = AdminTinta, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     ItemChecklist("Site conferido", siteConferido) { siteConferido = it }
                     ItemChecklist("Domínio do e-mail conferido", dominioConferido) { dominioConferido = it }
                     ItemChecklist("Identificação conferida", identificacaoConferida) { identificacaoConferida = it }
-                    OutlinedTextField(observacao, { observacao = it.take(500) }, label = { Text("Observação (opcional)") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(observacao, { observacao = it.take(500) }, label = { Text("Observação (opcional)") }, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
                     TextButton(enabled = !enviando && podeAtivar, onClick = {
                         aoVerificar(AdminVerificacaoParceiraRequest(true, true, true, observacao.trim().ifBlank { null }))
-                    }) { Text(if (enviando) "Ativando…" else "Concluir verificação e ativar") }
+                    }) {
+                        Text(
+                            if (enviando) "Ativando…" else "Concluir verificação e ativar",
+                            color = if (podeAtivar && !enviando) AuthColors.Purple else AdminCinza
+                        )
+                    }
                 }
                 if (parceira.situacao == "ATIVA") TextButton(enabled = !enviando, onClick = aoSuspender) { Text("Suspender parceria", color = Color(0xFFB42336)) }
-                if (parceira.situacao == "SUSPENSA") TextButton(enabled = !enviando, onClick = aoReativar) { Text("Reativar parceria") }
+                if (parceira.situacao == "SUSPENSA") TextButton(enabled = !enviando, onClick = aoReativar) { Text("Reativar parceria", color = AuthColors.Purple) }
 
                 Text("Histórico", color = AdminTinta, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 when {
@@ -329,14 +365,26 @@ private fun DialogoDetalheParceira(
                 erro?.let { Text(it, color = Color(0xFFB42336), fontSize = 11.sp) }
             }
         },
-        confirmButton = { TextButton(onClick = aoFechar) { Text("Fechar") } }
+        confirmButton = { TextButton(onClick = aoFechar) { Text("Fechar", color = AuthColors.Purple) } },
+        containerColor = Color.White,
+        titleContentColor = AdminTinta,
+        textContentColor = AdminTinta,
+        tonalElevation = 0.dp
     )
 }
 
 @Composable
 private fun ItemChecklist(rotulo: String, marcado: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(checked = marcado, onCheckedChange = onChange)
+        Checkbox(
+            checked = marcado,
+            onCheckedChange = onChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = AuthColors.Purple,
+                uncheckedColor = AdminCinza,
+                checkmarkColor = Color.White
+            )
+        )
         Text(rotulo, color = AdminTinta, fontSize = 12.sp)
     }
 }
@@ -364,14 +412,35 @@ private fun DialogoSuspenderParceira(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("A parceira poderá consultar os dados, mas não editar cursos. O conteúdo publicado continua no ar.", color = AdminCinza, fontSize = 12.sp)
-                OutlinedTextField(motivo, { motivo = it.take(500) }, label = { Text("Motivo para a parceira") }, minLines = 3, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(motivo, { motivo = it.take(500) }, label = { Text("Motivo para a parceira") }, minLines = 3, colors = coresCampoParceira(), modifier = Modifier.fillMaxWidth())
                 erro?.let { Text(it, color = Color(0xFFB42336), fontSize = 11.sp) }
             }
         },
         confirmButton = { TextButton(enabled = !enviando && motivo.isNotBlank(), onClick = { aoSuspender(motivo.trim()) }) { Text(if (enviando) "Salvando…" else "Suspender", color = Color(0xFFB42336)) } },
-        dismissButton = { TextButton(enabled = !enviando, onClick = aoFechar) { Text("Cancelar") } }
+        dismissButton = { TextButton(enabled = !enviando, onClick = aoFechar) { Text("Cancelar", color = AuthColors.Purple) } },
+        containerColor = Color.White,
+        titleContentColor = AdminTinta,
+        textContentColor = AdminTinta,
+        tonalElevation = 0.dp
     )
 }
+
+@Composable
+private fun coresCampoParceira() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = AdminTinta,
+    unfocusedTextColor = AdminTinta,
+    disabledTextColor = AdminCinza,
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    disabledContainerColor = Color(0xFFF5F3F7),
+    cursorColor = AuthColors.Purple,
+    focusedBorderColor = AuthColors.Purple,
+    unfocusedBorderColor = Color(0xFFB8B2BD),
+    disabledBorderColor = Color(0xFFE9E7EE),
+    focusedLabelColor = AuthColors.Purple,
+    unfocusedLabelColor = AdminCinza,
+    disabledLabelColor = AdminCinza
+)
 
 @Composable
 private fun AdminParceirasCarregando() {

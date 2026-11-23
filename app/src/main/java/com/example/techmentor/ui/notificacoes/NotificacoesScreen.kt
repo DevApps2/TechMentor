@@ -277,6 +277,11 @@ private fun CartaoDeNotificacao(
  */
 private fun abrirDestino(navController: NavController, viewModel: NotificacoesViewModel, n: NotificacaoResponse) {
     when (n.destino) {
+        "REVISAO_DE_CURSO" -> {
+            val id = n.referencia?.toLongOrNull()
+            navController.navigate(if (id != null) "admin/cursos-revisao?cursoId=$id" else "admin/cursos-revisao")
+        }
+        "PARCEIRA_PARA_VERIFICAR" -> navController.navigate("admin/parceiras")
         "CURSO_DA_PARCEIRA" -> {
             val id = n.referencia?.toLongOrNull()
             navController.navigate(if (id != null) "parceira/curso/$id" else "parceira")
@@ -311,7 +316,8 @@ private fun iconeDaNotificacao(tipo: String?, titulo: String): Icone {
         "MENTORIA" -> return Icone.USUARIOS
         "AVALIACAO", "CONQUISTA", "NIVEL", "DESAFIO" -> return Icone.TROFEU
         "DENUNCIA" -> return Icone.ESCUDO
-        "CURSO" -> return Icone.LIVRO
+        "CURSO", "REVISAO" -> return Icone.LIVRO
+        "PARCERIA" -> return Icone.PREDIO
     }
     val t = titulo.lowercase(LocaleBr)
     return when {

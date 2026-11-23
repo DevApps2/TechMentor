@@ -141,4 +141,32 @@ interface AdminApi {
 
     @GET("api/admin/parceiras/{id}/historico")
     suspend fun historicoDaParceira(@Path("id") id: Long): List<AdminHistoricoParceiraResponse>
+
+    // ---- Revisão de cursos ----
+
+    @GET("api/admin/cursos")
+    suspend fun listarCursosAdmin(
+        @retrofit2.http.Query("situacao") situacao: String? = null
+    ): List<AdminCursoResponse>
+
+    @GET("api/admin/cursos/{id}")
+    suspend fun obterCursoAdmin(@Path("id") id: Long): AdminCursoResponse
+
+    @PATCH("api/admin/cursos/{id}/situacao")
+    suspend fun alterarSituacaoCurso(
+        @Path("id") id: Long,
+        @Body body: AdminCursoSituacaoRequest
+    ): AdminCursoResponse
+
+    @POST("api/admin/cursos/{id}/devolucao")
+    suspend fun devolverCursoParaAjustes(
+        @Path("id") id: Long,
+        @Body body: AdminCursoComentarioRequest
+    ): AdminCursoResponse
+
+    @POST("api/admin/cursos/{id}/recusa")
+    suspend fun recusarCurso(
+        @Path("id") id: Long,
+        @Body body: AdminCursoComentarioRequest
+    ): AdminCursoResponse
 }
