@@ -219,6 +219,15 @@ private fun PainelConteudo(
             Spacer(modifier = Modifier.height(10.dp))
 
             CartaoDeAtalho(
+                icone = Icone.LIVRO,
+                titulo = "Revisar cursos",
+                descricao = "Analise, aprove, devolva ou recuse cursos enviados pelas parceiras",
+                onClick = { navController.navigate("admin/cursos-revisao") }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            CartaoDeAtalho(
                 icone = Icone.MALETA,
                 titulo = "Nova oportunidade",
                 descricao = "Estágio, emprego, bolsa ou evento",

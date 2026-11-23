@@ -476,6 +476,28 @@ data class AdminHistoricoParceiraResponse(
     val detalhe: String?
 )
 
+data class AdminCursoResponse(
+    val id: Long,
+    val titulo: String,
+    val descricao: String?,
+    val categoria: String,
+    val nivel: String?,
+    val iconeUrl: String?,
+    val ativo: Boolean,
+    val instituicao: String?,
+    val situacao: String,
+    val totalAulas: Long,
+    val duracaoTotalMinutos: Int,
+    val xpTotal: Int,
+    val modulos: List<ModuloResponse> = emptyList(),
+    val parceiraId: Long? = null,
+    val comentarioRevisao: String? = null
+)
+
+data class AdminCursoSituacaoRequest(val situacao: String)
+
+data class AdminCursoComentarioRequest(val comentario: String)
+
 data class CursoResponse(
     val id: Long,
     val titulo: String,
