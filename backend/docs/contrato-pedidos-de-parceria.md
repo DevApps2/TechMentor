@@ -61,6 +61,7 @@ SITE: pedido  →  fila da admin (PENDENTE)  →  aprovar  →  e-mail de convit
 | Detalhar | `GET /api/admin/pedidos-parceria/{id}` | `Pedido` |
 | Aprovar | `POST /api/admin/pedidos-parceria/{id}/aprovacao` | `Pedido` (APROVADO, com `parceiraId`) |
 | Recusar | `POST /api/admin/pedidos-parceria/{id}/recusa` com `{ "motivo": "..." }` | `Pedido` (RECUSADO) |
+| Apagar os dados (LGPD) | `DELETE /api/admin/pedidos-parceria/{id}` | `204` sem corpo |
 
 **Pedido**
 ```json
@@ -80,12 +81,13 @@ SITE: pedido  →  fila da admin (PENDENTE)  →  aprovar  →  e-mail de convit
 - **Aprovar** faz o mesmo que "Convidar" em *Gerenciar parceiras*: cria a conta (inativa) e envia o e-mail com o código e o botão "Criar minha senha". Se o e-mail, o nome ou o CNPJ já existem, responde `409` com a mensagem e o pedido **continua pendente**. Depois de aprovar, a parceira aparece em *Gerenciar parceiras* como `CONVIDADA`, onde segue o fluxo de verificação de sempre.
 - **Recusar** exige o motivo (até 500 caracteres) e o envia por e-mail à instituição.
 - Pedido já respondido: `409` "Este pedido já foi respondido."
+- **Apagar** funciona para pedido `PENDENTE` ou `RECUSADO` (pedido de teste, spam ou de quem pediu para ser esquecida). Pedido `APROVADO` responde `409`: os dados já fazem parte da conta da parceira. O histórico de auditoria guarda só o número do pedido, sem dado pessoal.
 
 ## 3. Aviso no sininho da administradora
 Cada pedido novo gera uma notificação para **todas as administradoras** com:
 - `tipo`: `PARCERIA`
 - `destino`: `PEDIDO_DE_PARCERIA`
-- `referencia`: o **id do pedido** (leva à tela do pedido)
+- `referencia`: o **id do pedido** (o app abre *Gerenciar parceiras*, onde o pedido aparece como Pendente)
 
-## 4. O que a tela da administradora no app precisa
-Uma lista "Pedidos de parceria" (com contador de pendentes), o detalhe do pedido (mostrando a mensagem, o site, o CNPJ e a pista do domínio) e os botões **Aprovar** e **Recusar** (este com o campo do motivo).
+## 4. A tela da administradora no app
+Não há tela separada: os pedidos pendentes aparecem no topo de **Gerenciar parceiras** (filtro "Todas" e o filtro "Pedidos do site"), com o selo "Pendente". Ao abrir um pedido, a administradora vê os dados (mensagem, site, CNPJ e a pista do domínio) e usa **Aprovar**, **Recusar** (com o motivo) e **Apagar os dados**. Aprovado, o pedido sai da lista e a instituição entra como `CONVIDADA`. O sininho (destino `PEDIDO_DE_PARCERIA`) abre essa mesma tela.

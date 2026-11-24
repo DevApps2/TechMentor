@@ -243,6 +243,47 @@ class PedidoParceriaTest {
                 .anyMatch(r -> r.acao() == AcaoAuditada.PEDIDO_RECUSADO));
     }
 
+    // ---------------------------------------------------------------- apagar (LGPD)
+
+    @Test
+    void apagarRemoveOsDadosDoPedidoEODeixaSoONumeroNoHistorico() {
+        Usuario admin = criar(Usuario.Tipo.ADMIN);
+        PedidoResponse fila = pendenteDeUmPedidoNovo(admin);
+
+        pedidos.apagar(admin, fila.id());
+
+        assertThrows(NotFoundException.class, () -> pedidos.detalhar(admin, fila.id()));
+        assertTrue(pedidos.listar(admin, null).stream().noneMatch(p -> p.id().equals(fila.id())));
+        var historico = auditoria.historico(RegistroAuditoria.PEDIDO, fila.id());
+        assertTrue(historico.stream().anyMatch(r -> r.acao() == AcaoAuditada.PEDIDO_APAGADO));
+        assertTrue(historico.stream().noneMatch(r -> String.valueOf(r.detalhe()).contains(fila.email())),
+                "o histórico não guarda dado pessoal");
+    }
+
+    @Test
+    void pedidoRecusadoTambemSeApagaMasOAprovadoNao() {
+        Usuario admin = criar(Usuario.Tipo.ADMIN);
+        PedidoResponse recusado = pendenteDeUmPedidoNovo(admin);
+        pedidos.recusar(admin, recusado.id(), "Fora do perfil.");
+        pedidos.apagar(admin, recusado.id());
+        assertThrows(NotFoundException.class, () -> pedidos.detalhar(admin, recusado.id()));
+
+        PedidoResponse aprovado = pendenteDeUmPedidoNovo(admin);
+        pedidos.aprovar(admin, aprovado.id());
+        assertThrows(ConflictException.class, () -> pedidos.apagar(admin, aprovado.id()));
+        assertEquals(SituacaoPedido.APROVADO, pedidos.detalhar(admin, aprovado.id()).situacao());
+    }
+
+    @Test
+    void soAAdministradoraApagaEPedidoQueNaoExisteDa404() {
+        Usuario admin = criar(Usuario.Tipo.ADMIN);
+        PedidoResponse fila = pendenteDeUmPedidoNovo(admin);
+        Usuario mentora = criar(Usuario.Tipo.MENTORA);
+
+        assertThrows(ForbiddenException.class, () -> pedidos.apagar(mentora, fila.id()));
+        assertThrows(NotFoundException.class, () -> pedidos.apagar(admin, 999_999L));
+    }
+
     // ---------------------------------------------------------------- quem pode
 
     @Test

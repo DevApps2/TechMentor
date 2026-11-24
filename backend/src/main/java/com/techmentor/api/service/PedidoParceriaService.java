@@ -150,6 +150,25 @@ public class PedidoParceriaService {
         return resposta(pedido);
     }
 
+    /**
+     * Apaga os dados de um pedido (quem pediu quer ser esquecida, ou é um pedido de teste ou de spam). Só pedido pendente
+     * ou recusado: o aprovado já virou uma conta de parceira, e os dados passam a fazer parte dela.
+     * O histórico guarda só o número do pedido, sem nenhum dado pessoal.
+     */
+    @Transactional
+    public void apagar(Usuario ator, Long id) {
+        RegraAcesso.exigirAdmin(ator);
+        PedidoParceria pedido = pedido(id);
+
+        if (pedido.getSituacao() == SituacaoPedido.APROVADO) {
+            throw new ConflictException("Este pedido já virou uma conta de parceira, e os dados passaram a fazer parte dela. "
+                    + "Para tirar a instituição do sistema, fale com a equipe técnica.");
+        }
+
+        pedidos.delete(pedido);
+        auditoria.registrar(ator, AcaoAuditada.PEDIDO_APAGADO, RegistroAuditoria.PEDIDO, id, "Pedido #" + id + " apagado.");
+    }
+
     // ------------------------------------------------------------------ apoio
 
     private PedidoParceria pedido(Long id) {

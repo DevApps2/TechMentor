@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,5 +54,13 @@ public class PedidoParceriaAdminController {
     @PostMapping("/{id}/recusa")
     public PedidoResponse recusar(@PathVariable Long id, @Valid @RequestBody RecusaPedidoRequest request) {
         return pedidos.recusar(usuarios.buscarAtual(), id, request.motivo());
+    }
+
+    @Operation(summary = "Apagar um pedido",
+            description = "Apaga os dados do pedido (pedido de quem quer ser esquecida, de teste ou de spam). Só pedido pendente ou recusado: o aprovado já virou conta de parceira (409).")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> apagar(@PathVariable Long id) {
+        pedidos.apagar(usuarios.buscarAtual(), id);
+        return ResponseEntity.noContent().build();
     }
 }

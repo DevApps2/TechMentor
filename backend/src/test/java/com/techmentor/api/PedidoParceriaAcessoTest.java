@@ -138,12 +138,29 @@ class PedidoParceriaAcessoTest {
             espera(403, "GET", lista + "/1", null, intruso);
             espera(403, "POST", lista + "/1/aprovacao", null, intruso);
             espera(403, "POST", lista + "/1/recusa", "{\"motivo\":\"Não.\"}", intruso);
+            espera(403, "DELETE", lista + "/1", null, intruso);
         }
         espera(401, "POST", lista + "/1/aprovacao", null, null);
+        espera(401, "DELETE", lista + "/1", null, null);
 
         // a administradora chega até a regra de negócio
         espera(404, "GET", lista + "/999999", null, admin);
         espera(400, "POST", lista + "/999999/recusa", "{}", admin);
+        espera(404, "DELETE", lista + "/999999", null, admin);
+    }
+
+    @Test
+    void aAdministradoraApagaOPedidoPeloSiteEElePassaADarNaoEncontrado() throws Exception {
+        String email = "apagar" + UUID.randomUUID().toString().substring(0, 8) + "@instituto.org";
+        espera(201, "POST", "/parceiras/pedidos", pedidoJson(email), null);
+        Resp fila = chamar("GET", "/api/admin/pedidos-parceria?situacao=PENDENTE", null, admin);
+        String corpo = fila.corpo();
+        int posicaoDoEmail = corpo.indexOf(email);
+        int posicaoDoId = corpo.lastIndexOf("\"id\":", posicaoDoEmail) + 5;
+        String id = corpo.substring(posicaoDoId, corpo.indexOf(',', posicaoDoId));
+
+        espera(204, "DELETE", "/api/admin/pedidos-parceria/" + id, null, admin);
+        espera(404, "GET", "/api/admin/pedidos-parceria/" + id, null, admin);
     }
 
     @Test

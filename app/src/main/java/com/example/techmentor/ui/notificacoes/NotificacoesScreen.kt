@@ -281,7 +281,7 @@ private fun abrirDestino(navController: NavController, viewModel: NotificacoesVi
             val id = n.referencia?.toLongOrNull()
             navController.navigate(if (id != null) "admin/cursos-revisao?cursoId=$id" else "admin/cursos-revisao")
         }
-        "PARCEIRA_PARA_VERIFICAR" -> navController.navigate("admin/parceiras")
+        "PARCEIRA_PARA_VERIFICAR", "PEDIDO_DE_PARCERIA" -> navController.navigate("admin/parceiras")
         "CURSO_DA_PARCEIRA" -> {
             val id = n.referencia?.toLongOrNull()
             navController.navigate(if (id != null) "parceira/curso/$id" else "parceira")
