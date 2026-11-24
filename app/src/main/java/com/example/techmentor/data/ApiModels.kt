@@ -436,6 +436,27 @@ data class AdminVerificacaoParceiraRequest(
 
 data class AdminMotivoParceiraRequest(val motivo: String)
 
+// Um pedido de parceria feito pelo formulário do site (fila separada das parceiras)
+data class AdminPedidoParceriaResponse(
+    val id: Long,
+    val nome: String,
+    val tipo: String,
+    val documento: String?,
+    val site: String?,
+    val responsavel: String,
+    val email: String,
+    val mensagem: String,
+    val situacao: String,
+    val criadoEm: String?,
+    val dominioDoEmailConfereComSite: Boolean?,
+    val consentimentoEm: String?,
+    val politicaVersao: String?,
+    val decididoEm: String?,
+    val decididoPor: String?,
+    val motivoDaRecusa: String?,
+    val parceiraId: Long?
+)
+
 data class ParceiraVerificacaoResponse(
     val siteConferido: Boolean,
     val dominioDoEmailConferido: Boolean,

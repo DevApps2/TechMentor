@@ -13,6 +13,7 @@ import com.example.techmentor.data.ParceiraAulaRequest
 import com.example.techmentor.data.ParceiraPerfilResponse
 import com.example.techmentor.data.Sessao
 import com.google.gson.Gson
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -45,16 +46,19 @@ class ParceiraHomeViewModel : ViewModel() {
     val estado: StateFlow<ParceiraHomeUiState> = _estado.asStateFlow()
     private val gson = Gson()
 
+    // A trava olha a busca de verdade, não o estado: ele já nasce com carregando = true,
+    // e por isso a primeira busca nunca saía e a tela ficava carregando para sempre.
+    private var busca: Job? = null
+
     fun carregar(manual: Boolean = false) {
-        val atual = _estado.value
-        if (atual.carregando || atual.atualizando) return
+        if (busca?.isActive == true) return
         val usuarioId = Sessao.usuarioId
         if (usuarioId == null || Sessao.tipo != "PARCEIRA") {
             _estado.update { it.copy(carregando = false, sessaoExpirada = true) }
             return
         }
 
-        viewModelScope.launch {
+        busca = viewModelScope.launch {
             _estado.update {
                 if (it.perfil == null) it.copy(carregando = true, erro = null)
                 else it.copy(atualizando = manual, erro = null)

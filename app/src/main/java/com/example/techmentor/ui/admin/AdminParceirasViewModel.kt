@@ -7,6 +7,7 @@ import com.example.techmentor.data.AdminConviteParceiraRequest
 import com.example.techmentor.data.AdminHistoricoParceiraResponse
 import com.example.techmentor.data.AdminMotivoParceiraRequest
 import com.example.techmentor.data.AdminParceiraResponse
+import com.example.techmentor.data.AdminPedidoParceriaResponse
 import com.example.techmentor.data.AdminVerificacaoParceiraRequest
 import com.example.techmentor.data.ApiClient
 import com.example.techmentor.data.ERRO_CONEXAO
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 data class AdminParceirasUiState(
@@ -27,6 +29,8 @@ data class AdminParceirasUiState(
     val enviando: Boolean = false,
     val filtro: String? = null,
     val parceiras: List<AdminParceiraResponse> = emptyList(),
+    // pedidos que chegaram pelo formulário do site e esperam a administradora
+    val pedidos: List<AdminPedidoParceriaResponse> = emptyList(),
     val historico: List<AdminHistoricoParceiraResponse> = emptyList(),
     val erro: String? = null,
     val erroAcao: String? = null,
@@ -40,16 +44,33 @@ class AdminParceirasViewModel : ViewModel() {
 
     fun carregar(filtro: String? = _estado.value.filtro) {
         viewModelScope.launch {
-            _estado.update { it.copy(carregando = it.parceiras.isEmpty(), atualizando = it.parceiras.isNotEmpty(), filtro = filtro, erro = null) }
+            val primeira = _estado.value.parceiras.isEmpty() && _estado.value.pedidos.isEmpty()
+            _estado.update { it.copy(carregando = primeira, atualizando = !primeira, filtro = filtro, erro = null) }
             try {
-                val lista = ApiClient.adminApi.listarParceiras(filtro)
-                _estado.update { it.copy(carregando = false, atualizando = false, parceiras = lista, filtro = filtro, erro = null) }
+                // "PEDIDOS" não é uma situação da parceira: só mostra a fila de pedidos
+                val parceiras = if (filtro == FILTRO_PEDIDOS) emptyList() else ApiClient.adminApi.listarParceiras(filtro)
+                val pedidos = ApiClient.adminApi.listarPedidosDeParceria("PENDENTE")
+                _estado.update { it.copy(carregando = false, atualizando = false, parceiras = parceiras, pedidos = pedidos, filtro = filtro, erro = null) }
             } catch (e: HttpException) {
                 _estado.update { it.copy(carregando = false, atualizando = false, erro = mensagemDaApi(e)) }
             } catch (e: IOException) {
                 _estado.update { it.copy(carregando = false, atualizando = false, erro = ERRO_CONEXAO) }
             }
         }
+    }
+
+    // ---- Pedidos vindos do site: a administradora só revisa e decide ----
+
+    fun aprovarPedido(id: Long) = executar("Pedido aprovado; o convite foi enviado por e-mail.") {
+        ApiClient.adminApi.aprovarPedidoDeParceria(id)
+    }
+
+    fun recusarPedido(id: Long, motivo: String) = executar("Pedido recusado; a instituição foi avisada por e-mail.") {
+        ApiClient.adminApi.recusarPedidoDeParceria(id, AdminMotivoParceiraRequest(motivo))
+    }
+
+    fun apagarPedido(id: Long) = executar("Pedido apagado.") {
+        ApiClient.adminApi.apagarPedidoDeParceria(id)
     }
 
     fun convidar(dados: AdminConviteParceiraRequest) = executar("Convite registrado; o envio está sendo processado.") {
@@ -95,7 +116,11 @@ class AdminParceirasViewModel : ViewModel() {
         viewModelScope.launch {
             _estado.update { it.copy(enviando = true, erroAcao = null, sucesso = null) }
             try {
-                ApiClient.adminApi.chamada()
+                val resposta = ApiClient.adminApi.chamada()
+                if (resposta is Response<*> && !resposta.isSuccessful) {
+                    _estado.update { it.copy(enviando = false, erroAcao = mensagemDoCorpo(resposta.errorBody()?.string())) }
+                    return@launch
+                }
                 _estado.update { it.copy(enviando = false, sucesso = mensagem) }
                 carregar(_estado.value.filtro)
             } catch (e: HttpException) {
@@ -106,9 +131,13 @@ class AdminParceirasViewModel : ViewModel() {
         }
     }
 
-    private fun mensagemDaApi(e: HttpException): String {
-        val corpo = runCatching { e.response()?.errorBody()?.string() }.getOrNull()
-        return runCatching { gson.fromJson(corpo, ErroResponse::class.java)?.erro }
+    private fun mensagemDaApi(e: HttpException): String =
+        mensagemDoCorpo(runCatching { e.response()?.errorBody()?.string() }.getOrNull())
+
+    private fun mensagemDoCorpo(corpo: String?): String =
+        runCatching { gson.fromJson(corpo, ErroResponse::class.java)?.erro }
             .getOrNull()?.takeIf { it.isNotBlank() } ?: ERRO_CONEXAO
-    }
 }
+
+/** Filtro da tela de parceiras que mostra só os pedidos feitos pelo site. */
+const val FILTRO_PEDIDOS = "PEDIDOS"

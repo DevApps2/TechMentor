@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.techmentor.data.AdminConviteParceiraRequest
 import com.example.techmentor.data.AdminParceiraResponse
+import com.example.techmentor.data.AdminPedidoParceriaResponse
 import com.example.techmentor.data.AdminVerificacaoParceiraRequest
 import com.example.techmentor.ui.auth.AuthColors
 import com.example.techmentor.ui.auth.GradientButton
@@ -75,11 +76,53 @@ fun AdminParceirasScreen(
     var selecionada by remember { mutableStateOf<AdminParceiraResponse?>(null) }
     var reenviar by remember { mutableStateOf<AdminParceiraResponse?>(null) }
     var suspender by remember { mutableStateOf<AdminParceiraResponse?>(null) }
+    // pedidos que chegaram pelo formulário do site
+    var pedidoAbertoId by remember { mutableStateOf<Long?>(null) }
+    var recusarPedido by remember { mutableStateOf<AdminPedidoParceriaResponse?>(null) }
+    var apagarPedido by remember { mutableStateOf<AdminPedidoParceriaResponse?>(null) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.carregar() }
 
     LaunchedEffect(estado.sucesso) {
-        if (estado.sucesso != null) convidar = false
+        if (estado.sucesso != null) {
+            convidar = false
+            recusarPedido = null; apagarPedido = null
+        }
+    }
+
+    // o pedido saiu da fila (aprovado, recusado ou apagado): fecha o detalhe
+    val pedidoAberto = pedidoAbertoId?.let { id -> estado.pedidos.firstOrNull { it.id == id } }
+    LaunchedEffect(pedidoAberto, estado.carregando, estado.atualizando) {
+        if (pedidoAbertoId != null && pedidoAberto == null && !estado.carregando && !estado.atualizando) pedidoAbertoId = null
+    }
+    pedidoAberto?.let { pedido ->
+        DialogoDetalhePedido(
+            pedido = pedido,
+            enviando = estado.enviando,
+            erro = estado.erroAcao,
+            aoAprovar = { viewModel.aprovarPedido(pedido.id) },
+            aoRecusar = { recusarPedido = pedido },
+            aoApagar = { apagarPedido = pedido },
+            aoFechar = { pedidoAbertoId = null; viewModel.limparMensagens() }
+        )
+    }
+    recusarPedido?.let { item ->
+        DialogoRecusarPedido(
+            nome = item.nome,
+            enviando = estado.enviando,
+            erro = estado.erroAcao,
+            aoRecusar = { motivo -> viewModel.recusarPedido(item.id, motivo) },
+            aoFechar = { recusarPedido = null; viewModel.limparMensagens() }
+        )
+    }
+    apagarPedido?.let { item ->
+        DialogoApagarPedido(
+            nome = item.nome,
+            enviando = estado.enviando,
+            erro = estado.erroAcao,
+            aoApagar = { viewModel.apagarPedido(item.id) },
+            aoFechar = { apagarPedido = null; viewModel.limparMensagens() }
+        )
     }
 
     selecionada?.let { item ->
@@ -146,7 +189,7 @@ fun AdminParceirasScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp)) {
-                        Text("Convide e acompanhe instituições parceiras.", color = AdminCinza, fontSize = 13.sp)
+                        Text("Convide e acompanhe instituições parceiras. Os pedidos feitos pelo site aparecem aqui como pendentes.", color = AdminCinza, fontSize = 13.sp)
                         Spacer(Modifier.height(14.dp))
                         GradientButton(text = "Convidar uma parceira", onClick = { convidar = true })
                         estado.sucesso?.let {
@@ -159,7 +202,13 @@ fun AdminParceirasScreen(
                         }
                         Spacer(Modifier.height(15.dp))
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            listOf(null to "Todas", "CONVIDADA" to "Convidadas", "ATIVA" to "Ativas", "SUSPENSA" to "Suspensas").forEach { (filtro, rotulo) ->
+                            listOf(
+                                null to "Todas",
+                                FILTRO_PEDIDOS to if (estado.pedidos.isEmpty()) "Pedidos do site" else "Pedidos do site (${estado.pedidos.size})",
+                                "CONVIDADA" to "Convidadas",
+                                "ATIVA" to "Ativas",
+                                "SUSPENSA" to "Suspensas"
+                            ).forEach { (filtro, rotulo) ->
                                 FilterChip(
                                     selected = estado.filtro == filtro,
                                     onClick = { viewModel.carregar(filtro) },
@@ -175,7 +224,19 @@ fun AdminParceirasScreen(
                             }
                         }
                         Spacer(Modifier.height(10.dp))
-                        if (estado.parceiras.isEmpty()) {
+                        // os pedidos feitos pelo site aparecem primeiro, como "Pendente": a administradora revisa e aprova
+                        val mostrarPedidos = estado.filtro == null || estado.filtro == FILTRO_PEDIDOS
+                        if (mostrarPedidos) {
+                            estado.pedidos.forEach { pedido ->
+                                CartaoPedido(pedido) { pedidoAbertoId = pedido.id; viewModel.limparMensagens() }
+                                Spacer(Modifier.height(9.dp))
+                            }
+                        }
+                        if (estado.filtro == FILTRO_PEDIDOS) {
+                            if (estado.pedidos.isEmpty()) {
+                                Text("Nenhum pedido esperando resposta.", color = AdminCinza, fontSize = 13.sp, modifier = Modifier.padding(vertical = 24.dp))
+                            }
+                        } else if (estado.parceiras.isEmpty() && !(mostrarPedidos && estado.pedidos.isNotEmpty())) {
                             Text("Nenhuma parceira nesta situação.", color = AdminCinza, fontSize = 13.sp, modifier = Modifier.padding(vertical = 24.dp))
                         } else {
                             estado.parceiras.forEach { parceira ->

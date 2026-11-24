@@ -142,6 +142,22 @@ interface AdminApi {
     @GET("api/admin/parceiras/{id}/historico")
     suspend fun historicoDaParceira(@Path("id") id: Long): List<AdminHistoricoParceiraResponse>
 
+    // ---- Pedidos de parceria (vindos do formulário do site) ----
+
+    @GET("api/admin/pedidos-parceria")
+    suspend fun listarPedidosDeParceria(@retrofit2.http.Query("situacao") situacao: String? = null): List<AdminPedidoParceriaResponse>
+
+    // aprovar cria a parceira (CONVIDADA) e manda o convite por e-mail
+    @POST("api/admin/pedidos-parceria/{id}/aprovacao")
+    suspend fun aprovarPedidoDeParceria(@Path("id") id: Long): AdminPedidoParceriaResponse
+
+    @POST("api/admin/pedidos-parceria/{id}/recusa")
+    suspend fun recusarPedidoDeParceria(@Path("id") id: Long, @Body body: AdminMotivoParceiraRequest): AdminPedidoParceriaResponse
+
+    // apaga os dados do pedido (LGPD); 204 sem corpo. Pedido aprovado não pode: já virou conta
+    @DELETE("api/admin/pedidos-parceria/{id}")
+    suspend fun apagarPedidoDeParceria(@Path("id") id: Long): Response<Unit>
+
     // ---- Revisão de cursos ----
 
     @GET("api/admin/cursos")

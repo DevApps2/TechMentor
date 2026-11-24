@@ -212,7 +212,7 @@ private fun PainelConteudo(
             CartaoDeAtalho(
                 icone = Icone.PREDIO,
                 titulo = "Gerenciar parceiras",
-                descricao = "Convites, verificação e situação das instituições",
+                descricao = "Pedidos do site, convites, verificação e situação das instituições",
                 onClick = { navController.navigate("admin/parceiras") }
             )
 
